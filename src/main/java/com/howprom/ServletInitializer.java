@@ -1,4 +1,4 @@
-package com.howprom.how_prom;
+package com.howprom;
 
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
