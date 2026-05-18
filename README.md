@@ -1,4 +1,4 @@
-# 프롬프트 코딩 학습 플랫폼
+# 프롬프트 훈련
 
 > 초보 개발자가 LLM과의 대화형 프롬프트로 코드를 작성하는 법을 배우는 학습 플랫폼
 
@@ -109,8 +109,6 @@ mysql -u root -p < database/schema.sql
 ```bash
 ./mvnw spring-boot:run
 ```
-
-접속: http://localhost:8080
 
 ---
 
