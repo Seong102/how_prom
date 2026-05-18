@@ -110,8 +110,6 @@ mysql -u root -p < database/schema.sql
 ./mvnw spring-boot:run
 ```
 
-접속: http://localhost:8080
-
 ---
 
 ## 👥 팀원
