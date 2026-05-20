@@ -8,6 +8,6 @@ public class AuthController {
 
     @GetMapping("/auth/login")
     public String loginPage() {
-        return "auth/login";   // → templates/auth/login.html
+        return "auth/login"; 
     }
 }

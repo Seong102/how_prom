@@ -32,6 +32,7 @@ public class SecurityConfig {
                 .permitAll()
             );
         */
+    	
     	///비활성화///
     	http
         .authorizeHttpRequests(auth -> auth
