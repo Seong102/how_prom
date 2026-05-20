@@ -112,6 +112,7 @@
 		    <scope>runtime</scope>
 		</dependency>
 		
+		
 		<!-- WebClient (LLM API 호출) -->
 		<dependency>
 		    <groupId>org.springframework.boot</groupId>
