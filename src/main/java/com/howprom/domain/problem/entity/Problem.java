@@ -5,10 +5,10 @@ import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDateTime;
 
-@Entity
+//@Entity
 @Getter
 @Setter
-@Table(name = "problems")
+//@Table(name = "problems")
 public class Problem {
 
     @Id
@@ -20,7 +20,7 @@ public class Problem {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "evaluation_type")
+    @Column(nullable = false)
     private String evaluationType; // STANDARD, EFFICIENCY, BUDGET [cite: 141]
 
     @Column(name = "token_limit")
