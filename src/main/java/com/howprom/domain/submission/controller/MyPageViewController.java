@@ -27,7 +27,7 @@ public class MyPageViewController {
         model.addAttribute("stats", myPageData.getStats());
         model.addAttribute("submissions", myPageData.getSubmissions().getContent());
         model.addAttribute("page", myPageData.getSubmissions());
-
+        model.addAttribute("username", "userA");
         return "mypage/mypage"; // templates/mypage.html 반환
     }
 }

@@ -1,56 +1,115 @@
 
-    /* [가이드 반영] 기본 폰트 및 검은색 배경 적용 */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+    /* 이미지 UI와 동일하게 맞추기 위한 핵심 스타일 정의 */
 body {
-    font-family: 'Noto Sans KR', sans-serif;
-    background-color: #121212;
-    color: #e0e0e0;
-    padding-top: 30px;
+    background-color: #f9fafb;
+    color: #1f2937;
+}
+.proto-wrap {
+    max-width: 1200px;
+    margin-top: 2rem;
+}
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+.app-logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #3b82f6;
+}
+.app-logo span {
+    color: #10b981;
+}
+.app-nav a {
+    margin: 0 15px;
+    text-decoration: none;
+    color: #4b5563;
+    font-weight: 500;
+}
+.app-nav a.active {
+    color: #6366f1;
+    font-weight: bold;
+}
+.avatar {
+    background-color: #e0e7ff;
+    color: #4f46e5;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 14px;
+}
+.screen-body {
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #f3f4f6;
+}
+.section-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #4b5563;
+    margin-bottom: 1.5rem;
 }
 
-/* [가이드 반영] 네온 블루 컬러 정의 및 포인트 색상 적용 */
-:root { --neon-blue: #00f2fe; }
-h1, h2, h3, .h5, strong { color: #ffffff; }
-
-/* 대시보드 카드 스타일링 */
-.card-custom {
-    background-color: #1e1e1e;
-    border: 1px solid #333;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    transition: transform 0.2s;
+/* 테이블 스타일 커스텀 */
+.my-table {
+    width: 100%;
+    border-collapse: collapse;
 }
-.card-custom:hover { transform: translateY(-3px); }
-.card-title { font-size: 0.9rem; color: #aaaaaa; }
-.stats-value {
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: var(--neon-blue);
-    text-shadow: 0 0 5px rgba(0, 242, 254, 0.4);
+.my-table th {
+    padding: 12px 16px;
+    color: #9ca3af;
+    font-weight: 500;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 14px;
 }
-
-/* [가이드 반영] 테이블 다크 스타일링 및 링크 색상 변경 */
-.table-custom { background-color: #1e1e1e; border-radius: 8px; overflow: hidden; }
-.table-custom th { background-color: #252525; color: #aaaaaa; font-weight: 500; }
-.table-custom td { border-bottom: 1px solid #333; color: #e0e0e0; vertical-align: middle;}
-
-/* 문제 제목 링크 색상을 화이트로 변경하여 포인트 주기 */
-.problem-link { color: #ffffff; text-decoration: none; font-weight: 500;}
-.problem-link:hover { color: var(--neon-blue); text-decoration: underline; }
-
-/* [가이드 반영] 배지(Badge) 스타일 조정 */
-.badge-status {
-    font-weight: 400;
-    padding: 0.5em 0.8em;
-    border-radius: 4px;
+.my-table td {
+    padding: 16px;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 15px;
+    vertical-align: middle;
+}
+.my-table tbody tr {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.my-table tbody tr:hover {
+    background-color: #f9fafb;
 }
 
-/* 💡 추가: 페이징 스타일링 (필요시 사용) */
-.pagination .page-link { background-color: #1e1e1e; border-color: #333; color: var(--neon-blue); }
-.pagination .page-item.active .page-link { background-color: #008189; border-color: #008189; color: white; }
-.pagination .page-item.disabled .page-link { background-color: #121212; border-color: #333; color: #666; }
+/* 정렬 규칙 정의 */
+.text-left { text-align: left; }
+.text-center { text-align: center; }
 
-    /* 제출일시 및 텍스트 색상 강제 흰색 적용 */
-    .text-muted, .submission-date {
-        color: #ffffff !important;
-    }
+/* 모드별 배지 디자인 */
+.badge-custom {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+.badge-violet { background-color: #eef2ff; color: #4f46e5; }
+.badge-green { background-color: #f0fdf4; color: #16a34a; }
+.badge-amber { background-color: #fefbc3; color: #ca8a04; }
+
+/* 점수 및 상태 스타일 */
+.score-text {
+    font-weight: 800;
+    color: #1f2937;
+}
+.status-pass {
+    color: #16a34a;
+    font-weight: bold;
+}
+.status-fail {
+    color: #dc2626;
+    font-weight: bold;
+}
+.table-caption {
+    color: #9ca3af;
+    font-size: 13px;
+}
