@@ -1,0 +1,106 @@
+/* signup.css — 회원가입 페이지 전용 추가 스타일 (login.css 함께 import 필요) */
+
+/* 이메일 입력 + 중복 확인 버튼 한 줄 배치 */
+.form-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.form-input-group .form-input {
+    flex: 1;
+    min-width: 0; /* flex 아이템 축소 허용 */
+}
+
+.btn-check {
+    flex-shrink: 0;
+    height: 44px;
+    padding: 0 14px;
+    background: white;
+    color: var(--hp-primary);
+    border: 1px solid var(--hp-primary);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.btn-check:hover {
+    background: var(--hp-primary-light);
+}
+
+.btn-check:disabled {
+    background: #F3F4F6;
+    color: var(--hp-text-light);
+    border-color: var(--hp-border);
+    cursor: not-allowed;
+}
+
+/* 입력창 아래 피드백 메시지 */
+.form-feedback {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    min-height: 16px;
+    color: var(--hp-text-muted);
+}
+
+.form-feedback--success {
+    color: #10B981;
+}
+
+.form-feedback--error {
+    color: var(--hp-danger);
+}
+
+/* 하단 액션 버튼 2개 (뒤로 가기 / 회원가입) */
+.auth-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+.auth-button {
+    flex: 1;
+    height: 44px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: inherit;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.auth-button--primary {
+    background: var(--hp-primary);
+    color: white;
+}
+
+.auth-button--primary:hover {
+    background: var(--hp-primary-hover);
+}
+
+.auth-button--secondary {
+    background: white;
+    color: var(--hp-text);
+    border: 1px solid var(--hp-border);
+}
+
+.auth-button--secondary:hover {
+    background: var(--hp-bg);
+    border-color: #D1D5DB;
+}
+
+@media (max-width: 480px) {
+    .btn-check {
+        padding: 0 10px;
+        font-size: 12px;
+    }
+}
