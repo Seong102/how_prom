@@ -61,9 +61,9 @@ public class Problem {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    // 연관관계 매핑 (필요 시 유지, 패키지 경로 주의)
-    // @OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true)
-    // private List<Requirement> requirements = new ArrayList<>();
+    //연관관계 매핑 (필요 시 유지, 패키지 경로 주의)
+    @OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Requirement> requirements = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

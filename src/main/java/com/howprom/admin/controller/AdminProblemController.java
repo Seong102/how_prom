@@ -1,7 +1,7 @@
 package com.howprom.admin.controller;
 
 import java.util.List;
-import java.util.Map; // 추가됨
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.howprom.common.entity.Problem;
 import com.howprom.admin.dto.ProblemAdminDTO;
-import com.howprom.admin.dto.ProblemStatsDTO; // 추가됨
+import com.howprom.admin.dto.ProblemStatsDTO;
 import com.howprom.admin.service.AdminProblemService;
 import lombok.RequiredArgsConstructor;
 
@@ -26,34 +26,56 @@ public class AdminProblemController {
         return "admin/AdminDashboard";
     }
 
-    // [수정됨] 문제 관리 페이지: 통계 데이터(statsMap)를 모델에 함께 추가
+    // 문제 관리 페이지: 목록 및 통계 데이터 조회
     @GetMapping("/problems/manage")
     public String manageProblems(@RequestParam(value = "keyword", required = false) String keyword, Model model) {
-        // 1. 문제 목록 가져오기
         List<Problem> realProblemList = adminProblemService.getProblems(keyword);
         
-        // 2. DTO 리스트로 변환
         List<ProblemAdminDTO> problemDtoList = realProblemList.stream()
                 .map(ProblemAdminDTO::from)
                 .toList();
         
-        // 3. [핵심] 통계 데이터 Map 조회 (문제 ID별로 통계 정보를 담음)
         Map<Long, ProblemStatsDTO> statsMap = adminProblemService.getStatsMap();
         
         model.addAttribute("problemList", problemDtoList);
-        model.addAttribute("statsMap", statsMap); // 타임리프에서 사용 가능하도록 모델에 추가
+        model.addAttribute("statsMap", statsMap);
         model.addAttribute("keyword", keyword); 
 
         return "admin/problems/manage";
     }
     
+    // [수정] 문제 등록 페이지 이동: HTML 내부의 th:value="${problem...}" 에러 방지용 빈 객체 주입
     @GetMapping("/problems/register")
-    public String registerForm() {
+    public String registerForm(Model model) {
+        model.addAttribute("problem", new ProblemAdminDTO());
         return "admin/problems/register";
     }
 
+    // [수정] 문제 등록 처리: 폼 기본 정보와 동적 생성된 요구사항 리스트(reqDesc, reqWeight) 수집
     @PostMapping("/problems/register")
-    public String registerProcess() {
+    public String registerProcess(@ModelAttribute ProblemAdminDTO dto,
+                                  @RequestParam(value = "reqDesc", required = false) List<String> reqDescs,
+                                  @RequestParam(value = "reqWeight", required = false) List<Integer> reqWeights) {
+        adminProblemService.createProblem(dto, reqDescs, reqWeights);
+        return "redirect:/admin/problems/manage";
+    }
+    
+    // 문제 수정 페이지 이동 (기존 코드 유지)
+    @GetMapping("/problems/edit/{id}")
+    public String editForm(@PathVariable("id") Long id, Model model) {
+        Problem problem = adminProblemService.findById(id);
+        model.addAttribute("problem", ProblemAdminDTO.from(problem));
+        model.addAttribute("existingRequirements", problem.getRequirements());
+        return "admin/problems/register";
+    }
+
+    // [추가] 문제 수정 처리: html 폼의 액션 분기(@{/admin/problems/edit/{id}})를 받아 처리할 매핑
+    @PostMapping("/problems/edit/{id}")
+    public String editProcess(@PathVariable("id") Long id,
+                              @ModelAttribute ProblemAdminDTO dto,
+                              @RequestParam(value = "reqDesc", required = false) List<String> reqDescs,
+                              @RequestParam(value = "reqWeight", required = false) List<Integer> reqWeights) {
+        adminProblemService.updateProblem(id, dto, reqDescs, reqWeights);
         return "redirect:/admin/problems/manage";
     }
 
@@ -81,12 +103,5 @@ public class AdminProblemController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("FAIL");
         }
-    }
-    
-    @GetMapping("/problems/edit/{id}")
-    public String editForm(@PathVariable("id") Long id, Model model) {
-        Problem problem = adminProblemService.findById(id);
-        model.addAttribute("problem", ProblemAdminDTO.from(problem));
-        return "admin/problems/register";
     }
 }

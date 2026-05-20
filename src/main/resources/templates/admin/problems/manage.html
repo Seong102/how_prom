@@ -46,12 +46,12 @@
 				<table class="hp-table">
 					<thead>
 						<tr>
-							<th style="width: 8%; padding-left: 24px;">#</th>
+							<th style="width: 8%; padding-left: 24px;">번호</th>
 							<th style="width: 34%;">제목</th>
-							<th style="width: 13%;">유형</th>
-							<th style="width: 13%;">공개 여부</th>
-							<th class="text-right" style="width: 10%;">제출 수</th>
-							<th class="text-right" style="width: 11%;">평균 점수</th>
+							<th style="width: 13%; text-align: center;">유형</th>
+							<th style="width: 13%; text-align: center;">공개 여부</th>
+							<th class="text-center" style="width: 10%;">제출 수</th>
+							<th class="text-center" style="width: 11%;">평균 점수</th>
 							<th class="text-center" style="width: 11%;">관리</th>
 						</tr>
 					</thead>
@@ -59,22 +59,22 @@
 						<tr th:each="prob : ${problemList}">
 							<td style="padding-left: 24px;" th:text="'#' + ${#numbers.formatInteger(prob.id, 3)}">#001</td>
 							<td><strong th:text="${prob.title}">문제 제목 명세</strong></td>
-							<td>
+							<td class="text-center">
                                 <span class="hp-badge hp-badge--standard" th:if="${prob.evaluationType == 'STANDARD'}">Standard</span>
 								<span class="hp-badge hp-badge--efficiency" th:if="${prob.evaluationType == 'EFFICIENCY'}">Efficiency</span>
 								<span class="hp-badge hp-badge--budget" th:if="${prob.evaluationType == 'BUDGET'}">Budget</span>
 							</td>
-							<td>
-                                <label class="hp-switch"> 
+							<td class="text-center">
+                                <label class="hp-switch" style="justify-content: center;"> 
                                     <input type="checkbox" class="hp-switch__input" th:checked="${prob.isPublic}" th:attr="data-id=${prob.id}"> 
                                     <span class="hp-switch__slider"></span> 
                                     <span class="hp-switch__label" th:text="${prob.isPublic} ? '공개' : '비공개'">비공개</span>
                                 </label>
                             </td>
-                            <td class="text-right">
+                            <td class="text-center">
                                 <span th:text="${statsMap != null && statsMap.containsKey(prob.id) ? statsMap[prob.id].totalCount + '건' : '0건'}">0건</span>
                             </td>
-                            <td class="text-right hp-text-muted" style="font-weight: 600;">
+                            <td class="text-center hp-text-muted" style="font-weight: 600;">
                                 <span th:text="${statsMap != null && statsMap.containsKey(prob.id) ? #numbers.formatDecimal(statsMap[prob.id].avgScore, 1, 1) : '-'}">-</span>
                             </td>
                             <td class="text-center">

@@ -4,6 +4,9 @@ import com.howprom.common.entity.Problem;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -25,6 +28,9 @@ public class ProblemAdminDTO {
     private Boolean isPublic;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    
+    // 💡 다른 DTO를 깔끔하게 리스트로 포함시킵니다.
+    private List<RequirementAdminDTO> requirements; 
 
     public static ProblemAdminDTO from(Problem problem) {
         if (problem == null) return null;
@@ -44,6 +50,11 @@ public class ProblemAdminDTO {
                 .isPublic(problem.getIsPublic())
                 .createdAt(problem.getCreatedAt())
                 .updatedAt(problem.getUpdatedAt())
+                // 💡 Requirement 엔티티 리스트를 RequirementAdminDTO 리스트로 변환하여 조립
+                .requirements(problem.getRequirements() != null ? 
+                        problem.getRequirements().stream()
+                                .map(RequirementAdminDTO::from)
+                                .collect(Collectors.toList()) : new ArrayList<>())
                 .build();
     }
 }
