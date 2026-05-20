@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>새 문제 등록 - HowProm Admin</title>
+    <th:block th:replace="~{common/header :: styles}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <style>
+        .hp-dashboard-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+        .hp-form-group { margin-bottom: 20px; width: 100%; }
+        .hp-input, .hp-textarea { width: 100%; box-sizing: border-box; }
+        
+        /* 필수 항목 별표 스타일 */
+        .hp-form-group label::after { content: " *"; color: #E74C3C; font-weight: bold; }
+        .hp-example-group label::after { content: ""; } /* 예시는 필수 제외 */
+
+        .hp-req-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; height: 42px; }
+        .hp-req-row .hp-input:first-child { flex: 1; }
+        .hp-req-row .hp-weight { width: 80px !important; flex-shrink: 0; }
+        .hp-btn--del { width: 42px; height: 42px; padding: 0; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .hp-req-row:has(.hp-input):not(:has(.hp-btn--del))::after { content: ""; width: 42px; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{common/header :: header('admin')}"></div>
+
+<main class="hp-main">
+    <div class="hp-page-header--manage">
+        <div><h1 class="hp-page-header__title">새 문제 등록 <span class="hp-admin-badge">Admin</span></h1></div>
+    </div>
+
+    <div th:replace="~{admin/adminSubNav :: subNav('register')}"></div>
+
+    <form th:action="@{/admin/problems/register}" method="post">
+        <div class="hp-dashboard-row">
+            <section class="hp-card">
+                <div class="hp-card__header">문제 기본 정보</div>
+                <div class="hp-card__body">
+                    <div class="hp-form-group">
+                        <label>문제 제목</label>
+                        <input type="text" name="title" class="hp-input" placeholder="문제 제목을 입력하세요" required>
+                    </div>
+                    <div class="hp-form-group">
+                        <label>문제 설명</label>
+                        <textarea name="description" class="hp-textarea" rows="10" placeholder="구체적인 문제 정의를 입력하세요" required></textarea>
+                    </div>
+                    <div class="hp-form-group">
+                        <label>평가 유형</label>
+                        <select name="evaluationType" class="hp-input" required>
+                            <option value="" disabled selected>평가 유형을 선택하세요</option>
+                            <option value="STANDARD">STANDARD — 표준 모드</option>
+                            <option value="EFFICIENCY">EFFICIENCY — 효율성 모드</option>
+                            <option value="BUDGET">BUDGET — 예산 최적화 모드</option>
+                        </select>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="hp-form-group hp-example-group">
+                            <label>예시 입력</label>
+                            <textarea name="exampleInput" class="hp-textarea" rows="4"></textarea>
+                        </div>
+                        <div class="hp-form-group hp-example-group">
+                            <label>예시 출력</label>
+                            <textarea name="exampleOutput" class="hp-textarea" rows="4"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="hp-card">
+                <div class="hp-card__header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>요구사항 상세 설정</span>
+                    <span id="scoreDisplay">배점 합계: <b>0</b> / 100</span>
+                </div>
+                <div class="hp-card__body">
+                    <div id="reqList">
+                        <div class="hp-req-row">
+                            <input type="text" name="reqDesc[]" class="hp-input" placeholder="요구사항 명세" required>
+                            <input type="number" name="reqWeight[]" class="hp-input hp-weight" value="0" min="0" oninput="calc()">
+                        </div>
+                    </div>
+                    <button type="button" class="hp-btn hp-btn--outline" style="width: 100%; margin-top: 10px;" onclick="addReq()">+ 요구사항 항목 추가</button>
+                    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--hp-border-soft);">
+                        <button type="submit" id="submitBtn" class="hp-btn hp-btn--primary" style="width: 100%; padding: 12px;">문제 등록 완료</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </form>
+</main>
+
+<script>
+    function addReq() {
+        const div = document.createElement('div');
+        div.className = 'hp-req-row';
+        div.innerHTML = `
+            <input type="text" name="reqDesc[]" class="hp-input" placeholder="요구사항 명세" required>
+            <input type="number" name="reqWeight[]" class="hp-input hp-weight" value="0" min="0" oninput="calc()">
+            <button type="button" class="hp-btn hp-btn--danger-outline hp-btn--del" onclick="this.parentElement.remove(); calc();">×</button>
+        `;
+        document.getElementById('reqList').appendChild(div);
+    }
+    
+    function calc() {
+        let total = 0;
+        document.querySelectorAll('.hp-weight').forEach(i => total += Number(i.value));
+        const display = document.getElementById('scoreDisplay');
+        const btn = document.getElementById('submitBtn');
+        display.innerHTML = `배점 합계: <b style="color: ${total > 100 ? 'var(--hp-danger-text)' : 'var(--hp-primary)'};">${total}</b> / 100`;
+        btn.disabled = (total > 100);
+        btn.style.opacity = (total > 100) ? '0.5' : '1';
+    }
+</script>
+</body>
+</html>
