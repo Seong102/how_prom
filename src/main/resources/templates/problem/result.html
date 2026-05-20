@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>채점 결과 - HowProm</title>
+    <style>
+        /* ===== problemDetail.html과 동일한 hp- 디자인 토큰 ===== */
+        :root {
+            --hp-primary:       #5B47D6;
+            --hp-primary-hover: #4a38c4;
+            --hp-primary-soft:  #F0EEFB;
+            --hp-bg:            #F5F6FA;
+            --hp-surface:       #FFFFFF;
+            --hp-text:          #1A1A1A;
+            --hp-text-muted:    #6B7280;
+            --hp-border:        #E5E7EB;
+            --hp-border-soft:   #EEF0F3;
+            --hp-success-bg:    #E6F7EC;
+            --hp-success-text:  #1F9D55;
+            --hp-danger-bg:     #FDECEC;
+            --hp-danger-text:   #D14343;
+            --hp-radius:        12px;
+            --hp-radius-sm:     6px;
+            --hp-shadow:        0 1px 3px rgba(0,0,0,0.06);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                         "Apple SD Gothic Neo", "Malgun Gothic", Roboto, sans-serif;
+            background: var(--hp-bg);
+            color: var(--hp-text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { text-decoration: none; color: inherit; }
+
+        /* ===== 헤더 (problemDetail.html과 동일) ===== */
+        .hp-header {
+            background: var(--hp-surface);
+            border-bottom: 1px solid var(--hp-border);
+            position: sticky; top: 0; z-index: 100; flex-shrink: 0;
+        }
+        .hp-header__inner {
+            max-width: 1400px; margin: 0 auto; padding: 0 32px;
+            height: 64px; display: flex; align-items: center; justify-content: space-between;
+        }
+        .hp-header__left { display: flex; align-items: center; gap: 48px; }
+        .hp-logo { font-size: 22px; font-weight: 700; color: var(--hp-primary); letter-spacing: -0.5px; }
+        .hp-nav  { display: flex; align-items: center; gap: 8px; }
+        .hp-nav__link {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 12px; font-size: 14px; color: var(--hp-text-muted);
+            border-bottom: 2px solid transparent; transition: color .15s;
+        }
+        .hp-nav__link:hover { color: var(--hp-text); }
+        .hp-nav__link--active { color: var(--hp-primary); border-bottom-color: var(--hp-primary); }
+        .hp-nav__icon { flex-shrink: 0; }
+        .hp-header__user {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 36px; height: 36px; border-radius: 50%;
+            color: var(--hp-text-muted); transition: background .15s;
+        }
+        .hp-header__user:hover { background: var(--hp-border-soft); }
+
+        /* ===== 서브 헤더 ===== */
+        .sub-header {
+            background: var(--hp-surface);
+            border-bottom: 1px solid var(--hp-border);
+            padding: 14px 32px;
+            display: flex; align-items: center; gap: 16px;
+        }
+        .btn-back {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 12px; border: 1px solid var(--hp-border);
+            border-radius: var(--hp-radius-sm); font-size: 12px;
+            color: var(--hp-text-muted); cursor: pointer;
+            background: var(--hp-surface); transition: background .15s;
+            font-family: inherit;
+        }
+        .btn-back:hover { background: var(--hp-bg); color: var(--hp-text); }
+        .btn-back svg { width: 13px; height: 13px; }
+        .sub-title { font-size: 18px; font-weight: 700; color: var(--hp-text); }
+        .sub-meta  { font-size: 12px; color: var(--hp-text-muted); margin-top: 2px; }
+
+        /* ===== 메인 그리드 ===== */
+        .main-content {
+            flex: 1; max-width: 1400px; width: 100%;
+            margin: 0 auto; padding: 32px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px; align-items: start;
+        }
+
+        /* ===== 카드 공통 ===== */
+        .card {
+            background: var(--hp-surface);
+            border: 1px solid var(--hp-border);
+            border-radius: var(--hp-radius);
+            box-shadow: var(--hp-shadow);
+        }
+
+        /* ===== 왼쪽: 점수 카드 ===== */
+        .score-card {
+            padding: 40px 32px 28px;
+        }
+
+        /* 도넛 차트 */
+        .donut-wrap { display: flex; justify-content: center; margin-bottom: 8px; }
+        .donut { position: relative; width: 160px; height: 160px; }
+        .donut svg { width: 160px; height: 160px; transform: rotate(-90deg); }
+        .donut-bg {
+            fill: none; stroke: var(--hp-bg);
+            stroke-width: 14;
+        }
+        .donut-fill {
+            fill: none; stroke-width: 14; stroke-linecap: round;
+            stroke-dasharray: 408;
+            stroke-dashoffset: 408;
+            transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1),
+                        stroke .3s;
+        }
+        .donut-label {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        .donut-score {
+            font-size: 42px; font-weight: 800;
+            color: var(--hp-text); letter-spacing: -2px; line-height: 1;
+        }
+        .donut-max { font-size: 13px; color: var(--hp-text-muted); margin-top: 2px; }
+
+        .score-label {
+            text-align: center; font-size: 13px;
+            color: var(--hp-text-muted); margin-bottom: 10px;
+        }
+
+        /* 상태 배지 */
+        .status-badge { display: flex; justify-content: center; margin-bottom: 28px; }
+        .badge {
+            padding: 5px 18px; border-radius: 20px;
+            font-size: 12px; font-weight: 700; letter-spacing: 0.8px;
+        }
+        .badge-passed { background: var(--hp-success-bg); color: var(--hp-success-text); }
+        .badge-failed { background: var(--hp-danger-bg);  color: var(--hp-danger-text); }
+        .badge-error  { background: #FEF3C7; color: #D97706; }
+
+        /* 통계 */
+        .stat-list { display: flex; flex-direction: column; }
+        .stat-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 13px 0; border-bottom: 1px solid var(--hp-border);
+        }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-key { font-size: 13px; color: var(--hp-text-muted); }
+        .stat-val { font-size: 13px; font-weight: 600; color: var(--hp-text); }
+        .eval-chip {
+            padding: 3px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.4px;
+        }
+        .chip-standard   { background: var(--hp-primary-soft); color: var(--hp-primary); }
+        .chip-efficiency { background: var(--hp-success-bg);   color: var(--hp-success-text); }
+        .chip-budget     { background: #FEF3C7; color: #D97706; }
+
+        /* ===== 오른쪽 ===== */
+        .right-col { display: flex; flex-direction: column; gap: 20px; }
+
+        .result-card { padding: 24px; }
+        .card-title {
+            font-size: 14px; font-weight: 700; color: var(--hp-text);
+            margin-bottom: 18px;
+        }
+
+        /* 요구사항 달성도 */
+        .req-list { display: flex; flex-direction: column; gap: 16px; }
+        .req-header {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 6px;
+        }
+        .req-name  { font-size: 13px; color: var(--hp-text); }
+        .req-score { font-size: 13px; font-weight: 700; }
+        .req-bar-bg {
+            height: 6px; background: var(--hp-bg);
+            border-radius: 3px; overflow: hidden;
+            border: 1px solid var(--hp-border);
+        }
+        .req-bar-fill {
+            height: 100%; border-radius: 3px;
+            transition: width 1s cubic-bezier(.4,0,.2,1) .3s;
+            width: 0%;
+        }
+
+        /* 피드백 */
+        .feedback-box {
+            background: var(--hp-bg);
+            border-left: 3px solid var(--hp-primary);
+            border-radius: 0 var(--hp-radius-sm) var(--hp-radius-sm) 0;
+            padding: 14px 16px;
+            font-size: 13px; color: var(--hp-text-muted); line-height: 1.75;
+        }
+
+        /* ===== 하단 버튼 ===== */
+        .bottom-actions {
+            max-width: 1400px; width: 100%;
+            margin: 0 auto; padding: 0 32px 40px;
+            display: flex; gap: 12px;
+        }
+        .btn-secondary {
+            padding: 11px 20px; border: 1px solid var(--hp-border);
+            border-radius: var(--hp-radius-sm); font-size: 13px; font-weight: 600;
+            color: var(--hp-text); background: var(--hp-surface);
+            cursor: pointer; transition: background .15s; font-family: inherit;
+        }
+        .btn-secondary:hover { background: var(--hp-bg); }
+        .btn-primary {
+            padding: 11px 24px; background: var(--hp-primary);
+            border: none; border-radius: var(--hp-radius-sm);
+            font-size: 13px; font-weight: 600; color: #fff;
+            cursor: pointer; transition: background .15s; font-family: inherit;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .btn-primary:hover { background: var(--hp-primary-hover); }
+        .btn-primary svg { width: 14px; height: 14px; }
+
+        /* 진입 애니메이션 */
+        .fade-up {
+            opacity: 0; transform: translateY(16px);
+            animation: fadeUp .45s ease forwards;
+        }
+        .fade-up:nth-child(1){ animation-delay: .05s; }
+        .fade-up:nth-child(2){ animation-delay: .15s; }
+        @keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
+    </style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<header class="hp-header">
+    <div class="hp-header__inner">
+        <div class="hp-header__left">
+            <a href="/" class="hp-logo">HowProm</a>
+            <nav class="hp-nav">
+                <a href="/" class="hp-nav__link">
+                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    <span>대시보드</span>
+                </a>
+                <a href="/problems" class="hp-nav__link hp-nav__link--active">
+                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+                        <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+                        <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+                    </svg>
+                    <span>문제</span>
+                </a>
+                <a href="/community" class="hp-nav__link">
+                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                        <path d="M4 22h16"/>
+                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                    </svg>
+                    <span>커뮤니티</span>
+                </a>
+                <a href="/admin" class="hp-nav__link">
+                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    <span>관리자</span>
+                </a>
+            </nav>
+        </div>
+        <div class="hp-header__right">
+            <a href="/profile" class="hp-header__user" aria-label="내 정보">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- 서브 헤더 -->
+<div class="sub-header">
+    <button class="btn-back" onclick="history.back()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        목록
+    </button>
+    <div>
+        <div class="sub-title">채점 결과</div>
+        <div class="sub-meta"
+             th:text="${submission.problemTitle + ' · ' + submission.evaluationType + ' 모드'}">
+            토큰 절약 버블정렬 · BUDGET 모드
+        </div>
+    </div>
+</div>
+
+<!-- 메인 -->
+<div class="main-content">
+
+    <!-- ── 왼쪽: 점수 카드 ── -->
+    <div class="card score-card fade-up">
+
+        <div class="donut-wrap">
+            <div class="donut">
+                <svg viewBox="0 0 160 160">
+                    <circle class="donut-bg"   cx="80" cy="80" r="65"/>
+                    <circle class="donut-fill" cx="80" cy="80" r="65" id="donutFill"/>
+                </svg>
+                <div class="donut-label">
+                    <!-- [DB] submissions.score -->
+                    <div class="donut-score" id="scoreNum"
+                         th:text="${submission.score}">0</div>
+                    <div class="donut-max">/ 100</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="score-label">최종 점수</div>
+
+        <!-- [DB] submissions.status -->
+        <div class="status-badge">
+            <div class="badge badge-passed"
+                 th:classappend="${submission.status == 'PASSED'} ? 'badge-passed' :
+                                  (${submission.status == 'FAILED'} ? 'badge-failed' : 'badge-error')"
+                 th:text="${submission.status}">
+                PASSED
+            </div>
+        </div>
+
+        <div class="stat-list">
+            <!-- [DB] submissions.total_user_tokens / problems.token_limit -->
+            <div class="stat-row">
+                <span class="stat-key">사용 토큰</span>
+                <span class="stat-val"
+                      th:text="${submission.totalUserTokens + ' / ' + submission.tokenLimit}">
+                    487 / 1500
+                </span>
+            </div>
+            <!-- [DB] conversation JSON 배열 길이 -->
+            <div class="stat-row">
+                <span class="stat-key">대화 턴 수</span>
+                <span class="stat-val"
+                      th:text="${submission.turnCount + ' turn'}">4 turn</span>
+            </div>
+            <!-- [DB] problems.evaluation_type -->
+            <div class="stat-row">
+                <span class="stat-key">평가 모드</span>
+                <span class="stat-val">
+                    <span class="eval-chip chip-budget"
+                          th:classappend="${submission.evaluationType == 'STANDARD'}    ? 'chip-standard' :
+                                          (${submission.evaluationType == 'EFFICIENCY'} ? 'chip-efficiency' : 'chip-budget')"
+                          th:text="${submission.evaluationType}">
+                        BUDGET
+                    </span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 오른쪽: 요구사항 + 피드백 ── -->
+    <div class="right-col fade-up">
+
+        <!-- 요구사항별 달성도 -->
+        <div class="card result-card">
+            <div class="card-title">요구사항별 달성도</div>
+            <!--
+                [DB] submissions.requirements_result JSON [{id, score, comment}]
+                     + requirements.description, requirements.weight
+                Thymeleaf: th:each="req : ${requirementsResult}"
+            -->
+            <div class="req-list" id="reqList">
+                <!-- [DB] submissions.requirements_result + requirements 테이블 -->
+                <div class="req-item" th:each="req : ${requirementsResult}">
+                    <div class="req-header">
+                        <span class="req-name"  th:text="${req.description}">요구사항</span>
+                        <span class="req-score"
+                              th:text="${req.score + '/' + req.maxScore}"
+                              th:style="${req.pct >= 80} ? 'color:var(--hp-success-text)' : 'color:#D97706'">
+                            0/0
+                        </span>
+                    </div>
+                    <div class="req-bar-bg">
+                        <div class="req-bar-fill"
+                             th:style="${req.pct >= 80} ? 'background:var(--hp-success-text)' : 'background:#D97706'"
+                             th:attr="data-pct=${req.pct}"></div>
+                    </div>
+                </div>
+                <!-- 데모 데이터 (Thymeleaf 없을 때) -->
+                <div class="req-item">
+                    <div class="req-header">
+                        <span class="req-name">이중 루프 구조 사용</span>
+                        <span class="req-score" style="color:var(--hp-success-text)">30/30</span>
+                    </div>
+                    <div class="req-bar-bg">
+                        <div class="req-bar-fill" style="background:var(--hp-success-text)" data-pct="100"></div>
+                    </div>
+                </div>
+                <div class="req-item">
+                    <div class="req-header">
+                        <span class="req-name">조기 종료 최적화</span>
+                        <span class="req-score" style="color:#D97706">36/40</span>
+                    </div>
+                    <div class="req-bar-bg">
+                        <div class="req-bar-fill" style="background:#D97706" data-pct="90"></div>
+                    </div>
+                </div>
+                <div class="req-item">
+                    <div class="req-header">
+                        <span class="req-name">함수로 분리 (def)</span>
+                        <span class="req-score" style="color:#D97706">22/30</span>
+                    </div>
+                    <div class="req-bar-bg">
+                        <div class="req-bar-fill" style="background:#D97706" data-pct="73"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LLM 피드백 -->
+        <div class="card result-card">
+            <div class="card-title">LLM 피드백</div>
+            <!-- [DB] submissions.feedback -->
+            <div class="feedback-box"
+                 th:text="${submission.feedback}">
+                버블정렬의 핵심 구조를 정확히 파악하고 조기 종료(swapped 플래그)를
+                올바르게 구현했습니다. 함수 분리는 완료되었으나 docstring이나
+                타입 힌트가 있으면 더 좋은 코드가 됩니다. 전반적으로 요구사항을
+                잘 이해하고 효율적으로 구현한 풀이입니다.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 하단 버튼 -->
+<div class="bottom-actions">
+    <button class="btn-secondary" onclick="location.href='/my-submissions'">
+        내 제출 기록 보기
+    </button>
+    <button class="btn-primary" onclick="location.href='/community'">
+        다른 풀이 보기
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+        </svg>
+    </button>
+</div>
+
+<script th:inline="javascript">
+    const SCORE = /*[[${submission.score}]]*/ 88;
+
+    window.addEventListener('DOMContentLoaded', () => {
+        /* 도넛 색상: 80↑ 초록 / 50↑ 노랑 / 미만 빨강 */
+        const color = SCORE >= 80 ? '#1F9D55'
+                    : SCORE >= 50 ? '#D97706'
+                    : '#D14343';
+
+        const fill    = document.getElementById('donutFill');
+        const circumf = 2 * Math.PI * 65;
+        fill.style.stroke = color;
+        setTimeout(() => {
+            fill.style.strokeDashoffset = circumf * (1 - SCORE / 100);
+        }, 200);
+
+        /* 숫자 카운트업 */
+        let cur = 0;
+        const el   = document.getElementById('scoreNum');
+        const step = Math.max(1, Math.ceil(SCORE / 40));
+        const t    = setInterval(() => {
+            cur = Math.min(cur + step, SCORE);
+            el.textContent = cur;
+            if (cur >= SCORE) clearInterval(t);
+        }, 25);
+
+        /* 요구사항 바 애니메이션 */
+        setTimeout(() => {
+            document.querySelectorAll('.req-bar-fill').forEach(bar => {
+                bar.style.width = bar.dataset.pct + '%';
+            });
+        }, 400);
+    });
+</script>
+</body>
+</html>
