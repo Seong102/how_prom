@@ -1,4 +1,4 @@
-package com.howprom.admin.entity;
+package com.howprom.common.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

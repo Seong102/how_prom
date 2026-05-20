@@ -1,18 +1,16 @@
 package com.howprom.admin.controller;
 
 import java.util.List;
+import java.util.Map; // 추가됨
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
-import com.howprom.admin.entity.Problem;
+import com.howprom.common.entity.Problem;
+import com.howprom.admin.dto.ProblemAdminDTO;
+import com.howprom.admin.dto.ProblemStatsDTO; // 추가됨
 import com.howprom.admin.service.AdminProblemService;
 import lombok.RequiredArgsConstructor;
 
@@ -23,38 +21,42 @@ public class AdminProblemController {
 
     private final AdminProblemService adminProblemService;
 
-    // 2. 관리자 메인 대시보드 매핑
     @GetMapping("") 
     public String adminDashboard() {
         return "admin/AdminDashboard";
     }
 
-    // 3. 문제 관리 페이지 (검색 기능 통합 버전)
-    // 기존의 파라미터 없는 메서드와 검색용 메서드를 하나로 통합했습니다.
+    // [수정됨] 문제 관리 페이지: 통계 데이터(statsMap)를 모델에 함께 추가
     @GetMapping("/problems/manage")
     public String manageProblems(@RequestParam(value = "keyword", required = false) String keyword, Model model) {
-        // 서비스에서 검색어에 맞는 데이터를 가져옵니다. (검색어가 null이면 전체 조회)
+        // 1. 문제 목록 가져오기
         List<Problem> realProblemList = adminProblemService.getProblems(keyword);
         
-        model.addAttribute("problemList", realProblemList);
-        model.addAttribute("keyword", keyword); // 검색창에 검색어 유지
+        // 2. DTO 리스트로 변환
+        List<ProblemAdminDTO> problemDtoList = realProblemList.stream()
+                .map(ProblemAdminDTO::from)
+                .toList();
+        
+        // 3. [핵심] 통계 데이터 Map 조회 (문제 ID별로 통계 정보를 담음)
+        Map<Long, ProblemStatsDTO> statsMap = adminProblemService.getStatsMap();
+        
+        model.addAttribute("problemList", problemDtoList);
+        model.addAttribute("statsMap", statsMap); // 타임리프에서 사용 가능하도록 모델에 추가
+        model.addAttribute("keyword", keyword); 
 
         return "admin/problems/manage";
     }
     
-    // 4. 문제 등록 페이지 이동
     @GetMapping("/problems/register")
     public String registerForm() {
         return "admin/problems/register";
     }
 
-    // 5. 문제 등록 처리
     @PostMapping("/problems/register")
     public String registerProcess() {
         return "redirect:/admin/problems/manage";
     }
 
-    // 6. 문제 삭제 비동기 처리 API
     @PostMapping("/problems/delete/{id}")
     @ResponseBody
     public ResponseEntity<String> deleteProblem(@PathVariable("id") Long id) {
@@ -68,7 +70,6 @@ public class AdminProblemController {
         }
     }
 
-    // 7. 공개 여부 토글 비동기 처리 API
     @PostMapping("/problems/toggle/{id}")
     @ResponseBody
     public ResponseEntity<String> toggleProblemStatus(
@@ -80,5 +81,12 @@ public class AdminProblemController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("FAIL");
         }
+    }
+    
+    @GetMapping("/problems/edit/{id}")
+    public String editForm(@PathVariable("id") Long id, Model model) {
+        Problem problem = adminProblemService.findById(id);
+        model.addAttribute("problem", ProblemAdminDTO.from(problem));
+        return "admin/problems/register";
     }
 }

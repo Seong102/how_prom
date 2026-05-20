@@ -1,11 +1,14 @@
 package com.howprom.admin.service;
 
-import com.howprom.admin.entity.Problem;
+import com.howprom.common.entity.Problem; // 공통 엔티티 참조로 수정
+import com.howprom.admin.dto.ProblemStatsDTO;
 import com.howprom.admin.repository.ProblemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +48,14 @@ public class AdminProblemService {
     }
     
     /**
+     * 문제 단건 조회 (수정 화면 진입용)
+     */
+    public Problem findById(Long id) {
+        return problemRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당 문제가 존재하지 않습니다. id=" + id));
+    }
+    
+    /**
      * 문제 검색: 번호(숫자) 또는 제목(문자열) 통합 조회
      */
     public List<Problem> getProblems(String keyword) {
@@ -54,12 +65,16 @@ public class AdminProblemService {
         // 1. 키워드가 숫자인지 확인
         if (keyword.matches("\\d+")) {
             Long id = Long.parseLong(keyword);
-            // 해당 ID가 존재하면 리스트에 담아 반환, 없으면 빈 리스트 반환
             return problemRepository.findById(id)
                     .map(List::of)
                     .orElse(List.of());
         }
         // 2. 숫자가 아니면 제목으로 검색
         return problemRepository.findByTitleContaining(keyword);
+    }
+    
+    public Map<Long, ProblemStatsDTO> getStatsMap() {
+        return problemRepository.getProblemStatistics().stream()
+                .collect(Collectors.toMap(ProblemStatsDTO::getProblemId, stats -> stats));
     }
 }

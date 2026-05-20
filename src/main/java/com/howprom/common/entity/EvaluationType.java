@@ -1,4 +1,4 @@
-package com.howprom.admin.entity;
+package com.howprom.common.entity;
 
 public enum EvaluationType {
     STANDARD, EFFICIENCY, BUDGET
