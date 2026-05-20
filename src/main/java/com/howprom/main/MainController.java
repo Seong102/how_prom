@@ -1,4 +1,4 @@
-package com.howprom.controller;
+package com.howprom.main;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
