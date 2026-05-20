@@ -9,6 +9,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @RestController
 @RequestMapping("/api/mypage")
@@ -29,7 +32,6 @@ public class MyPageController {
         MyPageResponseDto response = myPageService.getMyPageData(mockUserId, pageable);
         return ResponseEntity.ok(response);
     }
-
     /**
      * 제출 기록 단건 상세 조회 API (상세 팝업용 대화 이력 포함)
      * GET /api/mypage/submissions/1
