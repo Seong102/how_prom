@@ -1,123 +1,107 @@
-# 프롬프트 코딩 학습 플랫폼
+# HowProm
 
-> 초보 개발자가 LLM과의 대화형 프롬프트로 코드를 작성하는 법을 배우는 학습 플랫폼
+AI 프롬프트 작성 훈련 플랫폼 - Spring Boot + Thymeleaf
 
----
+## 요구사항
 
-## 🛠 기술 스택
+- Java 17 이상 (Java 21 권장)
+- (선택) Maven 3.9+ — 없으면 IDE 또는 Maven Wrapper 사용
 
-| 영역 | 기술 |
-|------|------|
-| Backend | Spring Boot 3.x, Spring Security, Spring Data JPA |
-| Database | MySQL 8.0 |
-| Frontend | Thymeleaf, Vanilla JS |
-| 인증 | JWT (jjwt) |
-| LLM 연동 | WebClient (Claude / GPT API) |
-
----
-
-## 📁 프로젝트 구조
+## 프로젝트 역할 분담
 
 ```
-src/main/java/com/promptcode/
-├── auth/           # 회원가입, 로그인, JWT
-├── problem/        # 문제 목록, 상세
-├── chat/           # 대화형 LLM 호출
-├── submission/     # 제출, LLM 평가, 채점
-├── community/      # 다른 풀이 보기, 좋아요
-├── mypage/         # 내 제출 기록
-├── admin/          # 문제 등록, 관리, 통계
-└── common/         # 공통 설정, 보안 필터
+[김성백]
+메인 대시보드
+회원가입/로그인
+문제 목록
+
+[박세준]
+문제 풀기 + 로컬LLM
+
+[전기현]
+다른 풀이 보기
+채점 결과
+마이페이지
+
+[김은빈]
+문제 등록
+문제 관리
+통계 대시보드
 ```
 
----
-
-## 🌿 브랜치 전략
+## 프로젝트 구조
 
 ```
-main
- └── develop
-      ├── feature/기능명
-      └── fix/버그명
+howprom/
+├── pom.xml
+└── src/main/
+    ├── java/com/howprom/
+    │   ├── HowPromApplication.java       # 메인 애플리케이션
+    │   └── controller/
+    │       └── MainController.java        # "/" 와 "/main" 라우팅
+    └── resources/
+        ├── application.properties
+        └── templates/
+            ├── common/
+            │   └── header.html            # 공통 헤더 fragment + styles
+            └── main/
+                └── main.html              # 대시보드 페이지
 ```
 
-| 브랜치 | 용도 | 병합 대상 |
-|--------|------|-----------|
-| `main` | 최종 배포 | — |
-| `develop` | 개발 통합 | `main` |
-| `feature/기능명` | 기능 개발 | `develop` |
-| `fix/버그명` | 버그 수정 | `develop` |
+## 실행 방법
 
-### 브랜치 네이밍 규칙
+### 1. IntelliJ IDEA / VS Code 등 IDE에서 실행
 
-```
-feature/SCR-PROB-02-chat-ui      # 화면 ID 기준
-feature/llm-evaluation-service   # 기능명 기준
-fix/budget-token-overflow        # 버그 수정
-```
+`HowPromApplication.java` 파일을 열고 main 메서드를 실행하세요.
 
----
+### 2. Maven이 설치된 경우
 
-## 🔀 PR & 코드 리뷰 규칙
-
-- `feature` → `develop` : PR 필수, **1명 이상 Approve** 후 머지
-- `develop` → `main` : PR 필수, **전원 Approve** 후 머지
-- PR 제목 형식: `[FEAT] 기능명` / `[FIX] 버그명` / `[REFACTOR] 내용`
-- PR 생성 시 템플릿의 **구현 검증 항목 체크리스트** 반드시 작성
-
----
-
-## 📋 이슈 라벨
-
-| 라벨 | 설명 |
-|------|------|
-| `bug` | 버그 리포트 |
-| `enhancement` | 기능 요청 |
-| `task` | 개발 작업 단위 |
-| `in-progress` | 작업 진행 중 |
-| `review` | 리뷰 요청 |
-
----
-
-## ⚙️ 로컬 실행 방법
-
-### 1. 레포 클론
 ```bash
-git clone https://github.com/{org}/{repo}.git
-cd {repo}
+mvn spring-boot:run
 ```
 
-### 2. 환경변수 설정
-`src/main/resources/application.properties` 파일 생성:
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/prompt_platform
-spring.datasource.username=root
-spring.datasource.password=비밀번호
+### 3. 빌드 후 실행 (배포용)
 
-llm.base-url=https://api.anthropic.com
-llm.api-key=발급받은_API_KEY
-llm.model=claude-sonnet-4-6
-llm.system-prompt-tokens=42
-```
-
-### 3. DB 생성
 ```bash
-mysql -u root -p < database/schema.sql
+mvn clean package
+java -jar target/howprom-0.0.1-SNAPSHOT.jar
 ```
 
-### 4. 실행
-```bash
-./mvnw spring-boot:run
-```
+## 접속
 
-접속: http://localhost:8080
+브라우저에서 다음 주소로 접속합니다:
 
----
+- http://localhost:8080/
+- http://localhost:8080/main
 
-## 👥 팀원
+## 주요 설정
 
-| 이름 | 담당 영역 | GitHub |
-|------|-----------|--------|
-|  |  |  |
-|  |  |  |
-|  |  |  |
+- 포트: `8080` (변경: `application.properties`의 `server.port`)
+- Thymeleaf 캐시: 개발 편의를 위해 꺼져 있음 (`spring.thymeleaf.cache=false`)
+- DevTools: 추가되어 있어 클래스 변경 시 자동 재시작
+
+## 페이지 추가하기
+
+새 페이지를 만들려면:
+
+1. `templates/` 아래에 새 HTML 파일 생성 (예: `templates/problems/problems.html`)
+2. 헤더 import:
+   ```html
+   <th:block th:replace="~{common/header :: styles}"></th:block>
+   <th:block th:replace="~{common/header :: header('problems')}"></th:block>
+   ```
+3. Controller에 매핑 추가:
+   ```java
+   @GetMapping("/problems")
+   public String problems(Model model) {
+       return "problems/problems";
+   }
+   ```
+
+header fragment에 전달하는 active 값은 `dashboard`, `problems`, `community`, `admin` 중 하나입니다.
+
+## 다음 단계
+
+- DB 연동: `spring-boot-starter-data-jpa` + H2/MySQL 의존성 추가
+- 로그인: `spring-boot-starter-security` 추가
+- API: REST 컨트롤러로 `/api/problems`, `/api/submissions` 등 추가
