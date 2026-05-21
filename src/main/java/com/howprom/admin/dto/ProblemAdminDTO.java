@@ -19,16 +19,17 @@ public class ProblemAdminDTO {
     private String description;
     private String exampleInput;
     private String exampleOutput;
+    private Integer difficulty;
     private String evaluationType;
     private Integer tokenLimit;
     private Float correctnessWeight;
     private Float efficiencyWeight;
-    private Float avgUserTokens;
+    private Float avgPromptTokens;
     private Boolean isPublic;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     
-    // 다른 DTO를 리스트로 포함
+    // 💡 다른 DTO를 깔끔하게 리스트로 포함시킵니다.
     private List<RequirementAdminDTO> requirements; 
 
     public static ProblemAdminDTO from(Problem problem) {
@@ -40,14 +41,16 @@ public class ProblemAdminDTO {
                 .description(problem.getDescription())
                 .exampleInput(problem.getExampleInput())
                 .exampleOutput(problem.getExampleOutput())
+                .difficulty(problem.getDifficulty())
                 .evaluationType(problem.getEvaluationType())
                 .tokenLimit(problem.getTokenLimit())
                 .correctnessWeight(problem.getCorrectnessWeight())
                 .efficiencyWeight(problem.getEfficiencyWeight())
-                .avgUserTokens(problem.getAvgUserTokens()) // 🔄 [변경] 변경된 엔티티 메서드 호출
+                .avgPromptTokens(problem.getAvgPromptTokens())
                 .isPublic(problem.getIsPublic())
                 .createdAt(problem.getCreatedAt())
                 .updatedAt(problem.getUpdatedAt())
+                // 💡 Requirement 엔티티 리스트를 RequirementAdminDTO 리스트로 변환하여 조립
                 .requirements(problem.getRequirements() != null ? 
                         problem.getRequirements().stream()
                                 .map(RequirementAdminDTO::from)

@@ -2,7 +2,6 @@ package com.howprom.admin.service;
 
 import com.howprom.common.entity.Problem;
 import com.howprom.common.entity.Requirement;
-import com.howprom.common.entity.User; // 🔗 [추가] User 엔티티 임포트
 import com.howprom.admin.dto.ProblemAdminDTO;
 import com.howprom.admin.dto.ProblemStatsDTO;
 import com.howprom.admin.repository.ProblemRepository;
@@ -31,12 +30,11 @@ public class AdminProblemService {
 
     /**
      * 새 문제 등록
-     * 🔗 [변경] 테이블 제약조건(NOT NULL)을 충족하기 위해 로그인한 출제자(User)를 인자로 받아 저장합니다.
      */
     @Transactional
-    public void createProblem(ProblemAdminDTO dto, List<String> reqDescs, List<Integer> reqWeights, User creator) {
+    public void createProblem(ProblemAdminDTO dto, List<String> reqDescs, List<Integer> reqWeights) {
         
-        // 평가 유형에 따라 정확성/효율성 배점 비율 자동 설정
+        // 💡 [추가 로직] 평가 유형에 따라 정확성/효율성 배점 비율 자동 설정
         float correctness = 1.0f;
         float efficiency = 0.0f;
         
@@ -52,13 +50,14 @@ public class AdminProblemService {
                 .evaluationType(dto.getEvaluationType())
                 .exampleInput(dto.getExampleInput())
                 .exampleOutput(dto.getExampleOutput())
-                // ❌ .difficulty() 라인 제거
+                // 💡 [변경] 하드코딩을 지우고 DTO에서 넘어온 값을 매핑합니다.
+                .difficulty(dto.getDifficulty())
                 .isPublic(dto.getIsPublic())
                 .tokenLimit(dto.getTokenLimit()) 
+                // 평가 유형별 비율 연동
                 .correctnessWeight(correctness)
                 .efficiencyWeight(efficiency)
-                .avgUserTokens(0.0f) // 🔄 [명칭 변경] avgPromptTokens -> avgUserTokens
-                .createdBy(creator)  // 🔗 [추가] 출제자 연관관계 세팅 (fk_problems_creator)
+                .avgPromptTokens(0.0f)
                 .build();
 
         // Lombok 빌더 직후 연관관계 컬렉션 초기화
@@ -95,11 +94,12 @@ public class AdminProblemService {
         problem.setExampleInput(dto.getExampleInput());
         problem.setExampleOutput(dto.getExampleOutput());
         
-        // ❌ problem.setDifficulty() 라인 제거
+        // 💡 [핵심 추가] 수정 페이지에서 넘어온 메타 정보 반영
+        problem.setDifficulty(dto.getDifficulty());
         problem.setIsPublic(dto.getIsPublic());
         problem.setTokenLimit(dto.getTokenLimit());
 
-        // 평가 유형 변경에 따른 배점 비율 갱신
+        // 💡 [추가 로직] 평가 유형 변경에 따른 배점 비율 갱신
         if ("EFFICIENCY".equals(dto.getEvaluationType())) {
             problem.setCorrectnessWeight(0.7f);
             problem.setEfficiencyWeight(0.3f);
