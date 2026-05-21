@@ -68,7 +68,7 @@ public class AdminProblemService {
         if (reqDescs != null && reqWeights != null) {
             for (int i = 0; i < reqDescs.size(); i++) {
                 Requirement requirement = Requirement.builder()
-                        .content(reqDescs.get(i))
+                        .description(reqDescs.get(i)) // 변경: content -> description
                         .weight(reqWeights.get(i))
                         .displayOrder(i + 1)
                         .problem(problem)
@@ -115,7 +115,7 @@ public class AdminProblemService {
         if (reqDescs != null && reqWeights != null) {
             for (int i = 0; i < reqDescs.size(); i++) {
                 Requirement requirement = Requirement.builder()
-                        .content(reqDescs.get(i))
+                        .description(reqDescs.get(i)) // 변경: content -> description
                         .weight(reqWeights.get(i))
                         .displayOrder(i + 1)
                         .problem(problem)

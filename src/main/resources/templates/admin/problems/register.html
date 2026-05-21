@@ -102,7 +102,7 @@
                         </div>
 
                         <div class="hp-req-row" th:if="${problem.requirements != null}" th:each="req, iterStat : ${problem.requirements}">
-                            <input type="text" name="reqDesc" class="hp-input" th:value="${req.content}" placeholder="요구사항 명세" required>
+                            <input type="text" name="reqDesc" class="hp-input" th:value="${req.description}" placeholder="요구사항 명세" required>
                             <input type="number" name="reqWeight" class="hp-input hp-weight" th:value="${req.weight}" min="0" oninput="calc(this)">
                             <button th:if="${iterStat.index > 0}" type="button" class="hp-btn hp-btn--danger-outline hp-btn--del" onclick="this.parentElement.remove(); calc();">×</button>
                         </div>
@@ -121,7 +121,6 @@
 
 <script th:inline="javascript">
     document.addEventListener("DOMContentLoaded", function() {
-        // 서버에서 전달받은 메시지 출력
         const serverMessage = [[${message}]];
         if (serverMessage) {
             alert(serverMessage);
