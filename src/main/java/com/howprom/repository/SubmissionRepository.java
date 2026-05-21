@@ -1,6 +1,7 @@
-package com.howprom.submission.repository;
+package com.howprom.repository;
 
 import com.howprom.common.entity.Submission;
+import com.howprom.common.entity.Submission.SubmissionStatus;
 import com.howprom.submission.dto.MyPageListDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,11 +33,11 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     /**
      * 3. 유저별 특정 상태(예: 'PASSED')의 제출 횟수 계산 [cite: 105, 177]
      */
-    long countByUser_IdAndStatus(Long userId, String status);
+    long countByUser_IdAndStatus(Long userId, SubmissionStatus status);
 
     /**
      * 4. 유저가 '통과(PASSED)'한 서로 다른 문제의 개수 계산 (중복 문제 제거) [cite: 105, 177]
      */
     @Query("SELECT COUNT(DISTINCT s.problem.id) FROM Submission s WHERE s.user.id = :userId AND s.status = :status")
-    long countDistinctProblemIdByUserIdAndStatus(@Param("userId") Long userId, @Param("status") String status);
+    long countDistinctProblemIdByUserIdAndStatus(@Param("userId") Long userId, @Param("status") SubmissionStatus status);
 }

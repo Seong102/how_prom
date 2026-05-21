@@ -2,7 +2,8 @@ package com.howprom.submission.service;
 
 import com.howprom.submission.dto.*;
 import com.howprom.common.entity.Submission;
-import com.howprom.submission.repository.SubmissionRepository;
+import com.howprom.common.entity.Submission.SubmissionStatus;
+import com.howprom.repository.SubmissionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,8 +27,8 @@ public class MyPageService {
 
         // 상단 대시보드 통계 계산용 원천 데이터 집계
         long totalSubmissions = submissionRepository.countByUser_Id(userId);
-        long totalSolvedProblems = submissionRepository.countDistinctProblemIdByUserIdAndStatus(userId, "PASSED");
-        long passedCount = submissionRepository.countByUser_IdAndStatus(userId, "PASSED");
+        long totalSolvedProblems = submissionRepository.countDistinctProblemIdByUserIdAndStatus(userId, SubmissionStatus.PASSED);
+        long passedCount = submissionRepository.countByUser_IdAndStatus(userId, SubmissionStatus.PASSED);
 
         // 방어 코딩: 가입 후 제출 이력이 없는 신규 유저의 분모 0(ArithmeticException) 예외 방지
         double passRate = 0.0;

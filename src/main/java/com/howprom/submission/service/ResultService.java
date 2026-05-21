@@ -1,11 +1,11 @@
 package com.howprom.submission.service;
 
-import com.howprom.problem.repository.RequirementRepository;
+import com.howprom.repository.RequirementRepository;
 import com.howprom.common.entity.Requirement;
 import com.howprom.common.entity.Submission;
 import com.howprom.submission.dto.RequirementResultViewDto;
 import com.howprom.submission.dto.ResultViewDto;
-import com.howprom.submission.repository.SubmissionRepository;
+import com.howprom.repository.SubmissionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

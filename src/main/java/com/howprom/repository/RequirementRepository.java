@@ -1,4 +1,4 @@
-package com.howprom.problem.repository;
+package com.howprom.repository;
 
 import com.howprom.common.entity.Requirement;
 import org.springframework.data.jpa.repository.JpaRepository;
