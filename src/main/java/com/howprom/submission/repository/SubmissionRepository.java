@@ -1,7 +1,7 @@
-package com.howprom.domain.submission.repository;
+package com.howprom.submission.repository;
 
 import com.howprom.common.entity.Submission;
-import com.howprom.domain.submission.dto.MyPageListDto;
+import com.howprom.submission.dto.MyPageListDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,7 +16,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * 1. 마이페이지 목록 조회 (성능 최적화 경량 쿼리)
      * s.conversation JSON 컬럼을 완전히 제외하고, DTO 생성자로 필요한 필드만 즉시 프로젝션하여 조회합니다[cite: 177, 179].
      */
-    @Query(value = "SELECT new com.howprom.domain.submission.dto.MyPageListDto(" +
+    @Query(value = "SELECT new com.howprom.submission.dto.MyPageListDto(" +
             "s.id, p.id, p.title, p.evaluationType, s.score, s.status, s.totalUserTokens, s.submittedAt) " +
             "FROM Submission s " +
             "JOIN s.problem p " +

@@ -1,7 +1,7 @@
 package com.howprom.common.entity;
 
-import com.howprom.domain.submission.dto.ChatMessageDto;
-import com.howprom.domain.submission.dto.RequirementResultDto;
+import com.howprom.submission.dto.ChatMessageDto;
+import com.howprom.submission.dto.RequirementResultDto;
 
 import jakarta.persistence.*;
 import lombok.Getter;

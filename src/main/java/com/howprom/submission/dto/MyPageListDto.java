@@ -1,4 +1,4 @@
-package com.howprom.domain.submission.dto;
+package com.howprom.submission.dto;
 
 //
 //목록 조회용 경량 DTO (MyPageListDto.java)
