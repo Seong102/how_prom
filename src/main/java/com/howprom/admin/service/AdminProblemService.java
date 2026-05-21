@@ -51,13 +51,13 @@ public class AdminProblemService {
                 .exampleInput(dto.getExampleInput())
                 .exampleOutput(dto.getExampleOutput())
                 // 💡 [변경] 하드코딩을 지우고 DTO에서 넘어온 값을 매핑합니다.
-                .difficulty(dto.getDifficulty())
+                //.difficulty(dto.getDifficulty())
                 .isPublic(dto.getIsPublic())
                 .tokenLimit(dto.getTokenLimit()) 
                 // 평가 유형별 비율 연동
                 .correctnessWeight(correctness)
                 .efficiencyWeight(efficiency)
-                .avgPromptTokens(0.0f)
+                //.avgPromptTokens(0.0f)
                 .build();
 
         // Lombok 빌더 직후 연관관계 컬렉션 초기화
@@ -95,7 +95,7 @@ public class AdminProblemService {
         problem.setExampleOutput(dto.getExampleOutput());
         
         // 💡 [핵심 추가] 수정 페이지에서 넘어온 메타 정보 반영
-        problem.setDifficulty(dto.getDifficulty());
+        //problem.setDifficulty(dto.getDifficulty());
         problem.setIsPublic(dto.getIsPublic());
         problem.setTokenLimit(dto.getTokenLimit());
 
