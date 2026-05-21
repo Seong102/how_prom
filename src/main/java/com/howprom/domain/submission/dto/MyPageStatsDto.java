@@ -1,4 +1,4 @@
-package com.howprom.submission.dto;
+package com.howprom.domain.submission.dto;
 
 //상단 요약 통계 DTO (MyPageStatsDto.java)
 //마이페이지 상단 카드 레이아웃에 들어갈 통계 가공 데이터입니다.
