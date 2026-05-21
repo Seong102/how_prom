@@ -1,8 +1,7 @@
 package com.howprom.domain.submission.entity;
 
-// 1. 올바른 프로젝트 내 도메인 엔티티 임포트 (팀원들의 폴더 구조에 맞게 매핑)
-import com.howprom.domain.user.entity.User;       // 👈 스프링 내부 객체가 아닌 실제 유저 엔티티
-import com.howprom.domain.problem.entity.Problem; // 👈 스프링 내부 객체가 아닌 실제 문제 엔티티
+import com.howprom.common.entity.User;
+import com.howprom.common.entity.Problem;
 
 // 2. DTO 구조체 임포트 (JSON 직렬화용)
 import com.howprom.domain.submission.dto.ChatMessageDto;
