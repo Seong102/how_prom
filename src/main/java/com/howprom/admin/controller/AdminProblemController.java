@@ -2,13 +2,16 @@ package com.howprom.admin.controller;
 
 import java.util.List;
 import java.util.Map;
+import jakarta.servlet.http.HttpSession; // 💡 세션 사용을 위해 서블릿 세션 임포트
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.howprom.common.entity.Problem;
+import com.howprom.common.entity.User;
 import com.howprom.admin.dto.ProblemAdminDTO;
 import com.howprom.admin.dto.ProblemStatsDTO;
 import com.howprom.admin.service.AdminProblemService;
@@ -44,23 +47,35 @@ public class AdminProblemController {
         return "admin/problems/manage";
     }
     
-    // [수정] 문제 등록 페이지 이동: HTML 내부의 th:value="${problem...}" 에러 방지용 빈 객체 주입
+    // 문제 등록 페이지 이동
     @GetMapping("/problems/register")
     public String registerForm(Model model) {
-        model.addAttribute("problem", new ProblemAdminDTO());
+        ProblemAdminDTO dto = new ProblemAdminDTO();
+        dto.setRequirements(new java.util.ArrayList<>()); 
+        model.addAttribute("problem", dto);
         return "admin/problems/register";
     }
 
-    // [수정] 문제 등록 처리: 폼 기본 정보와 동적 생성된 요구사항 리스트(reqDesc, reqWeight) 수집
     @PostMapping("/problems/register")
     public String registerProcess(@ModelAttribute ProblemAdminDTO dto,
                                   @RequestParam(value = "reqDesc", required = false) List<String> reqDescs,
-                                  @RequestParam(value = "reqWeight", required = false) List<Integer> reqWeights) {
-        adminProblemService.createProblem(dto, reqDescs, reqWeights);
+                                  @RequestParam(value = "reqWeight", required = false) List<Integer> reqWeights,
+                                  HttpSession session,
+                                  RedirectAttributes redirectAttributes) {
+        try {
+            User loginUser = (User) session.getAttribute("loginUser");
+            if (loginUser == null) {
+                loginUser = User.builder().id(1L).email("admin@howprom.com").nickname("최고관리자").build();
+            }
+            adminProblemService.createProblem(dto, reqDescs, reqWeights, loginUser);
+            redirectAttributes.addFlashAttribute("message", "새 문제가 성공적으로 등록되었습니다!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("message", "문제 등록 실패: " + e.getMessage());
+        }
         return "redirect:/admin/problems/manage";
     }
     
-    // 문제 수정 페이지 이동 (기존 코드 유지)
+    // 문제 수정 페이지 이동
     @GetMapping("/problems/edit/{id}")
     public String editForm(@PathVariable("id") Long id, Model model) {
         Problem problem = adminProblemService.findById(id);
@@ -69,13 +84,19 @@ public class AdminProblemController {
         return "admin/problems/register";
     }
 
-    // [추가] 문제 수정 처리: html 폼의 액션 분기(@{/admin/problems/edit/{id}})를 받아 처리할 매핑
+    // 문제 수정 처리
     @PostMapping("/problems/edit/{id}")
     public String editProcess(@PathVariable("id") Long id,
                               @ModelAttribute ProblemAdminDTO dto,
                               @RequestParam(value = "reqDesc", required = false) List<String> reqDescs,
-                              @RequestParam(value = "reqWeight", required = false) List<Integer> reqWeights) {
-        adminProblemService.updateProblem(id, dto, reqDescs, reqWeights);
+                              @RequestParam(value = "reqWeight", required = false) List<Integer> reqWeights,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            adminProblemService.updateProblem(id, dto, reqDescs, reqWeights);
+            redirectAttributes.addFlashAttribute("message", "문제 수정이 완료되었습니다!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("message", "문제 수정 실패: " + e.getMessage());
+        }
         return "redirect:/admin/problems/manage";
     }
 

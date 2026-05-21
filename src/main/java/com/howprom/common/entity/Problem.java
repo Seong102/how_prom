@@ -5,6 +5,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import com.howprom.common.entity.EvaluationType;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 @Entity
 @Table(name = "problems")
@@ -31,27 +34,32 @@ public class Problem {
     @Column(name = "example_output", columnDefinition = "TEXT")
     private String exampleOutput;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "evaluation_type", nullable = false)
-    private String evaluationType; // STANDARD, EFFICIENCY, BUDGET
+    private EvaluationType evaluationType;
 
     @Column(name = "token_limit")
-    private Integer tokenLimit;
+    private Integer tokenLimit; // BUDGET 모드용 상한선
 
     @Column(name = "correctness_weight", nullable = false)
+    @Builder.Default
     private Float correctnessWeight = 0.7f;
 
     @Column(name = "efficiency_weight", nullable = false)
+    @Builder.Default
     private Float efficiencyWeight = 0.3f;
 
     @Column(name = "avg_user_tokens", nullable = false)
-    private Float avgUserTokens = 0.0f;
+    @Builder.Default
+    private Float avgUserTokens = 0.0f; // 🔄 [명칭 변경] avg_prompt_tokens -> avg_user_tokens
 
     @Column(name = "is_public", nullable = false)
+    @Builder.Default
     private Boolean isPublic = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
-    private User createdBy;
+    private User createdBy; // 🔗 [추가] 출제자 외래키 연관관계 매핑
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -60,6 +68,7 @@ public class Problem {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Requirement> requirements = new ArrayList<>();
 
     @PrePersist
