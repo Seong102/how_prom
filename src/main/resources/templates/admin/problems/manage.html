@@ -97,15 +97,7 @@
 		</div>
 	</main>
 
-	<script th:inline="javascript">
-    /* 서버 메시지 처리를 위한 로직 추가 */
-    document.addEventListener("DOMContentLoaded", function() {
-        const message = [[${message}]];
-        if (message) {
-            alert(message);
-        }
-    });
-
+	<script>
     document.querySelectorAll('.hp-switch__input').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             const isPublic = this.checked;

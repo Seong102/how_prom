@@ -17,7 +17,7 @@ public class Requirement {
     private Long id;
 
     @Column(name = "description", nullable = false, length = 500)
-    private String content; // DB의 description 컬럼과 정상 매핑됨
+    private String content;
 
     @Column(nullable = false)
     private Integer weight;
