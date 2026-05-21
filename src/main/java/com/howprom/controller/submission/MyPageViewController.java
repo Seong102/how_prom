@@ -1,12 +1,11 @@
-package com.howprom.domain.submission.controller;
+package com.howprom.controller.submission;
 
 
-import com.howprom.domain.submission.dto.MyPageResponseDto;
-import com.howprom.domain.submission.service.MyPageService;
+import com.howprom.submission.dto.MyPageResponseDto;
+import com.howprom.submission.service.MyPageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
