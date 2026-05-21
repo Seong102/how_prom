@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>HowProm - 관리자 대시보드</title>
+    
+    <th:block th:replace="~{common/header :: styles}"></th:block>
+    
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body th:with="
+    stats=${ {totalSubmits: 278, passRate: 63, totalUsers: 145, activeProblems: 3} },
+    
+    problemList=${ {
+        {id: 1, title: '로또 번호 생성기', totalCount: 24, avgScore: 76.5, passedCount: 20, failedCount: 3, errorCount: 1},
+        {id: 2, title: '소수 판별 알고리즘', totalCount: 18, avgScore: 81.2, passedCount: 14, failedCount: 4, errorCount: 0},
+        {id: 3, title: '효율적인 피보나치', totalCount: 142, avgScore: 74.0, passedCount: 92, failedCount: 48, errorCount: 2},
+        {id: 4, title: '링크드 리스트 역순', totalCount: 94, avgScore: 88.1, passedCount: 67, failedCount: 26, errorCount: 1},
+        {id: 5, title: 'CSV 데이터 정제', totalCount: 0, avgScore: 0.0, passedCount: 0, failedCount: 0, errorCount: 0}
+    } },
+    
+    efficiencyList=${ {
+        {id: 3, title: '효율적인 피보나치', avgPromptTokens: 342.5, barWidth: '85%', color: '#E28743'},
+        {id: 4, title: '링크드 리스트 역순', avgPromptTokens: 218.0, barWidth: '58%', color: '#76A1EF'},
+        {id: 1, title: '로또 번호 생성기', avgPromptTokens: 185.2, barWidth: '42%', color: '#79C3C4'}
+    } },
+    
+    requirementList=${ {
+        {probId: '#003', desc: '조기 종료(Early Return) 최적화', avgAchieve: 88, failRate: 12, color: 'var(--hp-success-text)'},
+        {probId: '#001', desc: '시간복잡도 준수 O(n log n)', avgAchieve: 61, failRate: 39, color: '#E2A134'},
+        {probId: '#004', desc: '노드 삭제 시 이진 트리 재구성', avgAchieve: 48, failRate: 52, color: 'var(--hp-danger-text)'},
+        {probId: '#002', desc: '메모이전이션(Memoization) 캐싱 적용', avgAchieve: 79, failRate: 21, color: '#4A90E2'}
+    } }
+">
+
+<div th:replace="~{common/header :: header('admin')}"></div>
+
+<main class="hp-main">
+    <div class="hp-page-header">
+        <h1 class="hp-page-header__title">
+            통합 관리자 대시보드 <span class="hp-admin-badge">Admin</span>
+        </h1>
+        <p class="hp-page-header__subtitle"></p>
+    </div>
+
+    <div th:replace="~{admin/adminSubNav :: subNav('dashboard')}"></div>
+
+    <div class="hp-stats-grid">
+        <div class="hp-stat-card">
+            <div class="hp-stat-card__label">총 제출 건수</div>
+            <div class="hp-stat-card__value hp-stat-card__value--primary" th:text="${stats.totalSubmits}">0</div>
+            <div class="hp-stat-card__sub">전체 submissions 누적 합산</div>
+        </div>
+        <div class="hp-stat-card">
+            <div class="hp-stat-card__label">종합 통과율</div>
+            <div class="hp-stat-card__value hp-stat-card__value--success" th:text="${stats.passRate} + '%'">0%</div>
+            <div class="hp-stat-card__sub">PASSED 상태 제출 비율</div>
+        </div>
+        <div class="hp-stat-card">
+            <div class="hp-stat-card__label">활성 사용자 수</div>
+            <div class="hp-stat-card__value" style="color: #4A90E2;" th:text="${stats.totalUsers}">0</div>
+            <div class="hp-stat-card__sub">등록된 학생(USER) 계정 수</div>
+        </div>
+        <div class="hp-stat-card">
+            <div class="hp-stat-card__label">공개 문제 수</div>
+            <div class="hp-stat-card__value" th:text="${stats.activeProblems}">0</div>
+            <div class="hp-stat-card__sub">is_public = 1 활성 문항</div>
+        </div>
+    </div>
+
+    <div class="hp-dashboard-row">
+        
+        <div class="hp-card">
+            <div class="hp-card__header">문제별 종합 통계 현황</div>
+            <div class="hp-card__body" style="padding: 12px 24px;">
+                <table class="hp-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 28%;">문제명</th>
+                            <th class="th-right" style="width: 13%;">총 제출</th>
+                            <th class="th-right" style="width: 15%;">평균 점수</th>
+                            <th class="th-right" style="width: 14%;">정상 통과</th>
+                            <th class="th-right" style="width: 15%;">제출 실패</th>
+                            <th class="th-right" style="width: 15%;">파싱 에러</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="prob : ${problemList}">
+                            <td><strong th:text="'#' + ${prob.id} + ' ' + ${prob.title}">문제명</strong></td>
+                            <td class="text-right" th:text="${prob.totalCount} + '건'">0건</td>
+                            
+                            <td class="text-right" style="font-weight: 600;" 
+                                th:text="${prob.totalCount > 0} ? ${prob.avgScore} + '점' : '-'"
+                                th:classappend="${prob.totalCount == 0} ? 'hp-text-muted' : ''">0점</td>
+                                
+                            <td class="text-right" style="color: var(--hp-success-text); font-weight:600;" 
+                                th:text="${prob.totalCount > 0} ? ${prob.passedCount} + '건' : '-'"
+                                th:classappend="${prob.totalCount == 0} ? 'hp-text-muted' : ''">0건</td>
+
+                            <td class="text-right" style="color: #E28743; font-weight:600;" 
+                                th:text="${prob.totalCount > 0} ? ${prob.failedCount} + '건' : '-'"
+                                th:classappend="${prob.totalCount == 0} ? 'hp-text-muted' : ''">0건</td>
+                                
+                            <td class="text-right" style="font-weight:600;" 
+                                th:text="${prob.totalCount > 0} ? ${prob.errorCount} + '건' : '-'"
+                                th:styleappend="${prob.errorCount > 0} ? 'color: var(--hp-danger-text);' : ''"
+                                th:classappend="${prob.totalCount == 0} ? 'hp-text-muted' : ''">0건</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="hp-card">
+            <div class="hp-card__header">EFFICIENCY 모드 · 평균 토큰 현황</div>
+            <div class="hp-card__body">
+                <p style="font-size: 12px; color: var(--hp-text-muted); margin-bottom: 24px; margin-top: -4px;">
+                    problems.avg_prompt_tokens 기준값 시각화 (사용자 작성 프롬프트 토큰 대상)
+                </p>
+                <div class="hp-progress-container" style="margin-top: 0; gap: 22px;">
+                    <div class="hp-progress-item" th:each="eff : ${efficiencyList}">
+                        <div class="hp-progress-info">
+                            <span th:text="'#' + ${eff.id} + ' ' + ${eff.title}">문제명</span>
+                            <span class="hp-progress-meta">avg <strong style="color:var(--hp-primary)" th:text="${eff.avgPromptTokens}">0</strong> tokens</span>
+                        </div>
+                        <div class="hp-progress-bar-bg" style="height: 8px;">
+                            <div class="hp-progress-bar-fill" 
+                                 th:styleappend="'width: ' + ${eff.barWidth} + '; background-color: ' + ${eff.color} + ';'"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <div class="hp-card">
+        <div class="hp-card__header">요구사항별 달성률 · 자주 감점되는 취약 조건 분석</div>
+        <table class="hp-table">
+            <thead>
+                <tr>
+                    <th style="width: 12%;">문제 번호</th>
+                    <th style="width: 35%;">핵심 요구사항 명세 (requirements.description)</th>
+                    <th class="th-right" style="width: 15%;">평균 달성도</th>
+                    <th class="th-right" style="width: 15%;">달성 미달 빈도</th>
+                    <th style="width: 23%;">미달 분포 비율</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="req : ${requirementList}">
+                    <td th:text="${req.probId}">#000</td>
+                    <td><strong th:text="${req.desc}">요구사항 명세</strong></td>
+                    <td class="text-right" th:styleappend="'color:' + ${req.color} + '; font-weight:600;'" th:text="${req.avgAchieve} + '%'">0%</td>
+                    <td class="text-right" th:text="${req.failRate} + '%'">0%</td>
+                    <td>
+                        <div class="hp-progress-bar-bg" style="height: 8px;">
+                            <div class="hp-progress-bar-fill" th:styleappend="'width: ' + ${req.failRate} + '%; background-color: ' + ${req.color} + ';'"></div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+</body>
+</html>

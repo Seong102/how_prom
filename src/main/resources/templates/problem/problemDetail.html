@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>버블 정렬 알고리즘 구현 - HowProm</title>
+    <style>
+        /* ===== header.html 의 styles fragment 직접 인라인 ===== */
+        :root {
+            --hp-primary: #5B47D6;
+            --hp-primary-hover: #4a38c4;
+            --hp-primary-soft: #F0EEFB;
+            --hp-bg: #F5F6FA;
+            --hp-surface: #FFFFFF;
+            --hp-text: #1A1A1A;
+            --hp-text-muted: #6B7280;
+            --hp-border: #E5E7EB;
+            --hp-border-soft: #EEF0F3;
+            --hp-success-bg: #E6F7EC;
+            --hp-success-text: #1F9D55;
+            --hp-danger-bg: #FDECEC;
+            --hp-danger-text: #D14343;
+            --hp-radius: 12px;
+            --hp-radius-sm: 6px;
+            --hp-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo",
+                         "Malgun Gothic", "맑은 고딕", Roboto, sans-serif;
+            background-color: var(--hp-bg);
+            color: var(--hp-text);
+            -webkit-font-smoothing: antialiased;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        a { text-decoration: none; color: inherit; }
+
+        /* ===== 헤더 (header.html 그대로) ===== */
+        .hp-header {
+            background-color: var(--hp-surface);
+            border-bottom: 1px solid var(--hp-border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-shrink: 0;
+        }
+        .hp-header__inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 32px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .hp-header__left { display: flex; align-items: center; gap: 48px; }
+        .hp-logo { font-size: 22px; font-weight: 700; color: var(--hp-primary); letter-spacing: -0.5px; }
+        .hp-nav  { display: flex; align-items: center; gap: 8px; }
+        .hp-nav__link {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 12px; font-size: 14px; color: var(--hp-text-muted);
+            border-bottom: 2px solid transparent; transition: color 0.15s ease;
+        }
+        .hp-nav__link:hover { color: var(--hp-text); }
+        .hp-nav__link--active { color: var(--hp-primary); border-bottom-color: var(--hp-primary); }
+        .hp-nav__icon { flex-shrink: 0; }
+        .hp-header__user {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 36px; height: 36px; border-radius: 50%; color: var(--hp-text-muted);
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+        .hp-header__user:hover { background-color: var(--hp-border-soft); color: var(--hp-text); }
+
+        /* ===== 페이지 레이아웃 ===== */
+        .prob-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            height: calc(100vh - 64px);
+        }
+
+        /* 경고 배너 */
+        .warn-banner {
+            background: #FFFBEB; border-bottom: 1px solid #FDE68A;
+            padding: 7px 24px; font-size: 12px; color: #92400E;
+            display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+        }
+        .warn-banner svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+        /* ── 왼쪽: 문제 패널 ── */
+        .prob-panel {
+            width: 284px;
+            background: var(--hp-surface);
+            border-right: 1px solid var(--hp-border);
+            display: flex; flex-direction: column;
+            overflow: hidden; flex-shrink: 0;
+        }
+        .prob-panel__head {
+            padding: 16px 18px 14px;
+            border-bottom: 1px solid var(--hp-border);
+            flex-shrink: 0;
+        }
+        .eval-badge {
+            display: inline-flex; align-items: center;
+            padding: 3px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 600; letter-spacing: 0.4px;
+            margin-bottom: 10px;
+        }
+        .eb-standard   { background: var(--hp-primary-soft); color: var(--hp-primary); }
+        .eb-efficiency { background: #E6F7EC; color: #1F9D55; }
+        .eb-budget     { background: #FEF3C7; color: #D97706; }
+        .prob-title { font-size: 15px; font-weight: 600; color: var(--hp-text); line-height: 1.45; }
+
+        .prob-panel__body { flex: 1; overflow-y: auto; padding: 16px 18px; }
+        .prob-panel__body::-webkit-scrollbar { width: 4px; }
+        .prob-panel__body::-webkit-scrollbar-thumb { background: var(--hp-border); border-radius: 2px; }
+
+        .sec-label {
+            font-size: 10.5px; font-weight: 600; color: var(--hp-text-muted);
+            letter-spacing: 0.9px; text-transform: uppercase; margin-bottom: 8px;
+        }
+        .prob-desc {
+            font-size: 13px; color: var(--hp-text-muted);
+            line-height: 1.75; margin-bottom: 20px; word-break: keep-all;
+        }
+        .io-box {
+            background: var(--hp-bg); border: 1px solid var(--hp-border);
+            border-radius: var(--hp-radius-sm); padding: 10px 12px; margin-bottom: 8px;
+        }
+        .io-label { font-size: 10.5px; font-weight: 600; color: var(--hp-text-muted); margin-bottom: 4px; }
+        .io-box code { font-size: 12px; color: var(--hp-text); font-family: 'Consolas','D2Coding',monospace; }
+
+        .req-list { display: flex; flex-direction: column; gap: 6px; margin-top: 16px; }
+        .req-item {
+            display: flex; align-items: flex-start; gap: 8px;
+            padding: 8px 10px; border: 1px solid var(--hp-border);
+            border-radius: var(--hp-radius-sm); background: var(--hp-bg);
+        }
+        .req-weight {
+            flex-shrink: 0; min-width: 36px; padding: 2px 5px; text-align: center;
+            background: var(--hp-primary-soft); color: var(--hp-primary);
+            border-radius: 4px; font-size: 11px; font-weight: 700;
+        }
+        .req-desc { font-size: 12.5px; color: var(--hp-text-muted); line-height: 1.55; }
+
+        .token-sec { padding: 12px 18px; border-top: 1px solid var(--hp-border); flex-shrink: 0; }
+        .token-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .token-lbl  { font-size: 12px; color: var(--hp-text-muted); font-weight: 500; }
+        .token-val  { font-size: 12px; font-weight: 600; color: var(--hp-text); }
+        .token-bg   { height: 6px; background: var(--hp-bg); border-radius: 3px; overflow: hidden; border: 1px solid var(--hp-border); }
+        .token-fill { height: 100%; border-radius: 3px; transition: width .3s, background .3s; background: var(--hp-primary); }
+        .token-warn { margin-top: 6px; font-size: 11px; color: var(--hp-danger-text); font-weight: 500; display: none; }
+
+        .submit-area { padding: 12px 18px; border-top: 1px solid var(--hp-border); flex-shrink: 0; }
+        .btn-submit {
+            width: 100%; padding: 11px; background: var(--hp-primary); color: #fff;
+            border: none; border-radius: var(--hp-radius-sm); font-size: 13px; font-weight: 600;
+            cursor: pointer; font-family: inherit; display: flex; align-items: center;
+            justify-content: center; gap: 7px; transition: background .15s, transform .1s;
+        }
+        .btn-submit:hover  { background: var(--hp-primary-hover); }
+        .btn-submit:active { transform: scale(0.98); }
+        .btn-submit svg { width: 14px; height: 14px; }
+
+        /* ── 가운데: 에디터 ── */
+        .editor-panel { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+        .editor-toolbar {
+            height: 44px; background: var(--hp-surface); border-bottom: 1px solid var(--hp-border);
+            display: flex; align-items: center; padding: 0 14px; gap: 6px; flex-shrink: 0;
+        }
+        .tb-btn {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 5px 12px; border: 1px solid var(--hp-border);
+            border-radius: var(--hp-radius-sm); background: var(--hp-surface);
+            font-size: 12px; color: var(--hp-text-muted); cursor: pointer;
+            transition: background .15s; font-family: inherit;
+        }
+        .tb-btn:hover { background: var(--hp-bg); color: var(--hp-text); }
+        .tb-btn svg { width: 13px; height: 13px; }
+        .tb-run { background: #10B981; color: #fff; border-color: #10B981; }
+        .tb-run:hover { background: #059669; color: #fff; }
+        .tb-lang { margin-left: auto; font-size: 11px; color: var(--hp-text-muted); font-family: 'Consolas',monospace; }
+
+        /* Monaco Editor 컨테이너 */
+        .editor-area { flex: 1; background: #1E1E2E; overflow: hidden; position: relative; }
+        #monacoEditor { width: 100%; height: 100%; }
+
+        /* 실행 중 상태 */
+        .tb-run.running { background: #6B7280; border-color: #6B7280; cursor: not-allowed; }
+        .tb-run.running:hover { background: #6B7280; }
+        .r-ok  { color: #10B981; white-space: pre; font-family: 'Consolas',monospace; }
+        .r-err { color: #F87171; white-space: pre; font-family: 'Consolas',monospace; }
+        .r-running { color: var(--hp-text-muted); font-style: italic; }
+
+        .result-panel {
+            height: 240px; background: var(--hp-surface);
+            border-top: 1px solid var(--hp-border); display: flex; flex-direction: column; flex-shrink: 0;
+        }
+        .stdin-area {
+            display: flex; align-items: flex-start; gap: 8px;
+            padding: 6px 14px; border-top: 1px solid var(--hp-border);
+            background: var(--hp-bg); flex-shrink: 0;
+        }
+        .stdin-label {
+            font-size: 11px; font-weight: 600; color: var(--hp-text-muted);
+            white-space: nowrap; font-family: 'Consolas', monospace;
+            padding-top: 6px;
+        }
+        .stdin-input {
+            flex: 1; border: 1px solid var(--hp-border);
+            border-radius: var(--hp-radius-sm); padding: 5px 10px;
+            font-size: 12px; font-family: 'Consolas', 'D2Coding', monospace;
+            color: var(--hp-text); background: var(--hp-surface);
+            outline: none; transition: border-color .15s;
+            resize: none; line-height: 1.5;
+        }
+        .stdin-input:focus { border-color: var(--hp-primary); }
+        .stdin-input::placeholder { color: var(--hp-text-muted); }
+        .result-tabs { display: flex; border-bottom: 1px solid var(--hp-border); padding: 0 14px; }
+        .rtab {
+            padding: 8px 14px; font-size: 12px; color: var(--hp-text-muted);
+            cursor: pointer; border-bottom: 2px solid transparent; transition: color .15s;
+        }
+        .rtab.active { color: var(--hp-primary); border-bottom-color: var(--hp-primary); font-weight: 500; }
+        .result-body { flex: 1; padding: 10px 14px; font-family: 'Consolas',monospace; font-size: 12.5px; overflow-y: auto; color: var(--hp-text-muted); line-height: 1.6; }
+        .r-ok { color: #10B981; }
+        .statusbar { padding: 3px 14px; background: #1E1E2E; display: flex; gap: 16px; }
+        .si { font-size: 11px; color: #6C7086; font-family: monospace; }
+
+        /* ── 오른쪽: 채팅 패널 ── */
+        .chat-panel {
+            width: 340px; background: var(--hp-surface); border-left: 1px solid var(--hp-border);
+            display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden;
+        }
+        .chat-head {
+            padding: 12px 16px; border-bottom: 1px solid var(--hp-border);
+            display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+        }
+        .ai-av {
+            width: 30px; height: 30px; border-radius: 50%; background: var(--hp-primary);
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .ai-av svg { width: 14px; height: 14px; fill: #fff; }
+        .chat-ttl  { font-size: 13px; font-weight: 600; color: var(--hp-text); }
+        .chat-sub  { font-size: 11px; color: var(--hp-text-muted); }
+        .online-dot { width: 7px; height: 7px; border-radius: 50%; background: #10B981; margin-left: auto; flex-shrink: 0; }
+
+        .chat-msgs { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+        .chat-msgs::-webkit-scrollbar { width: 4px; }
+        .chat-msgs::-webkit-scrollbar-thumb { background: var(--hp-border); border-radius: 2px; }
+
+        .bw { display: flex; gap: 8px; align-items: flex-start; }
+        .bw.u { flex-direction: row-reverse; }
+        .bav {
+            width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 700;
+        }
+        .bav.ai   { background: var(--hp-primary-soft); color: var(--hp-primary); }
+        .bav.user { background: var(--hp-border-soft); color: var(--hp-text-muted); }
+        .bubble { max-width: 228px; padding: 9px 12px; font-size: 12.5px; line-height: 1.6; word-break: keep-all; }
+        .bubble.ai {
+            background: var(--hp-bg); color: var(--hp-text);
+            border: 1px solid var(--hp-border); border-radius: 4px 12px 12px 12px;
+        }
+        .bubble.user { background: var(--hp-primary); color: #fff; border-radius: 12px 4px 12px 12px; }
+        .bcode {
+            margin-top: 8px; background: #1E1E2E; border-radius: 6px;
+            padding: 8px 10px; font-family: 'Consolas',monospace; font-size: 11.5px;
+            color: #CDD6F4; white-space: pre; overflow-x: auto; line-height: 1.5;
+        }
+        .bcode::-webkit-scrollbar { height: 3px; }
+        .bcode::-webkit-scrollbar-thumb { background: #45475A; border-radius: 2px; }
+        .apply-btn {
+            margin-top: 8px; padding: 4px 10px;
+            background: var(--hp-primary-soft); color: var(--hp-primary);
+            border: 1px solid #D4D0FF; border-radius: 5px; font-size: 11px;
+            font-weight: 600; cursor: pointer; display: inline-flex; align-items: center;
+            gap: 4px; transition: background .15s; font-family: inherit;
+        }
+        .apply-btn:hover { background: #DDD9FF; }
+        .apply-btn.done  { background: #D1FAE5; color: #059669; border-color: #A7F3D0; }
+        .apply-btn svg { width: 11px; height: 11px; }
+        .btime { font-size: 10px; color: var(--hp-text-muted); margin-top: 3px; padding: 0 2px; }
+        .bw.u .btime { text-align: right; }
+
+        .typing-dots { display: flex; gap: 4px; padding: 3px 0; }
+        .tdot { width: 5px; height: 5px; border-radius: 50%; background: var(--hp-text-muted); animation: td 1.2s infinite; }
+        .tdot:nth-child(2){ animation-delay:.2s } .tdot:nth-child(3){ animation-delay:.4s }
+        @keyframes td { 0%,60%,100%{transform:translateY(0);opacity:.35} 30%{transform:translateY(-5px);opacity:1} }
+
+        .chat-inp-area { padding: 12px 14px; border-top: 1px solid var(--hp-border); flex-shrink: 0; }
+        .chat-inp-row  { display: flex; gap: 8px; align-items: flex-end; }
+        .chat-ta {
+            flex: 1; border: 1px solid var(--hp-border); border-radius: var(--hp-radius-sm);
+            padding: 8px 12px; font-size: 12.5px; font-family: inherit; color: var(--hp-text);
+            resize: none; outline: none; max-height: 96px; line-height: 1.5;
+            background: var(--hp-bg); transition: border-color .15s;
+        }
+        .chat-ta:focus { border-color: var(--hp-primary); }
+        .chat-ta::placeholder { color: var(--hp-text-muted); font-size: 12px; }
+        .chat-ta:disabled { opacity: .45; cursor: not-allowed; }
+        .send-btn {
+            width: 34px; height: 34px; border-radius: var(--hp-radius-sm);
+            background: var(--hp-primary); border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; transition: background .15s, transform .1s;
+        }
+        .send-btn:hover  { background: var(--hp-primary-hover); }
+        .send-btn:active { transform: scale(.95); }
+        .send-btn:disabled { opacity: .45; cursor: not-allowed; }
+        .send-btn svg { width: 15px; height: 15px; }
+        .chat-hint { margin-top: 6px; font-size: 10.5px; color: var(--hp-text-muted); text-align: center; }
+        .chat-hint kbd {
+            background: var(--hp-bg); border: 1px solid var(--hp-border);
+            border-radius: 3px; padding: 1px 4px; font-size: 10px; font-family: monospace;
+        }
+
+        .loading-ov {
+            display: none; position: fixed; inset: 0;
+            background: rgba(255,255,255,.75); z-index: 999;
+            align-items: center; justify-content: center; flex-direction: column; gap: 14px;
+        }
+        .loading-ov.show { display: flex; }
+        .spinner { width: 36px; height: 36px; border: 3px solid var(--hp-border); border-top-color: var(--hp-primary); border-radius: 50%; animation: spin .75s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-txt { font-size: 14px; font-weight: 500; color: var(--hp-text); }
+    </style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<header class="hp-header">
+    <div class="hp-header__inner">
+        <div class="hp-header__left">
+            <a href="/" class="hp-logo">HowProm</a>
+            <nav class="hp-nav">
+                <a href="/" class="hp-nav__link">
+                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    <span>대시보드</span>
+                </a>
+                <a href="/problems" class="hp-nav__link hp-nav__link--active">
+                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+                        <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+                        <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+                    </svg>
+                    <span>문제</span>
+                </a>
+                <a href="/community" class="hp-nav__link">
+                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                        <path d="M4 22h16"/>
+                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                    </svg>
+                    <span>커뮤니티</span>
+                </a>
+                <a href="/admin" class="hp-nav__link">
+                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    <span>관리자</span>
+                </a>
+            </nav>
+        </div>
+        <div class="hp-header__right">
+            <a href="/profile" class="hp-header__user" aria-label="내 정보">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- 새로고침 경고 배너 -->
+<div class="warn-banner">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    새로고침 시 AI와의 대화 이력이 초기화됩니다. 제출 전 반드시 확인하세요.
+</div>
+
+<div class="prob-layout">
+
+    <!-- ── 왼쪽: 문제 패널 ── -->
+    <aside class="prob-panel">
+        <div class="prob-panel__head">
+            <div class="eval-badge eb-budget">BUDGET</div>
+            <div class="prob-title">버블 정렬 알고리즘 구현</div>
+        </div>
+
+        <div class="prob-panel__body">
+            <div class="sec-label">문제 설명</div>
+            <p class="prob-desc">
+                버블 정렬 알고리즘을 Python으로 구현하세요.
+                입력 배열을 오름차순으로 정렬하며, 불필요한 반복을 최소화하는
+                최적화된 버전을 작성합니다.
+            </p>
+
+            <div class="sec-label">예시 입출력</div>
+            <div class="io-box">
+                <div class="io-label">입력</div>
+                <code>[5, 3, 8, 1, 9, 2]</code>
+            </div>
+            <div class="io-box">
+                <div class="io-label">출력</div>
+                <code>[1, 2, 3, 5, 8, 9]</code>
+            </div>
+
+            <div class="sec-label" style="margin-top:18px;">요구사항</div>
+            <div class="req-list">
+                <div class="req-item">
+                    <div class="req-weight">30pt</div>
+                    <div class="req-desc">이중 루프 구조 사용</div>
+                </div>
+                <div class="req-item">
+                    <div class="req-weight">40pt</div>
+                    <div class="req-desc">조기 종료 최적화 (swapped 플래그)</div>
+                </div>
+                <div class="req-item">
+                    <div class="req-weight">30pt</div>
+                    <div class="req-desc">함수로 분리 (def bubble_sort)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="token-sec">
+            <div class="token-head">
+                <span class="token-lbl">🪙 토큰 사용량</span>
+                <span class="token-val" id="tokenCount">0 / 1500</span>
+            </div>
+            <div class="token-bg">
+                <div class="token-fill" id="tokenFill" style="width:0%"></div>
+            </div>
+            <div class="token-warn" id="tokenWarn">⚠ 토큰 한도 초과 — 제출만 가능합니다</div>
+        </div>
+
+        <div class="submit-area">
+            <button class="btn-submit" onclick="handleSubmit()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="9 11 12 14 22 4"/>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                </svg>
+                대화 종료 및 제출
+            </button>
+        </div>
+    </aside>
+
+    <!-- ── 가운데: 코드 에디터 ── -->
+    <div class="editor-panel">
+        <div class="editor-toolbar">
+            <button class="tb-btn tb-run" onclick="runCode()">
+                <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                실행
+            </button>
+            <button class="tb-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                조기 확인
+            </button>
+            <button class="tb-btn" onclick="switchTab(this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+                결과
+            </button>
+            <span class="tb-lang">Java 17 · UTF-8 · Ln 1, Col 1</span>
+        </div>
+
+        <div class="editor-area">
+            <div id="monacoEditor"></div>
+        </div>
+
+        <div class="result-panel">
+            <div class="result-tabs">
+                <div class="rtab active" onclick="switchTab(this,'result')">실행 결과</div>
+                <div class="rtab" onclick="switchTab(this,'error')">오류</div>
+                <div class="rtab" onclick="switchTab(this,'test')">테스트</div>
+            </div>
+            <div class="result-body" id="resultBody">
+                <span style="color:var(--hp-text-muted)">▶ 실행 버튼을 눌러 코드를 실행하세요</span>
+            </div>
+            <!-- stdin 입력창 (여러 줄 입력 가능) -->
+            <div class="stdin-area">
+                <span class="stdin-label">stdin</span>
+                <textarea
+                    class="stdin-input"
+                    id="stdinInput"
+                    rows="2"
+                    placeholder="예) 첫째 줄: 3 (개수)&#10;    둘째 줄: 5 3 8 (값)"
+                ></textarea>
+            </div>
+            <div class="statusbar">
+                <span class="si">● Java 17</span>
+                <span class="si" id="lineCount">0줄</span>
+                <span class="si" id="execTime"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 오른쪽: 채팅 패널 ── -->
+    <div class="chat-panel">
+        <div class="chat-head">
+            <div class="ai-av">
+                <svg viewBox="0 0 24 24"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+            </div>
+            <div style="flex:1">
+                <div class="chat-ttl">AI 코딩 어시스턴트</div>
+                <div class="chat-sub">코드 생성 · 질문 · 최적화</div>
+            </div>
+            <div class="online-dot"></div>
+        </div>
+
+        <div class="chat-msgs" id="chatMsgs">
+            <div class="bw">
+                <div class="bav ai">AI</div>
+                <div>
+                    <div class="bubble ai">안녕하세요! 문제를 함께 풀어볼게요.<br>어떤 부분부터 시작할까요?</div>
+                    <div class="btime">오후 4:28</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-inp-area">
+            <div class="chat-inp-row">
+                <textarea class="chat-ta" id="chatInput" rows="1"
+                    placeholder="AI에게 질문하세요... (Enter: 전송)"
+                    onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+                <button class="send-btn" id="sendBtn" onclick="sendMsg()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"/>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="chat-hint"><kbd>Enter</kbd> 전송 &nbsp;·&nbsp; <kbd>Shift+Enter</kbd> 줄바꿈</div>
+        </div>
+    </div>
+</div>
+
+<!-- Monaco Editor CDN -->
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+
+<div class="loading-ov" id="loadingOv">
+    <div class="spinner"></div>
+    <div class="loading-txt">채점 중입니다...</div>
+</div>
+
+<script>
+    /* ── 상수 ── */
+    const PROBLEM_ID  = 1;
+    const TOKEN_LIMIT = 1500;
+
+    /* Judge0 공개 API (RapidAPI 키 없이 사용 가능한 엔드포인트) */
+    const JUDGE0_URL = 'https://judge0-ce.p.rapidapi.com';
+    const JUDGE0_KEY = '';        /* ← RapidAPI 키 있으면 입력, 없으면 로컬 Judge0 고려 */
+    const JAVA_ID    = 62;        /* Judge0 language_id: Java (OpenJDK 13) */
+
+    /* ── Monaco Editor 초기 코드 ── */
+    const INITIAL_CODE = `import java.util.Arrays;
+import java.util.Scanner;
+
+public class Main {
+
+    static int[] bubbleSort(int[] arr) {
+        int n = arr.length;
+        for (int i = 0; i < n; i++) {
+            boolean swapped = false;
+            for (int j = 0; j < n - i - 1; j++) {
+                if (arr[j] > arr[j + 1]) {
+                    int tmp = arr[j];
+                    arr[j] = arr[j + 1];
+                    arr[j + 1] = tmp;
+                    swapped = true;
+                }
+            }
+            if (!swapped) break;
+        }
+        return arr;
+    }
+
+    public static void main(String[] args) {
+        int[] arr;
+
+        Scanner sc = new Scanner(System.in);
+        if (sc.hasNextLine()) {
+            // stdin에 값이 있으면 읽어서 사용
+            String[] tokens = sc.nextLine().trim().split("\\\\s+");
+            arr = new int[tokens.length];
+            for (int i = 0; i < tokens.length; i++) {
+                arr[i] = Integer.parseInt(tokens[i]);
+            }
+        } else {
+            // stdin이 비어있으면 기본값 사용
+            arr = new int[]{5, 3, 8, 1, 9, 2};
+        }
+
+        System.out.println(Arrays.toString(bubbleSort(arr)));
+    }
+}`;
+
+    /* ── 브라우저 메모리 상태 ── */
+    let conversation    = [];
+    let totalUserTokens = 0;
+    let aiWaiting       = false;
+    let monacoEditor    = null;   /* Monaco 인스턴스 */
+    let currentTab      = 'result';
+
+    /* ════════════════════════════════════
+       Monaco Editor 초기화
+    ════════════════════════════════════ */
+    require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
+    require(['vs/editor/editor.main'], function () {
+        monacoEditor = monaco.editor.create(document.getElementById('monacoEditor'), {
+            value:              INITIAL_CODE,
+            language:           'java',
+            theme:              'vs-dark',
+            fontSize:           13,
+            fontFamily:         "'Consolas', 'D2Coding', monospace",
+            lineHeight:         22,
+            minimap:            { enabled: false },
+            scrollBeyondLastLine: false,
+            automaticLayout:    true,        /* 부모 크기 변경 시 자동 리사이즈 */
+            tabSize:            4,
+            insertSpaces:       true,
+            wordWrap:           'off',
+            renderLineHighlight:'line',
+            cursorBlinking:     'smooth',
+        });
+
+        /* 줄 수 업데이트 */
+        monacoEditor.onDidChangeModelContent(() => {
+            const lines = monacoEditor.getModel().getLineCount();
+            document.getElementById('lineCount').textContent = lines + '줄';
+        });
+        document.getElementById('lineCount').textContent =
+            monacoEditor.getModel().getLineCount() + '줄';
+
+        /* Ctrl+Enter → 실행 단축키 */
+        monacoEditor.addCommand(
+            monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+            () => runCode()
+        );
+    });
+
+    /* ════════════════════════════════════
+       코드 실행 (Judge0 API)
+    ════════════════════════════════════ */
+    async function runCode() {
+        if (!monacoEditor) return;
+        const code    = monacoEditor.getValue();
+        const stdin   = document.getElementById('stdinInput').value;  /* stdin 입력값 */
+        const runBtn  = document.querySelector('.tb-run');
+        const body    = document.getElementById('resultBody');
+
+        /* 실행 중 UI */
+        runBtn.classList.add('running');
+        runBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" style="width:13px;height:13px;animation:spin .75s linear infinite"><path d="M12 2a10 10 0 1 0 10 10"/></svg> 실행 중...`;
+        body.innerHTML   = '<span class="r-running">실행 중...</span>';
+        switchTabById('result');
+        document.getElementById('execTime').textContent = '';
+
+        const startTime = Date.now();
+
+        try {
+            /*
+              Judge0 CE 공개 인스턴스: https://ce.judge0.com
+              RapidAPI 키가 없어도 아래 공개 인스턴스로 테스트 가능
+              (속도 제한 있음 — 학습/개발 용도)
+            */
+            const submitRes = await fetch('https://ce.judge0.com/submissions?base64_encoded=false&wait=true', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    source_code:  code,
+                    language_id:  JAVA_ID,
+                    stdin:        stdin   /* 사용자가 입력한 stdin 값 */
+                })
+            });
+
+            if (!submitRes.ok) throw new Error('Judge0 연결 실패 (' + submitRes.status + ')');
+            const result = await submitRes.json();
+            const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+
+            document.getElementById('execTime').textContent = elapsed + 's';
+
+            /* status.id: 3=Accepted, 4=Wrong, 5=TLE, 6=CE, 11=RE 등 */
+            if (result.stdout) {
+                body.innerHTML = `<span class="r-ok">${esc(result.stdout)}</span>`;
+                switchTabById('result');
+            }
+            if (result.stderr || result.compile_output) {
+                const errText = result.stderr || result.compile_output;
+                /* 오류 탭에 표시 */
+                body.innerHTML = `<span class="r-err">${esc(errText)}</span>`;
+                switchTabById('error');
+            }
+            if (!result.stdout && !result.stderr && !result.compile_output) {
+                body.innerHTML = '<span style="color:var(--hp-text-muted)">(출력 없음)</span>';
+            }
+
+        } catch (e) {
+            body.innerHTML = `<span class="r-err">실행 오류: ${esc(e.message)}\n\n※ 네트워크 문제이거나 Judge0 서버가 응답하지 않습니다.\n  로컬 Judge0 설치 또는 서버 사이드 실행으로 전환 필요.</span>`;
+        } finally {
+            runBtn.classList.remove('running');
+            runBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" style="width:13px;height:13px"><polygon points="5 3 19 12 5 21 5 3"/></svg> 실행`;
+        }
+    }
+
+    /* ════════════════════════════════════
+       탭 전환
+    ════════════════════════════════════ */
+    function switchTab(el, tabName) {
+        document.querySelectorAll('.rtab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+        currentTab = tabName;
+    }
+    function switchTabById(tabName) {
+        const tabs = document.querySelectorAll('.rtab');
+        const map  = { result: 0, error: 1, test: 2 };
+        tabs.forEach(t => t.classList.remove('active'));
+        if (tabs[map[tabName]]) tabs[map[tabName]].classList.add('active');
+        currentTab = tabName;
+    }
+
+    /* ════════════════════════════════════
+       토큰 게이지
+    ════════════════════════════════════ */
+    function updateGauge(val) {
+        const fill = document.getElementById('tokenFill');
+        const cnt  = document.getElementById('tokenCount');
+        const warn = document.getElementById('tokenWarn');
+        const pct  = Math.min((val / TOKEN_LIMIT) * 100, 100);
+        fill.style.width      = pct.toFixed(1) + '%';
+        cnt.textContent       = val + ' / ' + TOKEN_LIMIT;
+        fill.style.background = pct >= 90 ? '#EF4444' : pct >= 70 ? '#F59E0B' : 'var(--hp-primary)';
+        if (val >= TOKEN_LIMIT) {
+            warn.style.display = 'block';
+            document.getElementById('chatInput').disabled = true;
+            document.getElementById('sendBtn').disabled   = true;
+        }
+    }
+
+    /* ════════════════════════════════════
+       AI 채팅
+    ════════════════════════════════════ */
+    async function sendMsg() {
+        const inp  = document.getElementById('chatInput');
+        const text = inp.value.trim();
+        if (!text || aiWaiting) return;
+
+        addBubble('user', text);
+        conversation.push({ role: 'user', content: text });
+        totalUserTokens += Math.ceil(text.length / 4);
+        updateGauge(totalUserTokens);
+        inp.value = ''; inp.style.height = '';
+        aiWaiting = true;
+        showTyping();
+
+        try {
+            const res = await fetch('/api/chat/message', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ problemId: PROBLEM_ID, messages: conversation })
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const { content } = await res.json();
+            removeTyping();
+            addBubble('assistant', content, true);
+            conversation.push({ role: 'assistant', content });
+        } catch (e) {
+            removeTyping();
+            addBubble('assistant', '⚠ 응답을 받지 못했습니다. 다시 시도해주세요.');
+        } finally { aiWaiting = false; }
+    }
+
+    function addBubble(role, text, showApply) {
+        const msgs = document.getElementById('chatMsgs');
+        const now  = new Date();
+        const time = `오후 ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+        const cm   = text.match(/```[\w]*\n?([\s\S]*?)```/);
+        const code = cm ? esc(cm[1].trim()) : '';
+        const body = esc(cm ? text.replace(/```[\w]*\n?[\s\S]*?```/, '').trim() : text);
+        const isAI = role === 'assistant';
+        const wrap = document.createElement('div');
+        wrap.className = 'bw' + (isAI ? '' : ' u');
+        wrap.innerHTML = `
+            <div class="bav ${isAI ? 'ai' : 'user'}">${isAI ? 'AI' : 'U'}</div>
+            <div>
+                <div class="bubble ${isAI ? 'ai' : 'user'}">
+                    ${body}
+                    ${code ? `<div class="bcode">${code}</div>` : ''}
+                    ${code && isAI && showApply
+                        ? `<button class="apply-btn" onclick="applyCode(this,${JSON.stringify(cm[1].trim())})">
+                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
+                               에디터에 적용
+                           </button>`
+                        : ''}
+                </div>
+                <div class="btime">${time}</div>
+            </div>`;
+        msgs.appendChild(wrap);
+        msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    /* AI가 준 코드를 Monaco 에디터에 적용 */
+    function applyCode(btn, code) {
+        if (monacoEditor) {
+            monacoEditor.setValue(code);
+            monacoEditor.focus();
+        }
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px;height:11px"><polyline points="20 6 9 17 4 12"/></svg> 에디터에 적용됨`;
+        btn.className = 'apply-btn done';
+    }
+
+    function showTyping() {
+        const msgs = document.getElementById('chatMsgs');
+        const el   = document.createElement('div');
+        el.className = 'bw'; el.id = 'typingEl';
+        el.innerHTML = `<div class="bav ai">AI</div>
+            <div class="bubble ai">
+                <div class="typing-dots">
+                    <div class="tdot"></div><div class="tdot"></div><div class="tdot"></div>
+                </div>
+            </div>`;
+        msgs.appendChild(el);
+        msgs.scrollTop = msgs.scrollHeight;
+    }
+    function removeTyping() { const el = document.getElementById('typingEl'); if (el) el.remove(); }
+
+    /* ════════════════════════════════════
+       대화 종료 및 제출
+    ════════════════════════════════════ */
+    async function handleSubmit() {
+        if (!conversation.find(m => m.role === 'assistant')) {
+            alert('AI 응답이 없습니다. 먼저 대화를 진행해주세요.'); return;
+        }
+        if (!confirm('대화를 종료하고 제출하시겠습니까?\n제출 후 채점이 시작됩니다.')) return;
+        document.getElementById('loadingOv').classList.add('show');
+        try {
+            const res = await fetch('/api/submissions', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({
+                    problemId:       PROBLEM_ID,
+                    conversation:    conversation,
+                    totalUserTokens: totalUserTokens
+                })
+            });
+            if (!res.ok) throw new Error(res.status);
+            const { submissionId } = await res.json();
+            window.location.href = '/result/' + submissionId;
+        } catch (e) {
+            document.getElementById('loadingOv').classList.remove('show');
+            alert('제출 실패: ' + e.message);
+        }
+    }
+
+    /* ── 유틸 ── */
+    function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }
+    function autoResize(el) { el.style.height = ''; el.style.height = Math.min(el.scrollHeight, 96) + 'px'; }
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    updateGauge(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+
+    /* 이미지 UI와 동일하게 맞추기 위한 핵심 스타일 정의 */
+body {
+    background-color: #f9fafb;
+    color: #1f2937;
+}
+.proto-wrap {
+    max-width: 1200px;
+    margin-top: 2rem;
+}
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+.app-logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #3b82f6;
+}
+.app-logo span {
+    color: #10b981;
+}
+.app-nav a {
+    margin: 0 15px;
+    text-decoration: none;
+    color: #4b5563;
+    font-weight: 500;
+}
+.app-nav a.active {
+    color: #6366f1;
+    font-weight: bold;
+}
+.avatar {
+    background-color: #e0e7ff;
+    color: #4f46e5;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 14px;
+}
+.screen-body {
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #f3f4f6;
+}
+.section-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #4b5563;
+    margin-bottom: 1.5rem;
+}
+
+/* 테이블 스타일 커스텀 */
+.my-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.my-table th {
+    padding: 12px 16px;
+    color: #9ca3af;
+    font-weight: 500;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 14px;
+}
+.my-table td {
+    padding: 16px;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 15px;
+    vertical-align: middle;
+}
+.my-table tbody tr {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.my-table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+/* 정렬 규칙 정의 */
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+
+/* 모드별 배지 디자인 */
+.badge-custom {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+.badge-violet { background-color: #eef2ff; color: #4f46e5; }
+.badge-green { background-color: #f0fdf4; color: #16a34a; }
+.badge-amber { background-color: #fefbc3; color: #ca8a04; }
+
+/* 점수 및 상태 스타일 */
+.score-text {
+    font-weight: 800;
+    color: #1f2937;
+}
+.status-pass {
+    color: #16a34a;
+    font-weight: bold;
+}
+.status-fail {
+    color: #dc2626;
+    font-weight: bold;
+}
+.table-caption {
+    color: #9ca3af;
+    font-size: 13px;
+}
