@@ -17,7 +17,7 @@ public class Requirement {
     private Long id;
 
     @Column(name = "description", nullable = false, length = 500)
-    private String description; 
+    private String description;
 
     @Column(nullable = false)
     private Integer weight;
