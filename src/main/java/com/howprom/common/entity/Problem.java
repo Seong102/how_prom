@@ -5,6 +5,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import com.howprom.common.entity.EvaluationType;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 @Entity
 @Table(name = "problems")
@@ -34,8 +37,9 @@ public class Problem {
     @Column(nullable = false)
     private Integer difficulty = 1;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "evaluation_type", nullable = false)
-    private String evaluationType; // STANDARD, EFFICIENCY, BUDGET
+    private EvaluationType evaluationType;
 
     @Column(name = "token_limit")
     private Integer tokenLimit; // BUDGET 모드용 상한선

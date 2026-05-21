@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>버블 정렬 알고리즘 구현 - HowProm</title>
+    <title th:text="${problem.title} + ' - HowProm'">문제 - HowProm</title>
     <style>
         /* ===== header.html 의 styles fragment 직접 인라인 ===== */
         :root {
@@ -24,9 +24,9 @@
             --hp-radius-sm: 6px;
             --hp-shadow: 0 1px 2px rgba(0,0,0,0.03);
         }
-
+ 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
+ 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo",
                          "Malgun Gothic", "맑은 고딕", Roboto, sans-serif;
@@ -38,9 +38,9 @@
             display: flex;
             flex-direction: column;
         }
-
+ 
         a { text-decoration: none; color: inherit; }
-
+ 
         /* ===== 헤더 (header.html 그대로) ===== */
         .hp-header {
             background-color: var(--hp-surface);
@@ -76,7 +76,7 @@
             transition: background-color 0.15s ease, color 0.15s ease;
         }
         .hp-header__user:hover { background-color: var(--hp-border-soft); color: var(--hp-text); }
-
+ 
         /* ===== 페이지 레이아웃 ===== */
         .prob-layout {
             display: flex;
@@ -84,7 +84,7 @@
             overflow: hidden;
             height: calc(100vh - 64px);
         }
-
+ 
         /* 경고 배너 */
         .warn-banner {
             background: #FFFBEB; border-bottom: 1px solid #FDE68A;
@@ -92,7 +92,7 @@
             display: flex; align-items: center; gap: 8px; flex-shrink: 0;
         }
         .warn-banner svg { width: 14px; height: 14px; flex-shrink: 0; }
-
+ 
         /* ── 왼쪽: 문제 패널 ── */
         .prob-panel {
             width: 284px;
@@ -116,11 +116,11 @@
         .eb-efficiency { background: #E6F7EC; color: #1F9D55; }
         .eb-budget     { background: #FEF3C7; color: #D97706; }
         .prob-title { font-size: 15px; font-weight: 600; color: var(--hp-text); line-height: 1.45; }
-
+ 
         .prob-panel__body { flex: 1; overflow-y: auto; padding: 16px 18px; }
         .prob-panel__body::-webkit-scrollbar { width: 4px; }
         .prob-panel__body::-webkit-scrollbar-thumb { background: var(--hp-border); border-radius: 2px; }
-
+ 
         .sec-label {
             font-size: 10.5px; font-weight: 600; color: var(--hp-text-muted);
             letter-spacing: 0.9px; text-transform: uppercase; margin-bottom: 8px;
@@ -135,7 +135,7 @@
         }
         .io-label { font-size: 10.5px; font-weight: 600; color: var(--hp-text-muted); margin-bottom: 4px; }
         .io-box code { font-size: 12px; color: var(--hp-text); font-family: 'Consolas','D2Coding',monospace; }
-
+ 
         .req-list { display: flex; flex-direction: column; gap: 6px; margin-top: 16px; }
         .req-item {
             display: flex; align-items: flex-start; gap: 8px;
@@ -148,7 +148,7 @@
             border-radius: 4px; font-size: 11px; font-weight: 700;
         }
         .req-desc { font-size: 12.5px; color: var(--hp-text-muted); line-height: 1.55; }
-
+ 
         .token-sec { padding: 12px 18px; border-top: 1px solid var(--hp-border); flex-shrink: 0; }
         .token-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
         .token-lbl  { font-size: 12px; color: var(--hp-text-muted); font-weight: 500; }
@@ -156,7 +156,7 @@
         .token-bg   { height: 6px; background: var(--hp-bg); border-radius: 3px; overflow: hidden; border: 1px solid var(--hp-border); }
         .token-fill { height: 100%; border-radius: 3px; transition: width .3s, background .3s; background: var(--hp-primary); }
         .token-warn { margin-top: 6px; font-size: 11px; color: var(--hp-danger-text); font-weight: 500; display: none; }
-
+ 
         .submit-area { padding: 12px 18px; border-top: 1px solid var(--hp-border); flex-shrink: 0; }
         .btn-submit {
             width: 100%; padding: 11px; background: var(--hp-primary); color: #fff;
@@ -167,7 +167,7 @@
         .btn-submit:hover  { background: var(--hp-primary-hover); }
         .btn-submit:active { transform: scale(0.98); }
         .btn-submit svg { width: 14px; height: 14px; }
-
+ 
         /* ── 가운데: 에디터 ── */
         .editor-panel { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
         .editor-toolbar {
@@ -186,18 +186,18 @@
         .tb-run { background: #10B981; color: #fff; border-color: #10B981; }
         .tb-run:hover { background: #059669; color: #fff; }
         .tb-lang { margin-left: auto; font-size: 11px; color: var(--hp-text-muted); font-family: 'Consolas',monospace; }
-
+ 
         /* Monaco Editor 컨테이너 */
         .editor-area { flex: 1; background: #1E1E2E; overflow: hidden; position: relative; }
         #monacoEditor { width: 100%; height: 100%; }
-
+ 
         /* 실행 중 상태 */
         .tb-run.running { background: #6B7280; border-color: #6B7280; cursor: not-allowed; }
         .tb-run.running:hover { background: #6B7280; }
         .r-ok  { color: #10B981; white-space: pre; font-family: 'Consolas',monospace; }
         .r-err { color: #F87171; white-space: pre; font-family: 'Consolas',monospace; }
         .r-running { color: var(--hp-text-muted); font-style: italic; }
-
+ 
         .result-panel {
             height: 240px; background: var(--hp-surface);
             border-top: 1px solid var(--hp-border); display: flex; flex-direction: column; flex-shrink: 0;
@@ -232,7 +232,7 @@
         .r-ok { color: #10B981; }
         .statusbar { padding: 3px 14px; background: #1E1E2E; display: flex; gap: 16px; }
         .si { font-size: 11px; color: #6C7086; font-family: monospace; }
-
+ 
         /* ── 오른쪽: 채팅 패널 ── */
         .chat-panel {
             width: 340px; background: var(--hp-surface); border-left: 1px solid var(--hp-border);
@@ -250,11 +250,11 @@
         .chat-ttl  { font-size: 13px; font-weight: 600; color: var(--hp-text); }
         .chat-sub  { font-size: 11px; color: var(--hp-text-muted); }
         .online-dot { width: 7px; height: 7px; border-radius: 50%; background: #10B981; margin-left: auto; flex-shrink: 0; }
-
+ 
         .chat-msgs { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
         .chat-msgs::-webkit-scrollbar { width: 4px; }
         .chat-msgs::-webkit-scrollbar-thumb { background: var(--hp-border); border-radius: 2px; }
-
+ 
         .bw { display: flex; gap: 8px; align-items: flex-start; }
         .bw.u { flex-direction: row-reverse; }
         .bav {
@@ -289,12 +289,12 @@
         .apply-btn svg { width: 11px; height: 11px; }
         .btime { font-size: 10px; color: var(--hp-text-muted); margin-top: 3px; padding: 0 2px; }
         .bw.u .btime { text-align: right; }
-
+ 
         .typing-dots { display: flex; gap: 4px; padding: 3px 0; }
         .tdot { width: 5px; height: 5px; border-radius: 50%; background: var(--hp-text-muted); animation: td 1.2s infinite; }
         .tdot:nth-child(2){ animation-delay:.2s } .tdot:nth-child(3){ animation-delay:.4s }
         @keyframes td { 0%,60%,100%{transform:translateY(0);opacity:.35} 30%{transform:translateY(-5px);opacity:1} }
-
+ 
         .chat-inp-area { padding: 12px 14px; border-top: 1px solid var(--hp-border); flex-shrink: 0; }
         .chat-inp-row  { display: flex; gap: 8px; align-items: flex-end; }
         .chat-ta {
@@ -321,7 +321,7 @@
             background: var(--hp-bg); border: 1px solid var(--hp-border);
             border-radius: 3px; padding: 1px 4px; font-size: 10px; font-family: monospace;
         }
-
+ 
         .loading-ov {
             display: none; position: fixed; inset: 0;
             background: rgba(255,255,255,.75); z-index: 999;
@@ -334,7 +334,7 @@
     </style>
 </head>
 <body>
-
+ 
 <!-- 헤더 -->
 <header class="hp-header">
     <div class="hp-header__inner">
@@ -385,7 +385,7 @@
         </div>
     </div>
 </header>
-
+ 
 <!-- 새로고침 경고 배너 -->
 <div class="warn-banner">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -394,52 +394,46 @@
     </svg>
     새로고침 시 AI와의 대화 이력이 초기화됩니다. 제출 전 반드시 확인하세요.
 </div>
-
+ 
 <div class="prob-layout">
-
+ 
     <!-- ── 왼쪽: 문제 패널 ── -->
     <aside class="prob-panel">
         <div class="prob-panel__head">
-            <div class="eval-badge eb-budget">BUDGET</div>
-            <div class="prob-title">버블 정렬 알고리즘 구현</div>
+            <div class="eval-badge"
+             th:classappend="${problem.evaluationType.name() == 'STANDARD' ? 'eb-standard' : (problem.evaluationType.name() == 'EFFICIENCY' ? 'eb-efficiency' : 'eb-budget')}"
+             th:text="${problem.evaluationType}">BUDGET</div>
+            <div class="prob-title" th:text="${problem.title}">문제 제목</div>
         </div>
-
+ 
         <div class="prob-panel__body">
             <div class="sec-label">문제 설명</div>
-            <p class="prob-desc">
-                버블 정렬 알고리즘을 Python으로 구현하세요.
-                입력 배열을 오름차순으로 정렬하며, 불필요한 반복을 최소화하는
-                최적화된 버전을 작성합니다.
-            </p>
-
-            <div class="sec-label">예시 입출력</div>
-            <div class="io-box">
-                <div class="io-label">입력</div>
-                <code>[5, 3, 8, 1, 9, 2]</code>
+            <p class="prob-desc" th:text="${problem.description}">문제 설명</p>
+ 
+            <!-- 예시 입출력 - nullable이면 섹션 전체 미표시 -->
+            <div th:if="${problem.exampleInput != null or problem.exampleOutput != null}">
+                <div class="sec-label">예시 입출력</div>
+                <div class="io-box" th:if="${problem.exampleInput != null}">
+                    <div class="io-label">입력</div>
+                    <code th:text="${problem.exampleInput}"></code>
+                </div>
+                <div class="io-box" th:if="${problem.exampleOutput != null}">
+                    <div class="io-label">출력</div>
+                    <code th:text="${problem.exampleOutput}"></code>
+                </div>
             </div>
-            <div class="io-box">
-                <div class="io-label">출력</div>
-                <code>[1, 2, 3, 5, 8, 9]</code>
-            </div>
-
+ 
             <div class="sec-label" style="margin-top:18px;">요구사항</div>
             <div class="req-list">
-                <div class="req-item">
-                    <div class="req-weight">30pt</div>
-                    <div class="req-desc">이중 루프 구조 사용</div>
-                </div>
-                <div class="req-item">
-                    <div class="req-weight">40pt</div>
-                    <div class="req-desc">조기 종료 최적화 (swapped 플래그)</div>
-                </div>
-                <div class="req-item">
-                    <div class="req-weight">30pt</div>
-                    <div class="req-desc">함수로 분리 (def bubble_sort)</div>
+                <div class="req-item" th:each="req : ${problem.requirements}">
+                    <div class="req-weight" th:text="${req.weight} + 'pt'">0pt</div>
+                    <div class="req-desc" th:text="${req.description}">요구사항 설명</div>
                 </div>
             </div>
         </div>
-
-        <div class="token-sec">
+ 
+        <!-- BUDGET 모드만 토큰 게이지 표시 -->
+        <div class="token-sec" th:if="${problem.evaluationType.name() == 'BUDGET'}">
             <div class="token-head">
                 <span class="token-lbl">🪙 토큰 사용량</span>
                 <span class="token-val" id="tokenCount">0 / 1500</span>
@@ -449,7 +443,7 @@
             </div>
             <div class="token-warn" id="tokenWarn">⚠ 토큰 한도 초과 — 제출만 가능합니다</div>
         </div>
-
+ 
         <div class="submit-area">
             <button class="btn-submit" onclick="handleSubmit()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -460,7 +454,7 @@
             </button>
         </div>
     </aside>
-
+ 
     <!-- ── 가운데: 코드 에디터 ── -->
     <div class="editor-panel">
         <div class="editor-toolbar">
@@ -483,11 +477,11 @@
             </button>
             <span class="tb-lang">Java 17 · UTF-8 · Ln 1, Col 1</span>
         </div>
-
+ 
         <div class="editor-area">
             <div id="monacoEditor"></div>
         </div>
-
+ 
         <div class="result-panel">
             <div class="result-tabs">
                 <div class="rtab active" onclick="switchTab(this,'result')">실행 결과</div>
@@ -514,7 +508,7 @@
             </div>
         </div>
     </div>
-
+ 
     <!-- ── 오른쪽: 채팅 패널 ── -->
     <div class="chat-panel">
         <div class="chat-head">
@@ -527,7 +521,7 @@
             </div>
             <div class="online-dot"></div>
         </div>
-
+ 
         <div class="chat-msgs" id="chatMsgs">
             <div class="bw">
                 <div class="bav ai">AI</div>
@@ -537,7 +531,7 @@
                 </div>
             </div>
         </div>
-
+ 
         <div class="chat-inp-area">
             <div class="chat-inp-row">
                 <textarea class="chat-ta" id="chatInput" rows="1"
@@ -554,31 +548,31 @@
         </div>
     </div>
 </div>
-
+ 
 <!-- Monaco Editor CDN -->
 <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
-
+ 
 <div class="loading-ov" id="loadingOv">
     <div class="spinner"></div>
     <div class="loading-txt">채점 중입니다...</div>
 </div>
-
+ 
 <script>
     /* ── 상수 ── */
-    const PROBLEM_ID  = 1;
-    const TOKEN_LIMIT = 1500;
-
+    const PROBLEM_ID  = /*[[${problem.id}]]*/ 1;
+    const TOKEN_LIMIT = /*[[${problem.tokenLimit != null ? problem.tokenLimit : 0}]]*/ 0;
+ 
     /* Judge0 공개 API (RapidAPI 키 없이 사용 가능한 엔드포인트) */
     const JUDGE0_URL = 'https://judge0-ce.p.rapidapi.com';
     const JUDGE0_KEY = '';        /* ← RapidAPI 키 있으면 입력, 없으면 로컬 Judge0 고려 */
     const JAVA_ID    = 62;        /* Judge0 language_id: Java (OpenJDK 13) */
-
+ 
     /* ── Monaco Editor 초기 코드 ── */
     const INITIAL_CODE = `import java.util.Arrays;
 import java.util.Scanner;
-
+ 
 public class Main {
-
+ 
     static int[] bubbleSort(int[] arr) {
         int n = arr.length;
         for (int i = 0; i < n; i++) {
@@ -595,10 +589,10 @@ public class Main {
         }
         return arr;
     }
-
+ 
     public static void main(String[] args) {
         int[] arr;
-
+ 
         Scanner sc = new Scanner(System.in);
         if (sc.hasNextLine()) {
             // stdin에 값이 있으면 읽어서 사용
@@ -611,18 +605,18 @@ public class Main {
             // stdin이 비어있으면 기본값 사용
             arr = new int[]{5, 3, 8, 1, 9, 2};
         }
-
+ 
         System.out.println(Arrays.toString(bubbleSort(arr)));
     }
 }`;
-
+ 
     /* ── 브라우저 메모리 상태 ── */
     let conversation    = [];
     let totalUserTokens = 0;
     let aiWaiting       = false;
     let monacoEditor    = null;   /* Monaco 인스턴스 */
     let currentTab      = 'result';
-
+ 
     /* ════════════════════════════════════
        Monaco Editor 초기화
     ════════════════════════════════════ */
@@ -644,7 +638,7 @@ public class Main {
             renderLineHighlight:'line',
             cursorBlinking:     'smooth',
         });
-
+ 
         /* 줄 수 업데이트 */
         monacoEditor.onDidChangeModelContent(() => {
             const lines = monacoEditor.getModel().getLineCount();
@@ -652,14 +646,14 @@ public class Main {
         });
         document.getElementById('lineCount').textContent =
             monacoEditor.getModel().getLineCount() + '줄';
-
+ 
         /* Ctrl+Enter → 실행 단축키 */
         monacoEditor.addCommand(
             monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
             () => runCode()
         );
     });
-
+ 
     /* ════════════════════════════════════
        코드 실행 (Judge0 API)
     ════════════════════════════════════ */
@@ -669,16 +663,16 @@ public class Main {
         const stdin   = document.getElementById('stdinInput').value;  /* stdin 입력값 */
         const runBtn  = document.querySelector('.tb-run');
         const body    = document.getElementById('resultBody');
-
+ 
         /* 실행 중 UI */
         runBtn.classList.add('running');
         runBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" style="width:13px;height:13px;animation:spin .75s linear infinite"><path d="M12 2a10 10 0 1 0 10 10"/></svg> 실행 중...`;
         body.innerHTML   = '<span class="r-running">실행 중...</span>';
         switchTabById('result');
         document.getElementById('execTime').textContent = '';
-
+ 
         const startTime = Date.now();
-
+ 
         try {
             /*
               Judge0 CE 공개 인스턴스: https://ce.judge0.com
@@ -694,13 +688,13 @@ public class Main {
                     stdin:        stdin   /* 사용자가 입력한 stdin 값 */
                 })
             });
-
+ 
             if (!submitRes.ok) throw new Error('Judge0 연결 실패 (' + submitRes.status + ')');
             const result = await submitRes.json();
             const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
-
+ 
             document.getElementById('execTime').textContent = elapsed + 's';
-
+ 
             /* status.id: 3=Accepted, 4=Wrong, 5=TLE, 6=CE, 11=RE 등 */
             if (result.stdout) {
                 body.innerHTML = `<span class="r-ok">${esc(result.stdout)}</span>`;
@@ -715,7 +709,7 @@ public class Main {
             if (!result.stdout && !result.stderr && !result.compile_output) {
                 body.innerHTML = '<span style="color:var(--hp-text-muted)">(출력 없음)</span>';
             }
-
+ 
         } catch (e) {
             body.innerHTML = `<span class="r-err">실행 오류: ${esc(e.message)}\n\n※ 네트워크 문제이거나 Judge0 서버가 응답하지 않습니다.\n  로컬 Judge0 설치 또는 서버 사이드 실행으로 전환 필요.</span>`;
         } finally {
@@ -723,7 +717,7 @@ public class Main {
             runBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" style="width:13px;height:13px"><polygon points="5 3 19 12 5 21 5 3"/></svg> 실행`;
         }
     }
-
+ 
     /* ════════════════════════════════════
        탭 전환
     ════════════════════════════════════ */
@@ -739,7 +733,7 @@ public class Main {
         if (tabs[map[tabName]]) tabs[map[tabName]].classList.add('active');
         currentTab = tabName;
     }
-
+ 
     /* ════════════════════════════════════
        토큰 게이지
     ════════════════════════════════════ */
@@ -757,7 +751,7 @@ public class Main {
             document.getElementById('sendBtn').disabled   = true;
         }
     }
-
+ 
     /* ════════════════════════════════════
        AI 채팅
     ════════════════════════════════════ */
@@ -765,7 +759,7 @@ public class Main {
         const inp  = document.getElementById('chatInput');
         const text = inp.value.trim();
         if (!text || aiWaiting) return;
-
+ 
         addBubble('user', text);
         conversation.push({ role: 'user', content: text });
         totalUserTokens += Math.ceil(text.length / 4);
@@ -773,7 +767,7 @@ public class Main {
         inp.value = ''; inp.style.height = '';
         aiWaiting = true;
         showTyping();
-
+ 
         try {
             const res = await fetch('/api/chat/message', {
                 method:  'POST',
@@ -790,7 +784,7 @@ public class Main {
             addBubble('assistant', '⚠ 응답을 받지 못했습니다. 다시 시도해주세요.');
         } finally { aiWaiting = false; }
     }
-
+ 
     function addBubble(role, text, showApply) {
         const msgs = document.getElementById('chatMsgs');
         const now  = new Date();
@@ -819,7 +813,7 @@ public class Main {
         msgs.appendChild(wrap);
         msgs.scrollTop = msgs.scrollHeight;
     }
-
+ 
     /* AI가 준 코드를 Monaco 에디터에 적용 */
     function applyCode(btn, code) {
         if (monacoEditor) {
@@ -829,7 +823,7 @@ public class Main {
         btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px;height:11px"><polyline points="20 6 9 17 4 12"/></svg> 에디터에 적용됨`;
         btn.className = 'apply-btn done';
     }
-
+ 
     function showTyping() {
         const msgs = document.getElementById('chatMsgs');
         const el   = document.createElement('div');
@@ -844,7 +838,7 @@ public class Main {
         msgs.scrollTop = msgs.scrollHeight;
     }
     function removeTyping() { const el = document.getElementById('typingEl'); if (el) el.remove(); }
-
+ 
     /* ════════════════════════════════════
        대화 종료 및 제출
     ════════════════════════════════════ */
@@ -872,12 +866,12 @@ public class Main {
             alert('제출 실패: ' + e.message);
         }
     }
-
+ 
     /* ── 유틸 ── */
     function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }
     function autoResize(el) { el.style.height = ''; el.style.height = Math.min(el.scrollHeight, 96) + 'px'; }
     function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
+ 
     updateGauge(0);
 </script>
 </body>
