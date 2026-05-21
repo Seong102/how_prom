@@ -1,6 +1,8 @@
 package com.howprom.common.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -11,6 +13,8 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @Table(name = "users")
+@AllArgsConstructor
+@Builder
 public class User {
 
     @Id

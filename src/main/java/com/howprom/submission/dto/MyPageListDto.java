@@ -1,9 +1,11 @@
-package com.howprom.domain.submission.dto;
+package com.howprom.submission.dto;
 
 //
 //목록 조회용 경량 DTO (MyPageListDto.java)
 //마이페이지 메인 테이블에 뿌려질 5개 필드 위주의 가벼운 DTO입니다. conversation JSON 데이터는 제외하여 성능을 최적화합니다
 
+import com.howprom.common.entity.EvaluationType;
+import com.howprom.common.entity.Submission.SubmissionStatus;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,9 +16,9 @@ public class MyPageListDto {
     private Long submissionId;
     private Long problemId;
     private String problemTitle;
-    private String evaluationType; // STANDARD, EFFICIENCY, BUDGET
+    private EvaluationType evaluationType;
     private Integer score;
-    private String status;         // PASSED, FAILED, ERROR
+    private SubmissionStatus status;
     private Integer totalUserTokens;
     private LocalDateTime createdAt;
 }
