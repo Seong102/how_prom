@@ -1,6 +1,6 @@
 package com.howprom.submission.service;
 
-import com.howprom.admin.repository.RequirementRepository;
+import com.howprom.problem.repository.RequirementRepository;
 import com.howprom.common.entity.Requirement;
 import com.howprom.common.entity.Submission;
 import com.howprom.submission.dto.RequirementResultViewDto;
@@ -30,9 +30,9 @@ public class ResultService {
 
         return new ResultViewDto(
                 s.getProblem().getTitle(),
-                s.getProblem().getEvaluationType(),
+                s.getProblem().getEvaluationType().name(),
                 s.getScore(),
-                s.getStatus(),
+                s.getStatus().name(),
                 s.getTotalUserTokens(),
                 turnCount
         );
@@ -47,7 +47,7 @@ public class ResultService {
                     Requirement req = requirementRepository.findById(r.getId())
                             .orElseThrow(() -> new IllegalArgumentException("Requirement not found: " + r.getId()));
                     int pct = req.getWeight() > 0 ? (r.getScore() * 100 / req.getWeight()) : 0;
-                    return new RequirementResultViewDto(req.getContent(), r.getScore(), req.getWeight(), pct);
+                    return new RequirementResultViewDto(req.getDescription(), r.getScore(), req.getWeight(), pct);
                 })
                 .toList();
     }
