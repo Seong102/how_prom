@@ -6,7 +6,7 @@ import com.howprom.common.entity.Requirement;
 import com.howprom.common.entity.User; // 🔗 [추가] User 엔티티 임포트
 import com.howprom.admin.dto.ProblemAdminDTO;
 import com.howprom.admin.dto.ProblemStatsDTO;
-import com.howprom.admin.repository.ProblemRepository;
+import com.howprom.repository.ProblemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

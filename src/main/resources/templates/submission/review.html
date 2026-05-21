@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>내 풀이 보기 - HowProm</title>
+    <style>
+        :root {
+            --hp-primary:       #5B47D6;
+            --hp-primary-hover: #4a38c4;
+            --hp-primary-soft:  #F0EEFB;
+            --hp-bg:            #F5F6FA;
+            --hp-surface:       #FFFFFF;
+            --hp-text:          #1A1A1A;
+            --hp-text-muted:    #6B7280;
+            --hp-border:        #E5E7EB;
+            --hp-border-soft:   #EEF0F3;
+            --hp-success-bg:    #E6F7EC;
+            --hp-success-text:  #1F9D55;
+            --hp-danger-bg:     #FDECEC;
+            --hp-danger-text:   #D14343;
+            --hp-radius:        12px;
+            --hp-radius-sm:     6px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                         "Apple SD Gothic Neo", "Malgun Gothic", Roboto, sans-serif;
+            background: var(--hp-bg);
+            color: var(--hp-text);
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        /* ── 헤더 ── */
+        .hp-header {
+            background: var(--hp-surface);
+            border-bottom: 1px solid var(--hp-border);
+            position: sticky; top: 0; z-index: 100; flex-shrink: 0;
+        }
+        .hp-header__inner {
+            max-width: 1400px; margin: 0 auto; padding: 0 32px;
+            height: 64px; display: flex; align-items: center; justify-content: space-between;
+        }
+        .hp-header__left { display: flex; align-items: center; gap: 48px; }
+        .hp-logo { font-size: 22px; font-weight: 700; color: var(--hp-primary); letter-spacing: -0.5px; }
+        .hp-nav  { display: flex; align-items: center; gap: 8px; }
+        .hp-nav__link {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 12px; font-size: 14px; color: var(--hp-text-muted);
+            border-bottom: 2px solid transparent; transition: color .15s;
+        }
+        .hp-nav__link:hover { color: var(--hp-text); }
+        .hp-nav__link--active { color: var(--hp-primary); border-bottom-color: var(--hp-primary); }
+        .hp-nav__icon { flex-shrink: 0; }
+        .hp-header__user {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 36px; height: 36px; border-radius: 50%; color: var(--hp-text-muted);
+            transition: background-color .15s;
+        }
+        .hp-header__user:hover { background: var(--hp-border-soft); }
+
+        /* ── 서브 헤더 ── */
+        .sub-header {
+            background: var(--hp-surface);
+            border-bottom: 1px solid var(--hp-border);
+            padding: 12px 32px;
+            display: flex; align-items: center; gap: 12px;
+        }
+        .btn-back {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 5px 12px; border: 1px solid var(--hp-border);
+            border-radius: var(--hp-radius-sm); font-size: 12px;
+            color: var(--hp-text-muted); background: var(--hp-surface);
+            cursor: pointer; font-family: inherit; transition: background .15s;
+        }
+        .btn-back:hover { background: var(--hp-bg); }
+        .sub-title { font-size: 14px; font-weight: 600; color: var(--hp-text); }
+        .sub-meta  { font-size: 12px; color: var(--hp-text-muted); }
+        .score-pill {
+            margin-left: auto;
+            display: inline-block; padding: 4px 14px;
+            border-radius: 20px; font-size: 12px; font-weight: 700;
+        }
+        .pill-pass { background: var(--hp-success-bg); color: var(--hp-success-text); }
+        .pill-fail { background: var(--hp-danger-bg);  color: var(--hp-danger-text); }
+
+        /* ── 메인 2열 ── */
+        .main-content {
+            flex: 1;
+            max-width: 1100px; width: 100%;
+            margin: 24px auto 40px; padding: 0 24px;
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 16px;
+            align-items: start;
+        }
+
+        /* ── 카드 ── */
+        .card {
+            background: var(--hp-surface);
+            border: 1px solid var(--hp-border);
+            border-radius: var(--hp-radius);
+            overflow: hidden;
+        }
+        .card-head {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--hp-border);
+        }
+        .sec-label {
+            font-size: 10.5px; font-weight: 600; color: var(--hp-text-muted);
+            letter-spacing: 0.9px; text-transform: uppercase;
+        }
+
+        /* ── 대화 이력 ── */
+        .conv-list {
+            padding: 16px 18px;
+            display: flex; flex-direction: column; gap: 14px;
+            max-height: calc(100vh - 220px);
+            overflow-y: auto;
+        }
+        .conv-list::-webkit-scrollbar { width: 4px; }
+        .conv-list::-webkit-scrollbar-thumb { background: var(--hp-border); border-radius: 2px; }
+
+        .msg-row { display: flex; gap: 10px; align-items: flex-start; }
+        .msg-row.msg-user { flex-direction: row-reverse; }
+
+        .msg-avatar {
+            width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 700;
+        }
+        .msg-avatar.av-ai   { background: var(--hp-primary-soft); color: var(--hp-primary); }
+        .msg-avatar.av-user { background: var(--hp-border-soft);  color: var(--hp-text-muted); }
+
+        .msg-bubble {
+            max-width: 76%;
+            padding: 10px 13px;
+            font-size: 13px; line-height: 1.65;
+            word-break: break-word; white-space: pre-wrap;
+        }
+        .msg-bubble.bubble-ai {
+            background: var(--hp-bg);
+            border: 1px solid var(--hp-border);
+            border-radius: 4px 12px 12px 12px;
+            color: var(--hp-text);
+        }
+        .msg-bubble.bubble-user {
+            background: var(--hp-primary);
+            border-radius: 12px 4px 12px 12px;
+            color: #fff;
+        }
+
+        .msg-empty {
+            padding: 32px 18px;
+            text-align: center;
+            font-size: 13px; color: var(--hp-text-muted);
+        }
+
+        /* ── 우측 패널 ── */
+        .right-col { display: flex; flex-direction: column; gap: 16px; }
+
+        /* 점수 요약 */
+        .score-summary {
+            background: var(--hp-surface);
+            border: 1px solid var(--hp-border);
+            border-radius: var(--hp-radius);
+            padding: 18px 20px;
+        }
+        .score-big {
+            font-size: 48px; font-weight: 800;
+            color: var(--hp-primary); letter-spacing: -2px; line-height: 1;
+        }
+        .score-denom { font-size: 16px; color: var(--hp-text-muted); font-weight: 400; }
+        .score-stats {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 8px; margin-top: 14px;
+        }
+        .stat-box {
+            background: var(--hp-bg); border: 1px solid var(--hp-border);
+            border-radius: var(--hp-radius-sm); padding: 10px 12px;
+        }
+        .stat-lbl {
+            font-size: 10.5px; font-weight: 600; color: var(--hp-text-muted);
+            text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 3px;
+        }
+        .stat-val { font-size: 16px; font-weight: 700; color: var(--hp-text); }
+
+        /* 최종 코드 */
+        .code-box {
+            padding: 14px 16px;
+            background: #1E1E2E; color: #CDD6F4;
+            font-size: 12px; font-family: 'Consolas', 'D2Coding', monospace;
+            white-space: pre; overflow-x: auto;
+            line-height: 1.6;
+            max-height: 420px; overflow-y: auto;
+        }
+        .code-box::-webkit-scrollbar { width: 4px; height: 4px; }
+        .code-box::-webkit-scrollbar-thumb { background: #45475A; border-radius: 2px; }
+    </style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<header class="hp-header">
+    <div class="hp-header__inner">
+        <div class="hp-header__left">
+            <a href="/" class="hp-logo">HowProm</a>
+            <nav class="hp-nav">
+                <a href="/" class="hp-nav__link">
+                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    <span>대시보드</span>
+                </a>
+                <a href="/problems" class="hp-nav__link">
+                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+                        <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+                        <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+                    </svg>
+                    <span>문제</span>
+                </a>
+                <a href="/mypage" class="hp-nav__link">
+                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span>마이페이지</span>
+                </a>
+            </nav>
+        </div>
+        <div class="hp-header__right">
+            <a href="/profile" class="hp-header__user" aria-label="내 정보">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- 서브 헤더 -->
+<div class="sub-header">
+    <button class="btn-back" th:onclick="|history.back()|">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        채점 결과
+    </button>
+    <div>
+        <div class="sub-title" th:text="${detail.problemTitle}">문제명</div>
+        <div class="sub-meta">내 풀이 보기 · #<span th:text="${detail.submissionId}">-</span></div>
+    </div>
+    <span class="score-pill"
+          th:classappend="${detail.score >= 80} ? 'pill-pass' : 'pill-fail'"
+          th:text="${detail.score + ' / 100'}">88 / 100</span>
+</div>
+
+<!-- 메인 2열 -->
+<div class="main-content">
+
+    <!-- 왼쪽: 대화 이력 -->
+    <div class="card">
+        <div class="card-head">
+            <div class="sec-label">대화 이력</div>
+        </div>
+
+        <div class="conv-list" th:if="${detail.conversation != null and !detail.conversation.isEmpty()}">
+            <div th:each="msg : ${detail.conversation}"
+                 th:class="${msg.role == 'user'} ? 'msg-row msg-user' : 'msg-row'">
+                <div th:class="${msg.role == 'user'} ? 'msg-avatar av-user' : 'msg-avatar av-ai'"
+                     th:text="${msg.role == 'user'} ? 'U' : 'AI'">AI</div>
+                <div th:class="${msg.role == 'user'} ? 'msg-bubble bubble-user' : 'msg-bubble bubble-ai'"
+                     th:text="${msg.content}">메시지 내용</div>
+            </div>
+        </div>
+
+        <div class="msg-empty" th:if="${detail.conversation == null or detail.conversation.isEmpty()}">
+            대화 이력이 없습니다.
+        </div>
+    </div>
+
+    <!-- 오른쪽: 요약 + 최종 코드 -->
+    <div class="right-col">
+
+        <!-- 점수 요약 -->
+        <div class="score-summary">
+            <div class="sec-label" style="margin-bottom: 10px;">채점 결과 요약</div>
+            <div>
+                <span class="score-big" th:text="${detail.score}">88</span>
+                <span class="score-denom"> / 100</span>
+            </div>
+            <div class="score-stats">
+                <div class="stat-box">
+                    <div class="stat-lbl">사용 토큰</div>
+                    <div class="stat-val" th:text="${detail.totalUserTokens}">312</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-lbl">대화 횟수</div>
+                    <div class="stat-val"
+                         th:text="${detail.conversation != null ? detail.conversation.size() + '턴' : '0턴'}">4턴</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 최종 코드 -->
+        <div class="card">
+            <div class="card-head">
+                <div class="sec-label">최종 생성 코드</div>
+            </div>
+            <pre class="code-box" th:text="${detail.finalCode}">// 코드 없음</pre>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>
