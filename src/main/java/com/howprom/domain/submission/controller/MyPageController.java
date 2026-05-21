@@ -26,7 +26,7 @@ public class MyPageController {
      */
     @GetMapping
     public ResponseEntity<MyPageResponseDto> getMyPageData(
-            @PageableDefault(size = 5, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 5, sort = "submittedAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Long mockUserId = 2L; // 💡 로그인 연동 전 임시 하드코딩 유저 ID
         MyPageResponseDto response = myPageService.getMyPageData(mockUserId, pageable);
