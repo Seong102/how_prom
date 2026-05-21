@@ -10,8 +10,9 @@
         .hp-form-group { margin-bottom: 20px; width: 100%; }
         .hp-input, .hp-textarea { width: 100%; box-sizing: border-box; }
         
+        /* 필수 항목 별표 스타일 */
         .hp-form-group label::after { content: " *"; color: #E74C3C; font-weight: bold; }
-        .hp-example-group label::after, .hp-optional-group label::after { content: ""; }
+        .hp-example-group label::after, .hp-optional-group label::after { content: ""; } /* 필수 제외 */
 
         .hp-req-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; height: 42px; }
         .hp-req-row .hp-input:first-child { flex: 1; }
@@ -62,6 +63,15 @@
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                         <div class="hp-form-group">
+                            <label>난이도</label>
+                            <select name="difficulty" class="hp-input" required>
+                                <option value="" disabled th:selected="${problem.difficulty == null}">난이도 선택</option>
+                                <option value="1" th:selected="${problem.difficulty == 1}">Lv.1 — 쉬움</option>
+                                <option value="2" th:selected="${problem.difficulty == 2}">Lv.2 — 보통</option>
+                                <option value="3" th:selected="${problem.difficulty == 3}">Lv.3 — 어려움</option>
+                            </select>
+                        </div>
+                        <div class="hp-form-group">
                             <label>공개 여부</label>
                             <select name="isPublic" class="hp-input" required>
                                 <option value="true" th:selected="${problem.isPublic == true}">공개 (바로 노출)</option>
@@ -96,12 +106,12 @@
                     </div>
 
                     <div id="reqList">
-                        <div class="hp-req-row" th:if="${problem.requirements == null or #lists.isEmpty(problem.requirements)}">
+                        <div class="hp-req-row" th:if="${#lists.isEmpty(problem.requirements)}">
                             <input type="text" name="reqDesc" class="hp-input" placeholder="요구사항 명세" required>
                             <input type="number" name="reqWeight" class="hp-input hp-weight" value="0" min="0" oninput="calc(this)">
                         </div>
 
-                        <div class="hp-req-row" th:if="${problem.requirements != null}" th:each="req, iterStat : ${problem.requirements}">
+                        <div class="hp-req-row" th:each="req, iterStat : ${problem.requirements}" th:unless="${#lists.isEmpty(problem.requirements)}">
                             <input type="text" name="reqDesc" class="hp-input" th:value="${req.content}" placeholder="요구사항 명세" required>
                             <input type="number" name="reqWeight" class="hp-input hp-weight" th:value="${req.weight}" min="0" oninput="calc(this)">
                             <button th:if="${iterStat.index > 0}" type="button" class="hp-btn hp-btn--danger-outline hp-btn--del" onclick="this.parentElement.remove(); calc();">×</button>
@@ -121,14 +131,15 @@
 
 <script th:inline="javascript">
     document.addEventListener("DOMContentLoaded", function() {
-        // 서버에서 전달받은 메시지 출력
-        const serverMessage = [[${message}]];
+        // 1. 서버 전송형 알림 캐치 방식
+        const serverMessage = /*[[${message}]]*/ null;
         if (serverMessage) {
             alert(serverMessage);
         }
 
         calc();
 
+        // 2. 프론트엔드 자체 서브밋 완료 알림 겸 최종 방어선
         const form = document.querySelector('form');
         if (form) {
             form.addEventListener('submit', function(e) {
@@ -140,6 +151,9 @@
                     alert(`배점 합계가 정확히 100점이어야 합니다.\n(현재 합계: ${total}점)`);
                     return;
                 }
+
+                const isEdit = document.getElementById('pageTitle').textContent.trim() === '문제 수정';
+                alert(isEdit ? "문제 수정이 완료되었습니다!" : "새 문제가 성공적으로 등록되었습니다!");
             });
         }
     });
@@ -156,6 +170,7 @@
         calc();
     }
     
+    // 입력하는 순간 실시간으로 계산해서 100 오버 시 원천 차단
     function calc(currentInput) {
         let total = 0;
         const inputs = document.querySelectorAll('.hp-weight');
