@@ -1,7 +1,7 @@
 package com.howprom.domain.submission.service;
 
 import com.howprom.domain.submission.dto.*;
-import com.howprom.domain.submission.entity.Submission;
+import com.howprom.common.entity.Submission;
 import com.howprom.domain.submission.repository.SubmissionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,9 +25,9 @@ public class MyPageService {
         Page<MyPageListDto> paginationSubmissions = submissionRepository.findMyPageListByUserId(userId, pageable);
 
         // 상단 대시보드 통계 계산용 원천 데이터 집계
-        long totalSubmissions = submissionRepository.countByUserId(userId);
+        long totalSubmissions = submissionRepository.countByUser_Id(userId);
         long totalSolvedProblems = submissionRepository.countDistinctProblemIdByUserIdAndStatus(userId, "PASSED");
-        long passedCount = submissionRepository.countByUserIdAndStatus(userId, "PASSED");
+        long passedCount = submissionRepository.countByUser_IdAndStatus(userId, "PASSED");
 
         // 방어 코딩: 가입 후 제출 이력이 없는 신규 유저의 분모 0(ArithmeticException) 예외 방지
         double passRate = 0.0;
@@ -68,7 +68,6 @@ public class MyPageService {
                 .submissionId(submission.getId())
                 .problemTitle(submission.getProblem().getTitle())
                 .score(submission.getScore())
-                .feedback(submission.getFeedback())
                 .finalCode(submission.getFinalCode())
                 .totalUserTokens(submission.getTotalUserTokens())
                 .conversation(submission.getConversation())
