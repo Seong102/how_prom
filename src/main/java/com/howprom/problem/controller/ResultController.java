@@ -1,4 +1,4 @@
-package com.howprom.controller.problem;
+package com.howprom.problem.controller;
 
 import com.howprom.submission.dto.RequirementResultViewDto;
 import com.howprom.submission.dto.ResultViewDto;

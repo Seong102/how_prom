@@ -1,7 +1,9 @@
 package com.howprom.admin.service;
 
+import com.howprom.common.entity.EvaluationType;
 import com.howprom.common.entity.Problem;
 import com.howprom.common.entity.Requirement;
+import com.howprom.common.entity.User; // 🔗 [추가] User 엔티티 임포트
 import com.howprom.admin.dto.ProblemAdminDTO;
 import com.howprom.admin.dto.ProblemStatsDTO;
 import com.howprom.admin.repository.ProblemRepository;
@@ -30,15 +32,19 @@ public class AdminProblemService {
 
     /**
      * 새 문제 등록
+     * 🔗 [변경] 테이블 제약조건(NOT NULL)을 충족하기 위해 로그인한 출제자(User)를 인자로 받아 저장합니다.
      */
     @Transactional
-    public void createProblem(ProblemAdminDTO dto, List<String> reqDescs, List<Integer> reqWeights) {
+    public void createProblem(ProblemAdminDTO dto, List<String> reqDescs, List<Integer> reqWeights, User creator) {
         
-        // 💡 [추가 로직] 평가 유형에 따라 정확성/효율성 배점 비율 자동 설정
+        // String -> Enum 변환
+        EvaluationType evalType = EvaluationType.valueOf(dto.getEvaluationType());
+        
+        // 평가 유형에 따라 정확성/효율성 배점 비율 자동 설정
         float correctness = 1.0f;
         float efficiency = 0.0f;
         
-        if ("EFFICIENCY".equals(dto.getEvaluationType())) {
+        if (EvaluationType.EFFICIENCY.equals(evalType)) {
             correctness = 0.7f;
             efficiency = 0.3f;
         }
@@ -47,17 +53,16 @@ public class AdminProblemService {
         Problem problem = Problem.builder()
                 .title(dto.getTitle())
                 .description(dto.getDescription())
-                .evaluationType(dto.getEvaluationType())
+                .evaluationType(evalType)
                 .exampleInput(dto.getExampleInput())
                 .exampleOutput(dto.getExampleOutput())
-                // 💡 [변경] 하드코딩을 지우고 DTO에서 넘어온 값을 매핑합니다.
-                //.difficulty(dto.getDifficulty())
+                // ❌ .difficulty() 라인 제거
                 .isPublic(dto.getIsPublic())
                 .tokenLimit(dto.getTokenLimit()) 
-                // 평가 유형별 비율 연동
                 .correctnessWeight(correctness)
                 .efficiencyWeight(efficiency)
-                //.avgPromptTokens(0.0f)
+                .avgUserTokens(0.0f) // 🔄 [명칭 변경] avgPromptTokens -> avgUserTokens
+                .createdBy(creator)  // 🔗 [추가] 출제자 연관관계 세팅 (fk_problems_creator)
                 .build();
 
         // Lombok 빌더 직후 연관관계 컬렉션 초기화
@@ -67,7 +72,7 @@ public class AdminProblemService {
         if (reqDescs != null && reqWeights != null) {
             for (int i = 0; i < reqDescs.size(); i++) {
                 Requirement requirement = Requirement.builder()
-                        .content(reqDescs.get(i))
+                        .description(reqDescs.get(i)) // 변경: content -> description
                         .weight(reqWeights.get(i))
                         .displayOrder(i + 1)
                         .problem(problem)
@@ -87,20 +92,21 @@ public class AdminProblemService {
         Problem problem = problemRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 문제가 존재하지 않습니다. id=" + id));
 
+        EvaluationType evalType = EvaluationType.valueOf(dto.getEvaluationType());
+
         // 1. 마스터 정보 수정
         problem.setTitle(dto.getTitle());
         problem.setDescription(dto.getDescription());
-        problem.setEvaluationType(dto.getEvaluationType());
+        problem.setEvaluationType(evalType);
         problem.setExampleInput(dto.getExampleInput());
         problem.setExampleOutput(dto.getExampleOutput());
         
-        // 💡 [핵심 추가] 수정 페이지에서 넘어온 메타 정보 반영
-        //problem.setDifficulty(dto.getDifficulty());
+        // ❌ problem.setDifficulty() 라인 제거
         problem.setIsPublic(dto.getIsPublic());
         problem.setTokenLimit(dto.getTokenLimit());
 
-        // 💡 [추가 로직] 평가 유형 변경에 따른 배점 비율 갱신
-        if ("EFFICIENCY".equals(dto.getEvaluationType())) {
+        // 평가 유형 변경에 따른 배점 비율 갱신
+        if (EvaluationType.EFFICIENCY.equals(evalType)) {
             problem.setCorrectnessWeight(0.7f);
             problem.setEfficiencyWeight(0.3f);
         } else {
@@ -115,7 +121,7 @@ public class AdminProblemService {
         if (reqDescs != null && reqWeights != null) {
             for (int i = 0; i < reqDescs.size(); i++) {
                 Requirement requirement = Requirement.builder()
-                        .content(reqDescs.get(i))
+                        .description(reqDescs.get(i))
                         .weight(reqWeights.get(i))
                         .displayOrder(i + 1)
                         .problem(problem)

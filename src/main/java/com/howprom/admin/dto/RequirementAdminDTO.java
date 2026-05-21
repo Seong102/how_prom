@@ -9,7 +9,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class RequirementAdminDTO {
-    private String content;
+    private String description; // content에서 변경
     private Integer weight;
 
     // 엔티티를 DTO로 안전하게 변환
@@ -17,7 +17,7 @@ public class RequirementAdminDTO {
         if (requirement == null) return null;
         
         return RequirementAdminDTO.builder()
-                .content(requirement.getContent())
+                .description(requirement.getDescription())
                 .weight(requirement.getWeight())
                 .build();
     }
