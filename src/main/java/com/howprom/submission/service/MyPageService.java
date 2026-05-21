@@ -1,8 +1,8 @@
-package com.howprom.domain.submission.service;
+package com.howprom.submission.service;
 
-import com.howprom.domain.submission.dto.*;
+import com.howprom.submission.dto.*;
 import com.howprom.common.entity.Submission;
-import com.howprom.domain.submission.repository.SubmissionRepository;
+import com.howprom.submission.repository.SubmissionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

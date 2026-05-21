@@ -1,4 +1,4 @@
-package com.howprom.domain.submission.dto;
+package com.howprom.submission.dto;
 
 
 //2. 상세 팝업용 DTO (따로 분리하여 호출)

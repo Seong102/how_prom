@@ -1,4 +1,4 @@
-package com.howprom.domain.submission.dto;
+package com.howprom.submission.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
