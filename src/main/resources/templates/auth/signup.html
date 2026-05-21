@@ -1,0 +1,96 @@
+<!--signup.html-->
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>회원가입 · HowProm</title>
+	<link rel="stylesheet" th:href="@{/css/login.css}">
+	<link rel="stylesheet" th:href="@{/css/signup.css}">
+	<script th:src="@{/js/signup.js}" defer></script>
+</head>
+<body>
+	<a th:href="@{/}" class="auth-logo">HowProm</a>
+
+	<form class="auth-card" th:action="@{/auth/signup}" method="post">
+
+		<h1 class="auth-card__title">회원가입</h1>
+
+		<!--서버 측 에러 메시지-->
+		<div th:if="${param.error}" class="alert alert--error" th:text="${param.error}">
+			회원가입에 실패했습니다.
+		</div>
+
+		<!--이메일 (아이디로 사용)-->
+		<div class="form-group">
+			<div class="form-group__header">
+				<label class="form-label" for="email">이메일</label>
+			</div>
+			<div class="form-input-group">
+				<input type="email"
+						 id="email"
+						 name="email"
+						 class="form-input"
+						 placeholder="user@example.com"
+						 autocomplete="email"
+						 autofocus
+						 required>
+				<button type="button" class="btn-check" data-action="check-email">중복 확인</button>
+			</div>
+			<span id="emailFeedback" class="form-feedback"></span>
+		</div>
+
+		<!--별명-->
+		<div class="form-group">
+			<div class="form-group__header">
+				<label class="form-label" for="nickname">별명</label>
+			</div>
+			<input type="text"
+					 id="nickname"
+					 name="nickname"
+					 class="form-input"
+					 placeholder="2~12자"
+					 minlength="2"
+					 maxlength="12"
+					 autocomplete="nickname"
+					 required>
+		</div>
+
+		<!--비밀번호-->
+		<div class="form-group">
+			<div class="form-group__header">
+				<label class="form-label" for="password">비밀번호</label>
+			</div>
+			<input type="password"
+					 id="password"
+					 name="password"
+					 class="form-input"
+					 placeholder="8자 이상"
+					 minlength="8"
+					 autocomplete="new-password"
+					 required>
+		</div>
+
+		<!--비밀번호 확인-->
+		<div class="form-group">
+			<div class="form-group__header">
+				<label class="form-label" for="passwordConfirm">비밀번호 확인</label>
+			</div>
+			<input type="password"
+					 id="passwordConfirm"
+					 name="passwordConfirm"
+					 class="form-input"
+					 autocomplete="new-password"
+					 required>
+			<span id="passwordConfirmFeedback" class="form-feedback"></span>
+		</div>
+
+		<!--하단 버튼-->
+		<div class="auth-buttons">
+			<a th:href="@{/auth/login}" class="auth-button auth-button--secondary">뒤로 가기</a>
+			<button type="submit" class="auth-button auth-button--primary">회원가입</button>
+		</div>
+
+	</form>
+</body>
+</html>
