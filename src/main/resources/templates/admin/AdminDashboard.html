@@ -76,30 +76,34 @@
 										onclick="sortTable('problemStatsTable', 1)" title="클릭하여 정렬">총
 										제출 ↕</th>
 									<th class="th-right" style="width: 14%;"
-										onclick="sortTable('problemStatsTable', 2)" title="클릭하여 정렬">평균
-										점수 ↕</th>
-									<th class="th-right" style="width: 14%;"
-										onclick="sortTable('problemStatsTable', 3)" title="클릭하여 정렬">정상
+										onclick="sortTable('problemStatsTable', 2)" title="클릭하여 정렬">정상
 										통과 ↕</th>
+									<th class="th-right" style="width: 14%;"
+										onclick="sortTable('problemStatsTable', 3)" title="클릭하여 정렬">제출
+										실패 ↕</th>
 									<th class="th-right" style="width: 18%;"
 										onclick="sortTable('problemStatsTable', 4)" title="클릭하여 정렬">통과율
 										↕</th>
 									<th class="th-right" style="width: 18%;"
-										onclick="sortTable('problemStatsTable', 5)" title="클릭하여 정렬">제출
-										실패 ↕</th>
+										onclick="sortTable('problemStatsTable', 5)" title="클릭하여 정렬">평균
+										점수 ↕</th>
 								</tr>
 							</thead>
 							<tbody>
 								<tr th:each="prob : ${stats.problemList}">
 									<td><strong
 										th:text="'#' + ${prob.id} + ' ' + ${prob.title}">문제명</strong></td>
+
 									<td class="text-right" th:text="${prob.totalCount}">0건</td>
-									<td class="text-right" style="font-weight: 600;"
-										th:text="${prob.avgScore}"
-										th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0점</td>
+
 									<td class="text-right"
 										style="color: var(--hp-success-text); font-weight: 600;"
 										th:text="${prob.passedCount}"
+										th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0건</td>
+
+									<td class="text-right"
+										style="color: #E28743; font-weight: 600;"
+										th:text="${prob.failedCount}"
 										th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0건</td>
 
 									<td class="text-right hp-pass-rate"
@@ -107,14 +111,11 @@
 										th:data-has-submissions="${prob.hasSubmissions}"
 										th:data-total="${prob.totalCount}"
 										th:data-passed="${prob.passedCount}"
-										th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">
-										0.0%
-									</td>
+										th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0.0%</td>
 
-									<td class="text-right"
-										style="color: #E28743; font-weight: 600;"
-										th:text="${prob.failedCount}"
-										th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0건</td>
+									<td class="text-right" style="font-weight: 600;"
+										th:text="${prob.avgScore}"
+										th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0점</td>
 								</tr>
 							</tbody>
 						</table>
