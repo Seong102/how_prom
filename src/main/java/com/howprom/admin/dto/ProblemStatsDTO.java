@@ -22,13 +22,25 @@ public class ProblemStatsDTO {
     private boolean hasErrors;
 
     /**
+     * 🔥 [추가] 통과율(Pass Rate) 안전 계산용 동적 Getter
+     * 타임리프 화면에서 ${statsMap[prob.id].passRate}로 바로 호출할 수 있게 해줍니다.
+     */
+    public double getPassRate() {
+        if (totalCount == null || totalCount == 0 || passedCount == null) {
+            return 0.0;
+        }
+        return ((double) passedCount / totalCount) * 100.0;
+    }
+
+    /**
      * 🔥 [핵심] JPQL Repository의 'SELECT new' 쿼리가 요구하는 3개짜리 전용 생성자!
      * (s.problem.id, COUNT(s.id), AVG(s.score)) 순서와 타입을 그대로 일치시킵니다.
      */
-    public ProblemStatsDTO(Long problemId, Long totalCount, Double avgScore) {
+    public ProblemStatsDTO(Long problemId, Long totalCount, Double avgScore, Long passedCount) {
         this.problemId = problemId;
         this.totalCount = totalCount;
         this.avgScore = avgScore;
+        this.passedCount = passedCount != null ? passedCount : 0L; // null 방어
     }
 
     /**

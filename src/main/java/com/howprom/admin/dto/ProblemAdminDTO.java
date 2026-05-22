@@ -34,6 +34,14 @@ public class ProblemAdminDTO {
     
     private List<RequirementAdminDTO> requirements; 
 
+    /**
+     * 🔥 [추가] 요구사항 개수 반환 헬퍼 메서드
+     * 타임리프 단에서 복잡한 내장함수 대신 ${prob.requirementsCount}로 콤팩트하게 부를 수 있습니다.
+     */
+    public int getRequirementsCount() {
+        return this.requirements != null ? this.requirements.size() : 0;
+    }
+
     public static ProblemAdminDTO from(Problem problem) {
         if (problem == null) return null;
         

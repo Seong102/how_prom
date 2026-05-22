@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>접근 권한 없음 - HowProm</title>
+    <style>
+        :root {
+            --hp-primary: #5B47D6;
+            --hp-primary-hover: #4a38c4;
+            --hp-bg: #F5F6FA;
+            --hp-surface: #FFFFFF;
+            --hp-text: #1A1A1A;
+            --hp-text-muted: #6B7280;
+            --hp-border: #E5E7EB;
+            --hp-radius: 12px;
+            --hp-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+            background-color: var(--hp-bg);
+            color: var(--hp-text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .error-container {
+            background-color: var(--hp-surface);
+            border-radius: var(--hp-radius);
+            box-shadow: var(--hp-shadow);
+            padding: 48px 32px;
+            text-align: center;
+            max-width: 480px;
+            width: 100%;
+            border: 1px solid var(--hp-border);
+        }
+
+        .error-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            background-color: #FDECEC;
+            color: #D14343;
+            border-radius: 50%;
+            margin-bottom: 24px;
+        }
+
+        .error-code {
+            font-size: 14px;
+            font-weight: 700;
+            color: #D14343;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .error-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 0 12px 0;
+            color: var(--hp-text);
+            letter-spacing: -0.5px;
+        }
+
+        .error-message {
+            font-size: 15px;
+            color: var(--hp-text-muted);
+            line-height: 1.6;
+            margin: 0 0 32px 0;
+            word-break: keep-all;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background-color: var(--hp-primary);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--hp-primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--hp-text-muted);
+            border: 1px solid var(--hp-border);
+        }
+
+        .btn-secondary:hover {
+            background-color: #F9FAFB;
+            color: var(--hp-text);
+        }
+    </style>
+</head>
+<body>
+
+<div class="error-container">
+    <div class="error-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+    </div>
+
+    <div class="error-code">Error Code: 403 Forbidden</div>
+    <h1 class="error-title">접근 권한이 없습니다</h1>
+    <p class="error-message">
+        죄송합니다. 현재 계정으로는 접근할 수 없는 페이지입니다.<br>
+        접근이 제한된 페이지입니다. 대시보드로 돌아가 학습을 이어가세요.
+    </p>
+
+    <div class="btn-group">
+        <button onclick="history.back()" class="btn btn-secondary">이전 페이지</button>
+        <a th:href="@{/main}" class="btn btn-primary">대시보드로 이동</a>
+    </div>
+</div>
+
+</body>
+</html>
