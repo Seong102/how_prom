@@ -3,14 +3,14 @@ package com.howprom.controller.submission;
 import com.howprom.submission.dto.MyPageDetailResponseDto;
 import com.howprom.submission.dto.MyPageResponseDto;
 import com.howprom.submission.service.MyPageService;
+import com.howprom.user.CustomUserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 @RestController
 @RequestMapping("/api/mypage")
@@ -25,21 +25,23 @@ public class MyPageController {
      */
     @GetMapping
     public ResponseEntity<MyPageResponseDto> getMyPageData(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @PageableDefault(size = 5, sort = "submittedAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        Long mockUserId = 2L; // 💡 로그인 연동 전 임시 하드코딩 유저 ID
-        MyPageResponseDto response = myPageService.getMyPageData(mockUserId, pageable);
+        MyPageResponseDto response = myPageService.getMyPageData(principal.getId(), pageable);
         return ResponseEntity.ok(response);
     }
+
     /**
      * 제출 기록 단건 상세 조회 API (상세 팝업용 대화 이력 포함)
      * GET /api/mypage/submissions/1
      */
     @GetMapping("/submissions/{id}")
-    public ResponseEntity<MyPageDetailResponseDto> getSubmissionDetail(@PathVariable("id") Long submissionId) {
+    public ResponseEntity<MyPageDetailResponseDto> getSubmissionDetail(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @PathVariable("id") Long submissionId) {
 
-        Long mockUserId = 2L; // 💡 본인 확인 인가 검증용 임시 유저 ID
-        MyPageDetailResponseDto response = myPageService.getSubmissionDetail(submissionId, mockUserId);
+        MyPageDetailResponseDto response = myPageService.getSubmissionDetail(submissionId, principal.getId());
         return ResponseEntity.ok(response);
     }
 }

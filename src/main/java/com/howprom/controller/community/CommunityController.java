@@ -3,12 +3,13 @@ package com.howprom.controller.community;
 import com.howprom.community.dto.CommunityListDto;
 import com.howprom.community.service.CommunityService;
 import com.howprom.submission.dto.MyPageDetailResponseDto;
+import com.howprom.user.CustomUserPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -19,14 +20,13 @@ public class CommunityController {
     private final CommunityService communityService;
 
     /**
-     * 다른 풀이 보기 목록 페이지
-     * GET /community/problems/{problemId}?excludeUserId=xxx
+     * 다른 풀이 보기 목록 페이지 (본인 제출 제외)
+     * GET /community/problems/{problemId}
      */
     @GetMapping("/community/problems/{problemId}")
-    public String communityList(@PathVariable Long problemId,
-                                @RequestParam(defaultValue = "0") Long excludeUserId,
-                                Model model) {
-        List<CommunityListDto> submissions = communityService.getCommunityList(problemId, excludeUserId);
+    public String communityList(@AuthenticationPrincipal CustomUserPrincipal principal,
+                                @PathVariable Long problemId, Model model) {
+        List<CommunityListDto> submissions = communityService.getCommunityList(problemId, principal.getId());
         model.addAttribute("submissions", submissions);
         model.addAttribute("problemId", problemId);
         return "community/community";
