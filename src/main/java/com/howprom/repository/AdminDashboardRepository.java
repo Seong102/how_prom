@@ -35,17 +35,19 @@ public interface AdminDashboardRepository extends JpaRepository<Submission, Long
             + "GROUP BY p.id, p.title")
     List<Object[]> findEfficiencyTokenStats();
 
+    // 🔥 [수정] 문제 테이블(problems)을 JOIN 하고 p.title을 SELECT 및 GROUP BY에 추가
     String REQUIREMENT_STATS_QUERY =
-    	    "SELECT r.problem_id, r.description, " +
-    	    "AVG(jt.score) as avg_achieve, " +
-    	    "(COUNT(CASE WHEN jt.score < 50 THEN 1 END) * 100.0 / COUNT(*)) as fail_rate " +
-    	    "FROM requirements r " +
-    	    "JOIN submissions sub ON sub.problem_id = r.problem_id " +
-    	    "JOIN JSON_TABLE(sub.requirements_result, '$[*]' COLUMNS( " +
-    	    "    req_id BIGINT PATH '$.id', " +
-    	    "    score INT PATH '$.score' " +
-    	    ")) AS jt ON jt.req_id = r.id " +
-    	    "GROUP BY r.problem_id, r.description";
+            "SELECT r.problem_id, p.title, r.description, " +
+            "AVG(jt.score) as avg_achieve, " +
+            "(COUNT(CASE WHEN jt.score < 50 THEN 1 END) * 100.0 / COUNT(*)) as fail_rate " +
+            "FROM requirements r " +
+            "JOIN problems p ON p.id = r.problem_id " + 
+            "JOIN submissions sub ON sub.problem_id = r.problem_id " +
+            "JOIN JSON_TABLE(sub.requirements_result, '$[*]' COLUMNS( " +
+            "    req_id BIGINT PATH '$.id', " +
+            "    score INT PATH '$.score' " +
+            ")) AS jt ON jt.req_id = r.id " +
+            "GROUP BY r.problem_id, p.title, r.description";
 
     @Query(value = REQUIREMENT_STATS_QUERY, nativeQuery = true)
     List<Object[]> findRequirementStatsRaw();
