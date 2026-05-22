@@ -6,6 +6,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class ResultViewDto {
+    private Long    problemId;
     private String  problemTitle;
     private String  evaluationType;
     private Integer score;
