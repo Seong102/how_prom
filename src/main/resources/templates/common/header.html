@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
 <head>
     <meta charset="UTF-8">
     <title>HowProm</title>
@@ -44,19 +45,15 @@
                     <span>문제</span>
                 </a>
 
-                <a th:href="@{/community}"
-                   th:classappend="${active == 'community'} ? 'hp-nav__link--active' : ''"
+                <a th:href="@{/mypage}"
+                   th:classappend="${active == 'mypage'} ? 'hp-nav__link--active' : ''"
                    class="hp-nav__link">
-                    <!-- Trophy icon -->
-                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
-                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
-                        <path d="M4 22h16"/>
-                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
-                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
-                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                    <!-- Person icon -->
+					<svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
                     </svg>
-                    <span>커뮤니티</span>
+                    <span>마이페이지</span>
                 </a>
 
                 <a th:href="@{/admin}"
@@ -67,20 +64,33 @@
                         <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
                         <circle cx="12" cy="12" r="3"/>
                     </svg>
-                    <span>관리자</span>
+                    <span>관리자(관리사 계정 전용)</span>
                 </a>
             </nav>
         </div>
 
-        <!-- 사용자 아이콘 (오른쪽) -->
-        <div class="hp-header__right">
-            <a th:href="@{/profile}" class="hp-header__user" aria-label="내 정보">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                </svg>
-            </a>
-        </div>
+		<!-- 사용자 아이콘 + 닉네임 + 로그아웃 (오른쪽) -->
+		<div class="hp-header__right">
+		    <!-- 닉네임 -->
+		    <span class="hp-header__nickname" sec:authentication="principal.nickname">닉네임</span>
+
+		    <span class="hp-header__divider">|</span>
+
+		    <!-- 로그아웃 (POST form) -->
+		    <form th:action="@{/logout}" method="post" class="hp-header__logout-form">
+		        <button type="submit" class="hp-header__logout-btn">로그아웃</button>
+		    </form>
+
+		    <span class="hp-header__divider">|</span>
+
+		    <!-- 프로필 아이콘 -->
+		    <a th:href="@{/profile}" class="hp-header__user" aria-label="내 정보">
+		        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+		            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+		            <circle cx="12" cy="7" r="4"/>
+		        </svg>
+		    </a>
+		</div>
     </div>
 </header>
 
@@ -201,6 +211,42 @@
             background-color: var(--hp-border-soft);
             color: var(--hp-text);
         }
+		
+		.hp-header__right {
+		    display: flex;
+		    align-items: center;
+		    gap: 12px;
+		}
+
+		.hp-header__nickname {
+		    font-size: 14px;
+		    color: var(--hp-text);
+		    font-weight: 500;
+		}
+
+		.hp-header__divider {
+		    color: var(--hp-border);
+		    font-size: 12px;
+		}
+
+		.hp-header__logout-form {
+		    margin: 0;
+		}
+
+		.hp-header__logout-btn {
+		    background: none;
+		    border: none;
+		    font-size: 14px;
+		    color: var(--hp-text-muted);
+		    cursor: pointer;
+		    padding: 0;
+		    font-family: inherit;
+		    transition: color 0.15s ease;
+		}
+
+		.hp-header__logout-btn:hover {
+		    color: var(--hp-text);
+		}
 
         /* ===== Responsive ===== */
         @media (max-width: 768px) {

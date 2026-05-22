@@ -10,7 +10,7 @@
 <body>
 	<a th:href="@{/}" class="auth-logo">HowProm</a>
 	
-	<form class="auth-card" th:action="@{login}" method="post">
+	<form class="auth-card" th:action="@{/login}" method="post">
 		
 		<h1 class="auth-card__title">로그인</h1>
 		<!--로그인 실패 메시지-->
@@ -29,7 +29,7 @@
 			</div>
 			<input type="text" 
 					 id="username" 
-					 name="username" 
+					 name="email" 
 					 class="form-input" 
 					 autocomplete="username"
 					 autofocus
@@ -56,9 +56,10 @@
 			</label>
 			<button type="submit" class="btn-primary">로그인</button>
 		</div>
+		<!--
 		<div class="auth-divider">간편 로그인</div>
 		<div class="social-logins">
-			<!--Google 로그인-->
+			Google 로그인
 			<a th:href="@{/oauth2/authorization/google}"
 				class="social-btn"
 				title="Google 로그인"
@@ -67,20 +68,21 @@
 				</svg>
 			</a>
 			
-			<!--Naver 로그인-->
+			Naver 로그인
 			<a th:href="@{/oauth2/authorization/naver}"
 				class="social-btn social-btn--naver"
 				title="네이버 로그인"
 				aria-label="네이버 로그인">
 			</a>
 			
-			<!--Kakao 로그인-->
+			Kakao 로그인
 			<a th:href="@{/oauth2/authorization/kakao}"
 				class="social-btn social-btn--kakao"
 				title="카카오 로그인"
 				aria-label="카카오 로그인">
 			</a>
 		</div>
+		-->
 		<div class="auth-footer">
 			아이디가 없나요? <a th:href="@{/auth/signup}">회원가입</a>
 		</div>

@@ -12,17 +12,17 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    	/*
     	http
             .authorizeHttpRequests(auth -> auth
-            	.anyRequest().permitAll()  // 비활성화
-                .requestMatchers("/", "/auth/**", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/", "/main","/auth/**", "/css/**", "/js/**", "/images/**").permitAll()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/auth/login")
                 .loginProcessingUrl("/login")
-                .defaultSuccessUrl("/", true)
+                .usernameParameter("email")
+                .passwordParameter("password")
+                .defaultSuccessUrl("/main", true)
                 .failureUrl("/auth/login?error")
                 .permitAll()
             )
@@ -31,15 +31,6 @@ public class SecurityConfig {
                 .logoutSuccessUrl("/auth/login?logout")
                 .permitAll()
             );
-        */
-    	
-    	///비활성화///
-    	http
-        .authorizeHttpRequests(auth -> auth
-            .anyRequest().permitAll()  
-        )
-        .csrf(csrf -> csrf.disable()); 
-    	////////////
         return http.build();
     }
 
