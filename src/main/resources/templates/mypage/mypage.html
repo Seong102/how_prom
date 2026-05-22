@@ -156,9 +156,10 @@
             display: inline-block; padding: 3px 10px;
             border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.4px;
         }
-        .badge-passed { background: var(--hp-success-bg); color: var(--hp-success-text); }
-        .badge-failed { background: var(--hp-danger-bg);  color: var(--hp-danger-text); }
-        .badge-error  { background: #FEF3C7; color: #D97706; }
+        .badge-passed  { background: var(--hp-success-bg); color: var(--hp-success-text); }
+        .badge-failed  { background: var(--hp-danger-bg);  color: var(--hp-danger-text); }
+        .badge-error   { background: #FEF3C7; color: #D97706; }
+        .badge-grading { background: var(--hp-bg); border: 1px solid var(--hp-border); color: var(--hp-text-muted); }
 
         /* ── 페이지네이션 ── */
         .pagination {
@@ -273,8 +274,8 @@
                 <td th:text="${sub.problemTitle}">버블 정렬 알고리즘 구현</td>
                 <td>
                     <span class="eval-badge"
-                          th:classappend="${sub.evaluationType == 'STANDARD'}   ? 'ev-standard'   :
-                                         (${sub.evaluationType == 'EFFICIENCY'} ? 'ev-efficiency' : 'ev-budget')"
+                          th:classappend="${sub.evaluationType.name() == 'STANDARD'}   ? 'ev-standard'   :
+                                         (${sub.evaluationType.name() == 'EFFICIENCY'} ? 'ev-efficiency' : 'ev-budget')"
                           th:text="${sub.evaluationType}">STANDARD</span>
                 </td>
                 <td class="score-cell" th:text="${sub.score + '점'}">88점</td>
@@ -283,8 +284,9 @@
                     th:text="${#temporals.format(sub.createdAt, 'yyyy.MM.dd')}">2025.05.11</td>
                 <td>
                     <span class="status-badge"
-                          th:classappend="${sub.status == 'PASSED'} ? 'badge-passed' :
-                                         (${sub.status == 'FAILED'} ? 'badge-failed' : 'badge-error')"
+                          th:classappend="${sub.status.name() == 'PASSED'}  ? 'badge-passed'  :
+                                         (${sub.status.name() == 'FAILED'}  ? 'badge-failed'  :
+                                         (${sub.status.name() == 'GRADING'} ? 'badge-grading' : 'badge-error'))"
                           th:text="${sub.status}">PASSED</span>
                 </td>
             </tr>

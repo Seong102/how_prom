@@ -24,11 +24,13 @@ public class ResultService {
         Submission s = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("Submission not found: " + submissionId));
 
-        int turnCount = (int) s.getConversation().stream()
-                .filter(m -> "user".equals(m.getRole()))
-                .count();
+        int turnCount = s.getConversation() == null ? 0 :
+                (int) s.getConversation().stream()
+                        .filter(m -> "user".equals(m.getRole()))
+                        .count();
 
         return new ResultViewDto(
+                s.getProblem().getId(),
                 s.getProblem().getTitle(),
                 s.getProblem().getEvaluationType().name(),
                 s.getScore(),
@@ -41,6 +43,10 @@ public class ResultService {
     public List<RequirementResultViewDto> getRequirementResults(Long submissionId) {
         Submission s = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("Submission not found: " + submissionId));
+
+        if (s.getRequirementsResult() == null) {
+            return List.of();
+        }
 
         return s.getRequirementsResult().stream()
                 .map(r -> {

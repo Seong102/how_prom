@@ -2,6 +2,7 @@ package com.howprom.repository;
 
 import com.howprom.common.entity.Submission;
 import com.howprom.common.entity.Submission.SubmissionStatus;
+import com.howprom.community.dto.CommunityListDto;
 import com.howprom.submission.dto.MyPageListDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,6 +10,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 @Repository
 public interface SubmissionRepository extends JpaRepository<Submission, Long> {
@@ -40,4 +43,16 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     @Query("SELECT COUNT(DISTINCT s.problem.id) FROM Submission s WHERE s.user.id = :userId AND s.status = :status")
     long countDistinctProblemIdByUserIdAndStatus(@Param("userId") Long userId, @Param("status") SubmissionStatus status);
+
+    /**
+     * 5. 커뮤니티 — 같은 문제의 PASSED 제출 목록 (본인 제외, 점수 내림차순)
+     */
+    @Query("SELECT new com.howprom.community.dto.CommunityListDto(" +
+            "s.id, u.nickname, s.score, s.totalUserTokens, s.submittedAt) " +
+            "FROM Submission s JOIN s.user u " +
+            "WHERE s.problem.id = :problemId AND s.status = :status AND s.user.id <> :excludeUserId " +
+            "ORDER BY s.score DESC, s.totalUserTokens ASC")
+    List<CommunityListDto> findCommunityList(@Param("problemId") Long problemId,
+                                             @Param("status") SubmissionStatus status,
+                                             @Param("excludeUserId") Long excludeUserId);
 }
