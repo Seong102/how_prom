@@ -43,6 +43,7 @@ public class AdminDashboardDTO {
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
     public static class RequirementAnalysisDTO {
         private String probId;
+        private String title;
         private String description;
         private String avgAchieve;
         private String failRate;

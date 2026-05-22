@@ -21,14 +21,6 @@ public class AdminDashboardController {
             dashboardStats = AdminDashboardDTO.builder().build(); 
         }
 
-        // 🔍 [긴급 점검 로그] 콘솔 창에서 null인지 빈 배열([])인지 확인하는 용도
-        System.out.println("====== [대시보드 데이터 검증 로그] ======");
-        System.out.println("1. 상단 지표 - 총 제출 건수: " + dashboardStats.getTotalSubmissions());
-        System.out.println("2. 문제 통계 리스트: " + dashboardStats.getProblemList()); 
-        System.out.println("3. 토큰 현황 리스트: " + dashboardStats.getEfficiencyList());
-        System.out.println("4. 요구사항 리스트: " + dashboardStats.getRequirementList());
-        System.out.println("=========================================");
-
         model.addAttribute("stats", dashboardStats);
         return "admin/AdminDashboard";
     }

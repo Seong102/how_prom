@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>HowProm - 관리자 대시보드</title>
-    
     <th:block th:replace="~{common/header :: styles}"></th:block>
-    
     <link rel="stylesheet" th:href="@{/css/admin.css}">
 </head>
 <body>
@@ -15,7 +13,7 @@
 <main class="hp-main">
     <div class="hp-page-header">
         <h1 class="hp-page-header__title">
-            통합 관리자 대시보드 <span class="hp-admin-badge">Admin</span>
+            관리자 대시보드 <span class="hp-admin-badge">Admin</span>
         </h1>
         <p class="hp-page-header__subtitle"></p>
     </div>
@@ -46,104 +44,297 @@
     </div>
 
     <div class="hp-dashboard-row">
-        
+
         <div class="hp-card">
             <div class="hp-card__header">문제별 종합 통계 현황</div>
-            <div class="hp-card__body" style="padding: 12px 24px;">
-                <table class="hp-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 28%;">문제명</th>
-                            <th class="th-right" style="width: 13%;">총 제출</th>
-                            <th class="th-right" style="width: 15%;">평균 점수</th>
-                            <th class="th-right" style="width: 14%;">정상 통과</th>
-                            <th class="th-right" style="width: 15%;">제출 실패</th>
-                            <th class="th-right" style="width: 15%;">파싱 에러</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="prob : ${stats.problemList}">
-                            <td><strong th:text="'#' + ${prob.id} + ' ' + ${prob.title}">문제명</strong></td>
-                            <td class="text-right" th:text="${prob.totalCount}">0건</td>
-                            
-                            <td class="text-right" style="font-weight: 600;" 
-                                th:text="${prob.avgScore}"
-                                th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0점</td>
-                                
-                            <td class="text-right" style="color: var(--hp-success-text); font-weight:600;" 
-                                th:text="${prob.passedCount}"
-                                th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0건</td>
-
-                            <td class="text-right" style="color: #E28743; font-weight:600;" 
-                                th:text="${prob.failedCount}"
-                                th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0건</td>
-                                
-                            <td class="text-right" 
-                                th:text="${prob.errorCount}"
-                                th:style="${prob.hasErrors ? 'color: var(--hp-danger-text); font-weight: 600;' : 'font-weight: 600;'}"
-                                th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0건</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="hp-search-bar">
+                <select id="filterProblem" class="hp-sort-btn" style="color: var(--hp-text); border-color: var(--hp-border); padding: 7px 10px; margin-right: 4px;">
+                    <option value="title">문제명</option>
+                    <option value="id">문제번호</option>
+                    <option value="count_gte">총 제출 (이상)</option>
+                    <option value="count_lte">총 제출 (이하)</option>
+                    <option value="score_gte">평균 점수 (이상)</option>
+                    <option value="score_lte">평균 점수 (이하)</option>
+                </select>
+                <input type="text" id="searchProblem" class="hp-search-input"
+                       placeholder="검색어를 입력하세요..."
+                       onkeyup="searchTableAdvanced('searchProblem', 'filterProblem', 'problemStatsTable')">
+            </div>
+            <div class="hp-card__body">
+                <div class="hp-table-scroll">
+                    <table class="hp-table" id="problemStatsTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 28%;" onclick="sortTable('problemStatsTable', 0)" title="클릭하여 정렬">문제명 ↕</th>
+                                <th class="th-right" style="width: 13%;" onclick="sortTable('problemStatsTable', 1)" title="클릭하여 정렬">총 제출 ↕</th>
+                                <th class="th-right" style="width: 15%;" onclick="sortTable('problemStatsTable', 2)" title="클릭하여 정렬">평균 점수 ↕</th>
+                                <th class="th-right" style="width: 14%;" onclick="sortTable('problemStatsTable', 3)" title="클릭하여 정렬">정상 통과 ↕</th>
+                                <th class="th-right" style="width: 15%;" onclick="sortTable('problemStatsTable', 4)" title="클릭하여 정렬">제출 실패 ↕</th>
+                                <th class="th-right" style="width: 15%;" onclick="sortTable('problemStatsTable', 5)" title="클릭하여 정렬">파싱 에러 ↕</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="prob : ${stats.problemList}">
+                                <td><strong th:text="'#' + ${prob.id} + ' ' + ${prob.title}">문제명</strong></td>
+                                <td class="text-right" th:text="${prob.totalCount}">0건</td>
+                                <td class="text-right" style="font-weight: 600;"
+                                    th:text="${prob.avgScore}"
+                                    th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0점</td>
+                                <td class="text-right" style="color: var(--hp-success-text); font-weight:600;"
+                                    th:text="${prob.passedCount}"
+                                    th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0건</td>
+                                <td class="text-right" style="color: #E28743; font-weight:600;"
+                                    th:text="${prob.failedCount}"
+                                    th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0건</td>
+                                <td class="text-right"
+                                    th:text="${prob.errorCount}"
+                                    th:style="${prob.hasErrors ? 'color: var(--hp-danger-text); font-weight: 600;' : 'font-weight: 600;'}"
+                                    th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0건</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <div class="hp-card">
             <div class="hp-card__header">EFFICIENCY 모드 · 평균 토큰 현황</div>
-            <div class="hp-card__body">
+            <div class="hp-search-bar">
+                <select id="filterEfficiency" class="hp-sort-btn" style="color: var(--hp-text); border-color: var(--hp-border); padding: 7px 10px; margin-right: 4px;">
+                    <option value="title">문제명</option>
+                    <option value="id">문제번호</option>
+                    <option value="token_gte">평균 토큰 (이상)</option>
+                    <option value="token_lte">평균 토큰 (이하)</option>
+                </select>
+                <input type="text" id="searchEfficiency" class="hp-search-input"
+                       placeholder="검색어를 입력하세요..."
+                       onkeyup="searchProgressAdvanced('searchEfficiency', 'filterEfficiency', 'efficiencyList')">
+                <button class="hp-sort-btn" onclick="sortProgress('efficiencyList', 'avgTokenVal')" style="margin-left: 8px;">토큰 ↕</button>
+            </div>
+            <div class="hp-card__body hp-progress-scroll">
                 <p style="font-size: 12px; color: var(--hp-text-muted); margin-bottom: 24px; margin-top: -4px;">
                     submissions.total_user_tokens 기준값 시각화 (사용자 작성 프롬프트 토큰 대상)
                 </p>
-                <div class="hp-progress-container" style="margin-top: 0; gap: 22px;">
-                    <div class="hp-progress-item" th:each="eff : ${stats.efficiencyList}">
+                <div class="hp-progress-container" id="efficiencyList" style="margin-top: 0; gap: 22px;">
+                    <div class="hp-progress-item" th:each="eff : ${stats.efficiencyList}"
+                         th:attr="data-title=${eff.title}, data-token=${eff.avgUserTokens}">
                         <div class="hp-progress-info">
                             <span th:text="'#' + ${eff.id} + ' ' + ${eff.title}">문제명</span>
-                            <span class="hp-progress-meta">avg <strong style="color:var(--hp-primary)" th:text="${eff.avgUserTokens}">0</strong> tokens</span>
+                            <span class="hp-progress-meta">avg <strong class="avgTokenVal" style="color:var(--hp-primary)" th:text="${eff.avgUserTokens}">0</strong> tokens</span>
                         </div>
                         <div class="hp-progress-bar-bg" style="height: 8px;">
-                            <div class="hp-progress-bar-fill" 
+                            <div class="hp-progress-bar-fill"
                                  th:style="'width: ' + ${eff.barWidth} + '; background-color: ' + ${eff.color} + ';'"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        
+
     </div>
 
     <div class="hp-card">
         <div class="hp-card__header">요구사항별 달성률 · 자주 감점되는 취약 조건 분석</div>
-        <table class="hp-table">
-            <thead>
-                <tr>
-                    <th style="width: 12%;">문제 번호</th>
-                    <th style="width: 35%;">핵심 요구사항 명세 (requirements.description)</th>
-                    <th class="th-right" style="width: 15%;">평균 달성도</th>
-                    <th class="th-right" style="width: 15%;">달성 미달 빈도</th>
-                    <th style="width: 23%;">미달 분포 비율</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="req : ${stats.requirementList}">
-                    <td th:text="${req.probId}">#000</td>
-                    <td><strong th:text="${req.description}">요구사항 명세</strong></td>
-                    <td class="text-right" th:style="'color: ' + ${req.color} + '; font-weight:600;'" th:text="${req.avgAchieve}">0%</td>
-                    <td class="text-right" th:text="${req.failRate}">0%</td>
-                    <td>
-                        <div class="hp-progress-bar-bg" style="height: 8px;">
-                            <div class="hp-progress-bar-fill" th:style="'width: ' + ${req.failRate} + '; background-color: ' + ${req.color} + ';'"></div>
-                        </div>
-                    </td>
-                </tr>
-                <tr th:if="${#lists.isEmpty(stats.requirementList)}">
-                    <td colspan="5" style="text-align: center; color: var(--hp-text-muted); padding: 32px 0;">
-                        분석된 요구사항 통계 데이터가 존재하지 않습니다.
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="hp-search-bar">
+            <select id="filterReq" class="hp-sort-btn" style="color: var(--hp-text); border-color: var(--hp-border); padding: 7px 10px; margin-right: 4px;">
+                <option value="title">문제명</option>
+                <option value="id">문제번호</option>
+                <option value="desc">요구사항 명세</option>
+            </select>
+            <input type="text" id="searchReq" class="hp-search-input"
+                   placeholder="선택한 조건으로 검색..."
+                   onkeyup="searchReqAdvanced('searchReq', 'filterReq', 'reqTable')">
+        </div>
+        <div class="hp-card__body">
+            <div class="hp-req-scroll">
+                <table class="hp-table" id="reqTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 10%;" onclick="sortTable('reqTable', 0)" title="클릭하여 정렬">문제 번호 ↕</th>
+                            <th style="width: 20%;" onclick="sortTable('reqTable', 1)" title="클릭하여 정렬">문제명 ↕</th>
+                            <th style="width: 25%;">핵심 요구사항 명세 (requirements.description)</th>
+                            <th class="th-right" style="width: 15%;" onclick="sortTable('reqTable', 3)" title="클릭하여 정렬">평균 달성도 ↕</th>
+                            <th class="th-right" style="width: 15%;" onclick="sortTable('reqTable', 4)" title="클릭하여 정렬">달성 미달 빈도 ↕</th>
+                            <th style="width: 15%;">미달 분포 비율</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="req : ${stats.requirementList}">
+                            <td th:text="${req.probId}">#000</td>
+                            <td th:text="${req.title}" style="font-weight: 500; color: var(--hp-text);">문제명</td>
+                            <td><strong th:text="${req.description}">요구사항 명세</strong></td>
+                            <td class="text-right" th:style="'color: ' + ${req.color} + '; font-weight:600;'" th:text="${req.avgAchieve}">0%</td>
+                            <td class="text-right" th:text="${req.failRate}">0%</td>
+                            <td>
+                                <div class="hp-progress-bar-bg" style="height: 8px;">
+                                    <div class="hp-progress-bar-fill" th:style="'width: ' + ${req.failRate} + '; background-color: ' + ${req.color} + ';'"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(stats.requirementList)}">
+                            <td colspan="6" style="text-align: center; color: var(--hp-text-muted); padding: 32px 0;">
+                                분석된 요구사항 통계 데이터가 존재하지 않습니다.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </main>
+
+<script>
+    const sortState = {};
+
+    function sortTable(tableId, colIndex) {
+        const table = document.getElementById(tableId);
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr:not([style*="display: none"])'));
+
+        sortState[tableId + colIndex] = !sortState[tableId + colIndex];
+        const asc = sortState[tableId + colIndex];
+
+        rows.sort((a, b) => {
+            const aText = a.cells[colIndex]?.innerText.trim() ?? '';
+            const bText = b.cells[colIndex]?.innerText.trim() ?? '';
+            const aNum = parseFloat(aText.replace(/[^0-9.\-]/g, ''));
+            const bNum = parseFloat(bText.replace(/[^0-9.\-]/g, ''));
+            if (!isNaN(aNum) && !isNaN(bNum)) return asc ? aNum - bNum : bNum - aNum;
+            return asc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+
+        const headers = table.querySelectorAll('thead th[onclick]');
+        headers.forEach(th => {
+            const base = th.innerText.replace(/ [↑↓↕]$/, '');
+            const idx = parseInt(th.getAttribute('onclick').match(/\d+$/)[0]);
+            th.innerText = base + (idx === colIndex ? (asc ? ' ↑' : ' ↓') : ' ↕');
+        });
+    }
+
+    function searchTable(inputId, tableId) {
+        const keyword = document.getElementById(inputId).value.toLowerCase();
+        const tbody = document.getElementById(tableId).querySelector('tbody');
+        tbody.querySelectorAll('tr').forEach(row => {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(keyword) ? '' : 'none';
+        });
+    }
+
+    function searchTableAdvanced(inputId, filterId, tableId) {
+        const keyword = document.getElementById(inputId).value.toLowerCase().trim();
+        const filterType = document.getElementById(filterId).value;
+        const tbody = document.getElementById(tableId).querySelector('tbody');
+        
+        tbody.querySelectorAll('tr').forEach(row => {
+            if (!keyword) { row.style.display = ''; return; }
+
+            const titleText = row.cells[0]?.innerText.toLowerCase() ?? '';
+            const idMatch = titleText.match(/#(\d+)/);
+            const probId = idMatch ? idMatch[1] : '';
+            
+            const totalCount = parseFloat(row.cells[1]?.innerText.replace(/[^0-9]/g, '')) || 0;
+            const avgScore = parseFloat(row.cells[2]?.innerText.replace(/[^0-9.]/g, '')) || 0;
+            const inputNum = parseFloat(keyword);
+
+            let isMatch = false;
+
+            if (filterType === 'title') {
+                isMatch = titleText.includes(keyword);
+            } else if (filterType === 'id') {
+                isMatch = probId.includes(keyword);
+            } else if (filterType === 'count_gte') {
+                isMatch = !isNaN(inputNum) && totalCount >= inputNum;
+            } else if (filterType === 'count_lte') {
+                isMatch = !isNaN(inputNum) && totalCount <= inputNum;
+            } else if (filterType === 'score_gte') {
+                isMatch = !isNaN(inputNum) && avgScore >= inputNum;
+            } else if (filterType === 'score_lte') {
+                isMatch = !isNaN(inputNum) && avgScore <= inputNum;
+            }
+
+            row.style.display = isMatch ? '' : 'none';
+        });
+    }
+
+    // 🔥 [추정/추가] 요구사항 분석 전용 다중 조건식 고급 검색 로직
+    function searchReqAdvanced(inputId, filterId, tableId) {
+        const keyword = document.getElementById(inputId).value.toLowerCase().trim();
+        const filterType = document.getElementById(filterId).value;
+        const tbody = document.getElementById(tableId).querySelector('tbody');
+        
+        tbody.querySelectorAll('tr').forEach(row => {
+            if (row.cells.length < 5) return; // 데이터 없음 예외 행 무시
+            if (!keyword) { row.style.display = ''; return; }
+
+            const rawProbId = row.cells[0]?.innerText.toLowerCase() ?? '';
+            const cleanProbId = rawProbId.replace('#', ''); // '#' 기호 제거 검색 보정
+            const titleText = row.cells[1]?.innerText.toLowerCase() ?? '';
+            const descText = row.cells[2]?.innerText.toLowerCase() ?? '';
+
+            let isMatch = false;
+
+            if (filterType === 'title') {
+                isMatch = titleText.includes(keyword);
+            } else if (filterType === 'id') {
+                isMatch = cleanProbId.includes(keyword) || rawProbId.includes(keyword);
+            } else if (filterType === 'desc') {
+                isMatch = descText.includes(keyword);
+            }
+
+            row.style.display = isMatch ? '' : 'none';
+        });
+    }
+
+    function searchProgressAdvanced(inputId, filterId, containerId) {
+        const keyword = document.getElementById(inputId).value.toLowerCase().trim();
+        const filterType = document.getElementById(filterId).value;
+        const inputNum = parseFloat(keyword);
+        
+        document.getElementById(containerId).querySelectorAll('.hp-progress-item').forEach(item => {
+            if (!keyword) { item.style.display = ''; return; }
+
+            const title = (item.dataset.title || '').toLowerCase();
+            const idMatch = item.querySelector('.hp-progress-info span')?.innerText.match(/#(\d+)/);
+            const probId = idMatch ? idMatch[1] : '';
+            const tokenVal = parseFloat(item.dataset.token || 0);
+
+            let isMatch = false;
+
+            if (filterType === 'title') {
+                isMatch = title.includes(keyword);
+            } else if (filterType === 'id') {
+                isMatch = probId.includes(keyword);
+            } else if (filterType === 'token_gte') {
+                isMatch = !isNaN(inputNum) && tokenVal >= inputNum;
+            } else if (filterType === 'token_lte') {
+                isMatch = !isNaN(inputNum) && tokenVal <= inputNum;
+            }
+
+            item.style.display = isMatch ? '' : 'none';
+        });
+    }
+
+    function sortProgress(containerId, valClass) {
+        const container = document.getElementById(containerId);
+        const items = Array.from(container.querySelectorAll('.hp-progress-item'));
+
+        sortState[containerId] = !sortState[containerId];
+        const asc = sortState[containerId];
+
+        items.sort((a, b) => {
+            const aVal = parseFloat(a.dataset.token || 0);
+            const bVal = parseFloat(b.dataset.token || 0);
+            return asc ? aVal - bVal : bVal - aVal;
+        });
+
+        items.forEach(item => container.appendChild(item));
+
+        const btn = document.querySelector(`button[onclick="sortProgress('${containerId}', '${valClass}')"]`);
+        if (btn) btn.innerText = '토큰 ' + (asc ? '↑' : '↓');
+    }
+</script>
 
 </body>
 </html>

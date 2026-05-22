@@ -10,7 +10,33 @@
 .text-right { text-align: right !important; }
 .text-center { text-align: center !important; }
 .hp-action-group { display: inline-flex; gap: 8px; justify-content: center; width: 100%; }
-.hp-search-box { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
+.hp-search-box { display: flex; gap: 6px; margin-bottom: 20px; align-items: center; }
+
+/* 🔥 [추가] 크기 제각각인 것 방지: 검색 컴포넌트 크기 슬림화 및 완전 통일 */
+.hp-search-box select, 
+.hp-search-box input {
+    height: 38px !important;
+    box-sizing: border-box !important;
+}
+.hp-manage-filter-input {
+    width: 180px !important; /* 최대 크기를 콤팩트하게 줄이고 일괄 고정 */
+    max-width: 180px !important;
+}
+
+/* 🔥 [추가] 테이블 내부 스크롤 스펙 정의 */
+.hp-manage-table-scroll {
+    max-height: 520px; /* 대량 데이터 대응용 최대 높이 제한 */
+    overflow-y: auto;
+    overflow-x: auto;
+}
+/* 스크롤 시 헤더 고정 (선택 사항이지만 UX 향상용) */
+.hp-manage-table-scroll thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: var(--hp-card-bg, #fff);
+    box-shadow: inset 0 -1px 0 var(--hp-border);
+}
 </style>
 </head>
 <body>
@@ -31,76 +57,212 @@
 		<div th:replace="~{admin/adminSubNav :: subNav('manage')}"></div>
 
         <div class="hp-search-box">
-            <form th:action="@{/admin/problems/manage}" method="GET" style="display: flex; gap: 10px;">
-                <input type="text" name="keyword" th:value="${keyword}" 
-                       placeholder="번호 또는 제목 검색..." 
-                       class="hp-input" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 250px;">
-                <button type="submit" class="hp-btn hp-btn--primary">검색</button>
-                <a th:href="@{/admin/problems/manage}" class="hp-btn hp-btn--outline">초기화</a>
-            </form>
+            <select id="filterManage" class="hp-sort-btn" onchange="toggleSearchInput()" style="color: var(--hp-text); border-color: var(--hp-border); padding: 8px 12px; width: 110px;">
+                <option value="title">제목</option>
+                <option value="id">번호</option>
+                <option value="type">유형</option>
+                <option value="status">공개 상태</option>
+            </select>
+            
+            <input type="text" id="searchManageText" class="hp-search-input hp-manage-filter-input" 
+                   placeholder="검색어 입력..." 
+                   onkeyup="searchManageAdvanced()"
+                   style="padding: 0 12px; border: 1px solid var(--hp-border); border-radius: 4px;">
+
+            <select id="searchManageType" class="hp-sort-btn hp-manage-filter-input" onchange="searchManageAdvanced()" 
+                    style="display: none; color: var(--hp-text); border-color: var(--hp-border); padding: 8px 12px;">
+                <option value="">유형 전체</option>
+                <option value="standard">Standard</option>
+                <option value="efficiency">Efficiency</option>
+                <option value="budget">Budget</option>
+            </select>
+
+            <select id="searchManageStatus" class="hp-sort-btn hp-manage-filter-input" onchange="searchManageAdvanced()" 
+                    style="display: none; color: var(--hp-text); border-color: var(--hp-border); padding: 8px 12px;">
+                <option value="">상태 전체</option>
+                <option value="공개">공개</option>
+                <option value="비공개">비공개</option>
+            </select>
+
+            <button type="button" class="hp-btn hp-btn--outline" onclick="resetManageFilter()" style="height: 38px; white-space: nowrap;">필터 초기화</button>
         </div>
 
 		<div class="hp-card">
 			<div class="hp-card__header">전체 출제 문항 마스터 레코드</div>
 			<div class="hp-card__body" style="padding: 0;">
-				<table class="hp-table">
-					<thead>
-						<tr>
-							<th style="width: 8%; padding-left: 24px;">번호</th>
-							<th style="width: 34%;">제목</th>
-							<th style="width: 13%; text-align: center;">유형</th>
-							<th style="width: 13%; text-align: center;">공개 여부</th>
-							<th class="text-center" style="width: 10%;">제출 수</th>
-							<th class="text-center" style="width: 11%;">평균 점수</th>
-							<th class="text-center" style="width: 11%;">관리</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr th:each="prob : ${problemList}">
-							<td style="padding-left: 24px;" th:text="'#' + ${#numbers.formatInteger(prob.id, 3)}">#001</td>
-							<td><strong th:text="${prob.title}">문제 제목 명세</strong></td>
-							<td class="text-center">
-                                <span class="hp-badge hp-badge--standard" th:if="${prob.evaluationType == 'STANDARD'}">Standard</span>
-								<span class="hp-badge hp-badge--efficiency" th:if="${prob.evaluationType == 'EFFICIENCY'}">Efficiency</span>
-								<span class="hp-badge hp-badge--budget" th:if="${prob.evaluationType == 'BUDGET'}">Budget</span>
-							</td>
-							<td class="text-center">
-                                <label class="hp-switch" style="justify-content: center;"> 
-                                    <input type="checkbox" class="hp-switch__input" th:checked="${prob.isPublic}" th:attr="data-id=${prob.id}"> 
-                                    <span class="hp-switch__slider"></span> 
-                                    <span class="hp-switch__label" th:text="${prob.isPublic} ? '공개' : '비공개'">비공개</span>
-                                </label>
-                            </td>
-                            <td class="text-center">
-                                <span th:text="${statsMap != null && statsMap.containsKey(prob.id) ? statsMap[prob.id].totalCount + '건' : '0건'}">0건</span>
-                            </td>
-                            <td class="text-center hp-text-muted" style="font-weight: 600;">
-                                <span th:text="${statsMap != null && statsMap.containsKey(prob.id) ? #numbers.formatDecimal(statsMap[prob.id].avgScore, 1, 1) : '-'}">-</span>
-                            </td>
-                            <td class="text-center">
-								<div class="hp-action-group">
-									<a th:href="@{/admin/problems/edit/{id}(id=${prob.id})}" class="hp-btn hp-btn--outline" style="white-space: nowrap;">수정</a>
-									<button type="button" class="hp-btn hp-btn--danger-outline" th:attr="onclick=|deleteProblem('${prob.id}')|" style="white-space: nowrap;">삭제</button>
-								</div>
-							</td>
-						</tr>
+                <div class="hp-manage-table-scroll">
+                    <table class="hp-table" id="problemManageTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 10%; padding-left: 24px; cursor: pointer;" onclick="sortTable('problemManageTable', 0)" title="클릭하여 정렬">번호 ↕</th>
+                                <th style="width: 32%; cursor: pointer;" onclick="sortTable('problemManageTable', 1)" title="클릭하여 정렬">제목 ↕</th>
+                                <th style="width: 13%; text-align: center; cursor: pointer;" onclick="sortTable('problemManageTable', 2)" title="클릭하여 정렬">유형 ↕</th>
+                                <th style="width: 13%; text-align: center; cursor: pointer;" onclick="sortTable('problemManageTable', 3)" title="클릭하여 정렬">공개 여부 ↕</th>
+                                <th class="text-center" style="width: 10%; cursor: pointer;" onclick="sortTable('problemManageTable', 4)" title="클릭하여 정렬">제출 수 ↕</th>
+                                <th class="text-center" style="width: 11%; cursor: pointer;" onclick="sortTable('problemManageTable', 5)" title="클릭하여 정렬">평균 점수 ↕</th>
+                                <th class="text-center" style="width: 11%;">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="prob : ${problemList}">
+                                <td style="padding-left: 24px;" th:text="'#' + ${#numbers.formatInteger(prob.id, 3)}">#001</td>
+                                <td><strong th:text="${prob.title}">문제 제목 명세</strong></td>
+                                <td class="text-center">
+                                    <span class="hp-badge hp-badge--standard" th:if="${prob.evaluationType == 'STANDARD'}">Standard</span>
+                                    <span class="hp-badge hp-badge--efficiency" th:if="${prob.evaluationType == 'EFFICIENCY'}">Efficiency</span>
+                                    <span class="hp-badge hp-badge--budget" th:if="${prob.evaluationType == 'BUDGET'}">Budget</span>
+                                </td>
+                                <td class="text-center">
+                                    <label class="hp-switch" style="justify-content: center;"> 
+                                        <input type="checkbox" class="hp-switch__input" th:checked="${prob.isPublic}" th:attr="data-id=${prob.id}"> 
+                                        <span class="hp-switch__slider"></span> 
+                                        <span class="hp-switch__label hp-status-text" th:text="${prob.isPublic} ? '공개' : '비공개'">비공개</span>
+                                    </label>
+                                </td>
+                                <td class="text-center">
+                                    <span th:text="${statsMap != null && statsMap.containsKey(prob.id) ? statsMap[prob.id].totalCount + '건' : '0건'}">0건</span>
+                                </td>
+                                <td class="text-center hp-text-muted" style="font-weight: 600;">
+                                    <span th:text="${statsMap != null && statsMap.containsKey(prob.id) ? #numbers.formatDecimal(statsMap[prob.id].avgScore, 1, 1) + '점' : '-'}">-</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="hp-action-group">
+                                        <a th:href="@{/admin/problems/edit/{id}(id=${prob.id})}" class="hp-btn hp-btn--outline" style="white-space: nowrap;">수정</a>
+                                        <button type="button" class="hp-btn hp-btn--danger-outline" th:attr="onclick=|deleteProblem('${prob.id}')|" style="white-space: nowrap;">삭제</button>
+                                    </div>
+                                </td>
+                            </tr>
 
-                        <tr th:if="${#lists.isEmpty(problemList)}">
-							<td colspan="7" class="hp-text-muted" style="text-align: center; padding: 40px 0; font-size: 14px;">
-								<span th:if="${keyword != null}" th:text="'\'' + ${keyword} + '\' 검색 결과가 없습니다.'"></span>
-								<span th:if="${keyword == null}">출제 등록된 프롬프트 문제가 존재하지 않습니다.</span>
-							</td>
-						</tr>
-					</tbody>
-				</table>
+                            <tr id="noDataRow" style="display: none;">
+                                <td colspan="7" class="hp-text-muted" style="text-align: center; padding: 40px 0; font-size: 14px;">
+                                    검색 조건과 일치하는 관리 문항이 존재하지 않습니다.
+                                </td>
+                            </tr>
+
+                            <tr th:if="${#lists.isEmpty(problemList)}">
+                                <td colspan="7" class="hp-text-muted" style="text-align: center; padding: 40px 0; font-size: 14px;">
+                                    출제 등록된 프롬프트 문제가 존재하지 않습니다.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 			</div>
 		</div>
 	</main>
 
 	<script th:inline="javascript">
-    /* 서버 메시지 처리를 위한 로직 추가 */
+    const sortState = {};
+
+    /* 테이블 내 데이터 정렬 로직 */
+    function sortTable(tableId, colIndex) {
+        const table = document.getElementById(tableId);
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr:not(#noDataRow)'));
+
+        sortState[tableId + colIndex] = !sortState[tableId + colIndex];
+        const asc = sortState[tableId + colIndex];
+
+        rows.sort((a, b) => {
+            let aText = a.cells[colIndex]?.innerText.trim() ?? '';
+            let bText = b.cells[colIndex]?.innerText.trim() ?? '';
+            const aNum = parseFloat(aText.replace(/[^0-9.\-]/g, ''));
+            const bNum = parseFloat(bText.replace(/[^0-9.\-]/g, ''));
+            if (!isNaN(aNum) && !isNaN(bNum)) return asc ? aNum - bNum : bNum - aNum;
+            return asc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+
+        const headers = table.querySelectorAll('thead th[onclick]');
+        headers.forEach(th => {
+            const base = th.innerText.replace(/ [↑↓↕]$/, '');
+            const idx = parseInt(th.getAttribute('onclick').match(/\d+$/)[0]);
+            th.innerText = base + (idx === colIndex ? (asc ? ' ↑' : ' ↓') : ' ↕');
+        });
+    }
+
+    /* 필터 조건 선택에 따라 최적화된 입력창 UI 토글 제어 */
+    function toggleSearchInput() {
+        const filterType = document.getElementById('filterManage').value;
+        const textInput = document.getElementById('searchManageText');
+        const typeSelect = document.getElementById('searchManageType');
+        const statusSelect = document.getElementById('searchManageStatus');
+
+        textInput.value = '';
+        typeSelect.value = '';
+        statusSelect.value = '';
+
+        textInput.style.display = (filterType === 'title' || filterType === 'id') ? '' : 'none';
+        typeSelect.style.display = (filterType === 'type') ? '' : 'none';
+        statusSelect.style.display = (filterType === 'status') ? '' : 'none';
+
+        searchManageAdvanced();
+    }
+
+    /* 고급 검색 스크립트 */
+    function searchManageAdvanced() {
+        const filterType = document.getElementById('filterManage').value;
+        const tbody = document.getElementById('problemManageTable').querySelector('tbody');
+        const rows = tbody.querySelectorAll('tr:not(#noDataRow)');
+        let visibleCount = 0;
+
+        let keyword = '';
+        if (filterType === 'title' || filterType === 'id') {
+            keyword = document.getElementById('searchManageText').value.toLowerCase().trim();
+        } else if (filterType === 'type') {
+            keyword = document.getElementById('searchManageType').value.toLowerCase();
+        } else if (filterType === 'status') {
+            keyword = document.getElementById('searchManageStatus').value.toLowerCase();
+        }
+
+        rows.forEach(row => {
+            if (!keyword) { 
+                row.style.display = ''; 
+                visibleCount++;
+                return; 
+            }
+
+            const idText = row.cells[0]?.innerText.toLowerCase() ?? '';
+            const titleText = row.cells[1]?.innerText.toLowerCase() ?? '';
+            const typeText = row.cells[2]?.innerText.toLowerCase() ?? '';
+            const statusText = row.querySelector('.hp-status-text')?.innerText.toLowerCase() ?? '';
+
+            let isMatch = false;
+
+            if (filterType === 'id') {
+                isMatch = idText.includes(keyword) || idText.replace('#', '').includes(keyword);
+            } else if (filterType === 'title') {
+                isMatch = titleText.includes(keyword);
+            } else if (filterType === 'type') {
+                isMatch = typeText.includes(keyword);
+            } else if (filterType === 'status') {
+                isMatch = statusText === keyword;
+            }
+
+            if (isMatch) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        const noDataRow = document.getElementById('noDataRow');
+        if (noDataRow) {
+            noDataRow.style.display = visibleCount === 0 ? '' : 'none';
+        }
+    }
+
+    /* 필터 완벽 초기화 */
+    function resetManageFilter() {
+        document.getElementById('filterManage').value = 'title';
+        toggleSearchInput();
+    }
+
+    /* 엔티티 및 스위치 이벤트 처리 유지 */
     document.addEventListener("DOMContentLoaded", function() {
-        const message = [[${message}]];
+        const message = /*[[${message}]]*/ 'default';
         if (message) {
             alert(message);
         }
@@ -114,6 +276,7 @@
             fetch('/admin/problems/toggle/' + id + '?isPublic=' + isPublic, { method: 'POST' }).then(response => {
                 if (response.ok) {
                     labelEl.textContent = isPublic ? '공개' : '비공개';
+                    searchManageAdvanced();
                 } else {
                     alert('상태 변경에 실패했습니다.');
                     this.checked = !isPublic;

@@ -54,7 +54,7 @@ public class AdminDashboardService {
         // 3. 효율성 토큰 차트 데이터 조립
         List<AdminDashboardDTO.EfficiencyChartDTO> efficiencyList = getEfficiencyTokensList();
 
-        // 4. 요구사항 분석 데이터 조립 (이제 쿼리가 돌아가니 여기도 데이터가 들어옵니다!)
+        // 4. 요구사항 분석 데이터 조립
         List<AdminDashboardDTO.RequirementAnalysisDTO> requirementList = getRequirementAnalysisList();
 
         return AdminDashboardDTO.builder()
@@ -108,19 +108,21 @@ public class AdminDashboardService {
         int colorIdx = 0;
 
         for (Object[] row : rawReqs) {
-            // row[0]: problem_id, row[1]: description, row[2]: avg_achieve, row[3]: fail_rate
+            // 🔥 [수정] SELECT 절 변경에 따른 인덱스 포워딩 최적화
+            // row[0]: problem_id, row[1]: title, row[2]: description, row[3]: avg_achieve, row[4]: fail_rate
             String probId = row[0] != null ? "#" + row[0].toString() : "#0";
-            String description = row[1] != null ? (String) row[1] : "요구사항 명세가 없습니다.";
+            String title = row[1] != null ? (String) row[1] : "알 수 없는 문제";
+            String description = row[2] != null ? (String) row[2] : "요구사항 명세가 없습니다.";
             
-            // 데이터 타입 안전하게 처리 (Double로 형변환)
-            double avgAchieve = row[2] != null ? ((Number) row[2]).doubleValue() : 0.0;
-            double failRate = row[3] != null ? ((Number) row[3]).doubleValue() : 0.0;
+            double avgAchieve = row[3] != null ? ((Number) row[3]).doubleValue() : 0.0;
+            double failRate = row[4] != null ? ((Number) row[4]).doubleValue() : 0.0;
             
             String color = colors[colorIdx % colors.length];
             colorIdx++;
 
             result.add(AdminDashboardDTO.RequirementAnalysisDTO.builder()
                     .probId(probId)
+                    .title(title) // 🔥 DTO 내부 정적 클래스에 추가했던 title 필드 매핑
                     .description(description)
                     .avgAchieve(String.format("%.1f%%", avgAchieve))
                     .failRate(String.format("%.1f%%", failRate))
