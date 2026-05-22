@@ -55,4 +55,17 @@ public class AuthController {
     private String encode(String s) {
         return URLEncoder.encode(s, StandardCharsets.UTF_8);
     }
+    
+    // 비밀번호 찾기
+    @GetMapping("/auth/find-password")
+    public String findPasswordPage() {
+        return "auth/find-password";
+    }
+
+    @PostMapping("/auth/find-password")
+    public String findPassword(@RequestParam String email) {
+        userService.resetPasswordAndSendEmail(email);
+        // 성공/실패 관계없이 동일 메시지 (이메일 enumeration 방지)
+        return "redirect:/auth/find-password?sent";
+    }
 }

@@ -1,4 +1,4 @@
-package com.howprom.user;
+package com.howprom.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
