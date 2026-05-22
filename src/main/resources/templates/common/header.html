@@ -60,24 +60,30 @@
             </nav>
         </div>
 
-		<div class="hp-header__right">
-		    <span class="hp-header__nickname" sec:authentication="principal.nickname">닉네임</span>
+        <div class="hp-header__right">
+            <th:block sec:authorize="isAuthenticated()">
+                <span class="hp-header__nickname" sec:authentication="principal.nickname">닉네임</span>
 
-		    <span class="hp-header__divider">|</span>
+                <span class="hp-header__divider">|</span>
 
-		    <form th:action="@{/logout}" method="post" class="hp-header__logout-form">
-		        <button type="submit" class="hp-header__logout-btn">로그아웃</button>
-		    </form>
+                <form th:action="@{/logout}" method="post" class="hp-header__logout-form">
+                    <button type="submit" class="hp-header__logout-btn">로그아웃</button>
+                </form>
 
-		    <span class="hp-header__divider">|</span>
+                <span class="hp-header__divider">|</span>
 
-		    <a th:href="@{/profile}" class="hp-header__user" aria-label="내 정보">
-		        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-		            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-		            <circle cx="12" cy="7" r="4"/>
-		        </svg>
-		    </a>
-		</div>
+                <a th:href="@{/profile}" class="hp-header__user" aria-label="내 정보">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </a>
+            </th:block>
+
+            <th:block sec:authorize="isAnonymous()">
+                <a th:href="@{/login}" class="hp-header__logout-btn" style="font-weight: 500; color: var(--hp-primary);">로그인</a>
+            </th:block>
+        </div>
     </div>
 </header>
 

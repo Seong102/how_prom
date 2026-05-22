@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <title>HowProm - 문제 목록 관리</title>
+<meta name="_csrf" th:content="${_csrf.token}"/>
+<meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
 <th:block th:replace="~{common/header :: styles}"></th:block>
 <link rel="stylesheet" th:href="@{/css/admin.css}">
 
@@ -274,18 +277,30 @@
 
     /* 엔티티 및 스위치 이벤트 처리 유지 */
     document.addEventListener("DOMContentLoaded", function() {
-        const message = /*[[${message}]]*/ 'default';
-        if (message) {
+        // 알림창 버그 방지를 위해 기본값을 null로 수정
+        const message = /*[[${message}]]*/ null;
+        if (message && message !== 'default') {
             alert(message);
         }
     });
 
+    // [수정] 공개/비공개 토글 처리 이벤트 리스너 (CSRF 적용)
     document.querySelectorAll('.hp-switch__input').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             const isPublic = this.checked;
             const id = this.getAttribute('data-id');
             const labelEl = this.closest('.hp-switch').querySelector('.hp-switch__label');
-            fetch('/admin/problems/toggle/' + id + '?isPublic=' + isPublic, { method: 'POST' }).then(response => {
+            
+            // CSRF 토큰 정보 메타 태그에서 파싱
+            const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+            fetch('/admin/problems/toggle/' + id + '?isPublic=' + isPublic, { 
+                method: 'POST',
+                headers: {
+                    [header]: token // 헤더에 인증 토큰 실어주기
+                }
+            }).then(response => {
                 if (response.ok) {
                     labelEl.textContent = isPublic ? '공개' : '비공개';
                     searchManageAdvanced();
@@ -294,13 +309,29 @@
                     this.checked = !isPublic;
                     labelEl.textContent = !isPublic ? '공개' : '비공개';
                 }
+            }).catch(error => {
+                console.error('Error:', error);
+                alert('네트워크 오류가 발생했습니다.');
+                this.checked = !isPublic;
+                labelEl.textContent = !isPublic ? '공개' : '비공개';
             });
         });
     });
 
+    // [수정] 문제 삭제 비동기 처리 함수 (CSRF 적용)
     function deleteProblem(id) {
         if (!confirm("정말 이 문제를 삭제하시겠습니까?")) return;
-        fetch(`/admin/problems/delete/${id}`, { method: 'POST' })
+        
+        // CSRF 토큰 정보 메타 태그에서 파싱
+        const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+        fetch(`/admin/problems/delete/${id}`, { 
+            method: 'POST',
+            headers: {
+                [header]: token // 헤더에 인증 토큰 실어주기
+            }
+        })
         .then(async res => {
             const message = await res.text();
             if (res.ok) {
@@ -309,6 +340,9 @@
             } else {
                 alert("삭제 처리에 실패하였습니다.\n\n" + message);
             }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('삭제 중 네트워크 오류가 발생했습니다.');
         });
     }
     </script>
