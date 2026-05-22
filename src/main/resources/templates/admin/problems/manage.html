@@ -12,7 +12,7 @@
 .hp-action-group { display: inline-flex; gap: 8px; justify-content: center; width: 100%; }
 .hp-search-box { display: flex; gap: 6px; margin-bottom: 20px; align-items: center; }
 
-/* 🔥 [추가] 크기 제각각인 것 방지: 검색 컴포넌트 크기 슬림화 및 완전 통일 */
+/* 크기 제각각인 것 방지: 검색 컴포넌트 크기 슬림화 및 완전 통일 */
 .hp-search-box select, 
 .hp-search-box input {
     height: 38px !important;
@@ -23,7 +23,7 @@
     max-width: 180px !important;
 }
 
-/* 🔥 [추가] 테이블 내부 스크롤 스펙 정의 */
+/* 테이블 내부 스크롤 스펙 정의 */
 .hp-manage-table-scroll {
     max-height: 520px; /* 대량 데이터 대응용 최대 높이 제한 */
     overflow-y: auto;
@@ -107,11 +107,17 @@
                             <tr th:each="prob : ${problemList}">
                                 <td style="padding-left: 24px;" th:text="'#' + ${#numbers.formatInteger(prob.id, 3)}">#001</td>
                                 <td><strong th:text="${prob.title}">문제 제목 명세</strong></td>
-                                <td class="text-center">
-                                    <span class="hp-badge hp-badge--standard" th:if="${prob.evaluationType == 'STANDARD'}">Standard</span>
-                                    <span class="hp-badge hp-badge--efficiency" th:if="${prob.evaluationType == 'EFFICIENCY'}">Efficiency</span>
-                                    <span class="hp-badge hp-badge--budget" th:if="${prob.evaluationType == 'BUDGET'}">Budget</span>
+                                
+                                <td class="text-center" style="vertical-align: middle;">
+                                    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                        <span class="hp-badge hp-badge--standard" th:if="${prob.evaluationType == 'STANDARD'}">Standard</span>
+                                        <span class="hp-badge hp-badge--efficiency" th:if="${prob.evaluationType == 'EFFICIENCY'}">Efficiency</span>
+                                        <span class="hp-badge hp-badge--budget" th:if="${prob.evaluationType == 'BUDGET'}">Budget</span>
+                                        <span class="hp-text-muted" style="font-size: 11px; font-weight: 500;" 
+                                              th:text="'조건 ' + ${prob.requirementsCount} + '개'">조건 0개</span>
+                                    </div>
                                 </td>
+                                
                                 <td class="text-center">
                                     <label class="hp-switch" style="justify-content: center;"> 
                                         <input type="checkbox" class="hp-switch__input" th:checked="${prob.isPublic}" th:attr="data-id=${prob.id}"> 
@@ -122,9 +128,15 @@
                                 <td class="text-center">
                                     <span th:text="${statsMap != null && statsMap.containsKey(prob.id) ? statsMap[prob.id].totalCount + '건' : '0건'}">0건</span>
                                 </td>
-                                <td class="text-center hp-text-muted" style="font-weight: 600;">
+                                
+                                <td class="text-center hp-text-muted" style="font-weight: 600; vertical-align: middle;">
                                     <span th:text="${statsMap != null && statsMap.containsKey(prob.id) ? #numbers.formatDecimal(statsMap[prob.id].avgScore, 1, 1) + '점' : '-'}">-</span>
+                                    <div th:if="${statsMap != null && statsMap.containsKey(prob.id)}" 
+                                         style="font-size: 11px; font-weight: 500; color: #2b8a3e; margin-top: 3px;">
+                                        (🎯 통과 <span th:text="${#numbers.formatDecimal(statsMap[prob.id].passRate, 1, 0)}">0</span>%)
+                                    </div>
                                 </td>
+                                
                                 <td class="text-center">
                                     <div class="hp-action-group">
                                         <a th:href="@{/admin/problems/edit/{id}(id=${prob.id})}" class="hp-btn hp-btn--outline" style="white-space: nowrap;">수정</a>

@@ -7,14 +7,8 @@
 </head>
 <body>
 
-<!-- ============================================ -->
-<!-- Header Fragment                              -->
-<!-- 사용법: <div th:replace="~{common/header :: header('dashboard')}"></div> -->
-<!-- active 파라미터: dashboard | problems | community | admin -->
-<!-- ============================================ -->
 <header th:fragment="header(active)" class="hp-header">
     <div class="hp-header__inner">
-        <!-- 로고 + 네비게이션 (왼쪽 그룹) -->
         <div class="hp-header__left">
             <a th:href="@{/}" class="hp-logo">HowProm</a>
 
@@ -22,7 +16,6 @@
                 <a th:href="@{/}"
                    th:classappend="${active == 'dashboard'} ? 'hp-nav__link--active' : ''"
                    class="hp-nav__link">
-                    <!-- Home icon -->
                     <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                         <polyline points="9 22 9 12 15 12 15 22"/>
@@ -33,7 +26,6 @@
                 <a th:href="@{/problems}"
                    th:classappend="${active == 'problems'} ? 'hp-nav__link--active' : ''"
                    class="hp-nav__link">
-                    <!-- List icon -->
                     <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="8" y1="6" x2="21" y2="6"/>
                         <line x1="8" y1="12" x2="21" y2="12"/>
@@ -48,8 +40,7 @@
                 <a th:href="@{/mypage}"
                    th:classappend="${active == 'mypage'} ? 'hp-nav__link--active' : ''"
                    class="hp-nav__link">
-                    <!-- Person icon -->
-					<svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                         <circle cx="12" cy="7" r="4"/>
                     </svg>
@@ -57,33 +48,29 @@
                 </a>
 
                 <a th:href="@{/admin}"
+                   sec:authorize="hasRole('ADMIN')"
                    th:classappend="${active == 'admin'} ? 'hp-nav__link--active' : ''"
                    class="hp-nav__link">
-                    <!-- Settings icon -->
                     <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
                         <circle cx="12" cy="12" r="3"/>
                     </svg>
-                    <span>관리자(관리사 계정 전용)</span>
+                    <span>관리자(관리자 계정 전용)</span>
                 </a>
             </nav>
         </div>
 
-		<!-- 사용자 아이콘 + 닉네임 + 로그아웃 (오른쪽) -->
 		<div class="hp-header__right">
-		    <!-- 닉네임 -->
 		    <span class="hp-header__nickname" sec:authentication="principal.nickname">닉네임</span>
 
 		    <span class="hp-header__divider">|</span>
 
-		    <!-- 로그아웃 (POST form) -->
 		    <form th:action="@{/logout}" method="post" class="hp-header__logout-form">
 		        <button type="submit" class="hp-header__logout-btn">로그아웃</button>
 		    </form>
 
 		    <span class="hp-header__divider">|</span>
 
-		    <!-- 프로필 아이콘 -->
 		    <a th:href="@{/profile}" class="hp-header__user" aria-label="내 정보">
 		        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 		            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -94,10 +81,6 @@
     </div>
 </header>
 
-<!-- ============================================ -->
-<!-- 공통 스타일 fragment                          -->
-<!-- 사용법: <th:block th:replace="~{common/header :: styles}"></th:block> -->
-<!-- ============================================ -->
 <th:block th:fragment="styles">
     <style>
         /* ===== Design tokens ===== */
