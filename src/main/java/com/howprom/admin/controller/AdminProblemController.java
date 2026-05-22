@@ -23,12 +23,6 @@ import lombok.RequiredArgsConstructor;
 public class AdminProblemController {
 
     private final AdminProblemService adminProblemService;
-
-    @GetMapping("") 
-    public String adminDashboard() {
-        return "admin/AdminDashboard";
-    }
-
     // 문제 관리 페이지: 목록 및 통계 데이터 조회
     @GetMapping("/problems/manage")
     public String manageProblems(@RequestParam(value = "keyword", required = false) String keyword, Model model) {
