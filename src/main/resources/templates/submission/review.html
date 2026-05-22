@@ -4,63 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>내 풀이 보기 - HowProm</title>
+    <th:block th:replace="~{common/header :: styles}"></th:block>
     <style>
-        :root {
-            --hp-primary:       #5B47D6;
-            --hp-primary-hover: #4a38c4;
-            --hp-primary-soft:  #F0EEFB;
-            --hp-bg:            #F5F6FA;
-            --hp-surface:       #FFFFFF;
-            --hp-text:          #1A1A1A;
-            --hp-text-muted:    #6B7280;
-            --hp-border:        #E5E7EB;
-            --hp-border-soft:   #EEF0F3;
-            --hp-success-bg:    #E6F7EC;
-            --hp-success-text:  #1F9D55;
-            --hp-danger-bg:     #FDECEC;
-            --hp-danger-text:   #D14343;
-            --hp-radius:        12px;
-            --hp-radius-sm:     6px;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
-                         "Apple SD Gothic Neo", "Malgun Gothic", Roboto, sans-serif;
-            background: var(--hp-bg);
-            color: var(--hp-text);
-            -webkit-font-smoothing: antialiased;
-            min-height: 100vh;
-            display: flex; flex-direction: column;
-        }
-        a { text-decoration: none; color: inherit; }
-
-        /* ── 헤더 ── */
-        .hp-header {
-            background: var(--hp-surface);
-            border-bottom: 1px solid var(--hp-border);
-            position: sticky; top: 0; z-index: 100; flex-shrink: 0;
-        }
-        .hp-header__inner {
-            max-width: 1400px; margin: 0 auto; padding: 0 32px;
-            height: 64px; display: flex; align-items: center; justify-content: space-between;
-        }
-        .hp-header__left { display: flex; align-items: center; gap: 48px; }
-        .hp-logo { font-size: 22px; font-weight: 700; color: var(--hp-primary); letter-spacing: -0.5px; }
-        .hp-nav  { display: flex; align-items: center; gap: 8px; }
-        .hp-nav__link {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 8px 12px; font-size: 14px; color: var(--hp-text-muted);
-            border-bottom: 2px solid transparent; transition: color .15s;
-        }
-        .hp-nav__link:hover { color: var(--hp-text); }
-        .hp-nav__link--active { color: var(--hp-primary); border-bottom-color: var(--hp-primary); }
-        .hp-nav__icon { flex-shrink: 0; }
-        .hp-header__user {
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 36px; height: 36px; border-radius: 50%; color: var(--hp-text-muted);
-            transition: background-color .15s;
-        }
-        .hp-header__user:hover { background: var(--hp-border-soft); }
+        * { margin: 0; padding: 0; }
+        body { min-height: 100vh; display: flex; flex-direction: column; }
 
         /* ── 서브 헤더 ── */
         .sub-header {
@@ -204,45 +151,7 @@
 <body>
 
 <!-- 헤더 -->
-<header class="hp-header">
-    <div class="hp-header__inner">
-        <div class="hp-header__left">
-            <a href="/" class="hp-logo">HowProm</a>
-            <nav class="hp-nav">
-                <a href="/" class="hp-nav__link">
-                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                        <polyline points="9 22 9 12 15 12 15 22"/>
-                    </svg>
-                    <span>대시보드</span>
-                </a>
-                <a href="/problems" class="hp-nav__link">
-                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
-                        <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
-                        <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-                    </svg>
-                    <span>문제</span>
-                </a>
-                <a href="/mypage" class="hp-nav__link">
-                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                        <circle cx="12" cy="7" r="4"/>
-                    </svg>
-                    <span>마이페이지</span>
-                </a>
-            </nav>
-        </div>
-        <div class="hp-header__right">
-            <a href="/profile" class="hp-header__user" aria-label="내 정보">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                </svg>
-            </a>
-        </div>
-    </div>
-</header>
+<header th:replace="~{common/header :: header('mypage')}"></header>
 
 <!-- 서브 헤더 -->
 <div class="sub-header">
