@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <title>HowProm - 문제 목록 관리</title>
+<meta name="_csrf" th:content="${_csrf.token}"/>
+<meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
 <th:block th:replace="~{common/header :: styles}"></th:block>
 <link rel="stylesheet" th:href="@{/css/admin.css}">
 
@@ -12,7 +15,7 @@
 .hp-action-group { display: inline-flex; gap: 8px; justify-content: center; width: 100%; }
 .hp-search-box { display: flex; gap: 6px; margin-bottom: 20px; align-items: center; }
 
-/* 🔥 [추가] 크기 제각각인 것 방지: 검색 컴포넌트 크기 슬림화 및 완전 통일 */
+/* 크기 제각각인 것 방지: 검색 컴포넌트 크기 슬림화 및 완전 통일 */
 .hp-search-box select, 
 .hp-search-box input {
     height: 38px !important;
@@ -23,7 +26,7 @@
     max-width: 180px !important;
 }
 
-/* 🔥 [추가] 테이블 내부 스크롤 스펙 정의 */
+/* 테이블 내부 스크롤 스펙 정의 */
 .hp-manage-table-scroll {
     max-height: 520px; /* 대량 데이터 대응용 최대 높이 제한 */
     overflow-y: auto;
@@ -107,11 +110,17 @@
                             <tr th:each="prob : ${problemList}">
                                 <td style="padding-left: 24px;" th:text="'#' + ${#numbers.formatInteger(prob.id, 3)}">#001</td>
                                 <td><strong th:text="${prob.title}">문제 제목 명세</strong></td>
-                                <td class="text-center">
-                                    <span class="hp-badge hp-badge--standard" th:if="${prob.evaluationType == 'STANDARD'}">Standard</span>
-                                    <span class="hp-badge hp-badge--efficiency" th:if="${prob.evaluationType == 'EFFICIENCY'}">Efficiency</span>
-                                    <span class="hp-badge hp-badge--budget" th:if="${prob.evaluationType == 'BUDGET'}">Budget</span>
+                                
+                                <td class="text-center" style="vertical-align: middle;">
+                                    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                        <span class="hp-badge hp-badge--standard" th:if="${prob.evaluationType == 'STANDARD'}">Standard</span>
+                                        <span class="hp-badge hp-badge--efficiency" th:if="${prob.evaluationType == 'EFFICIENCY'}">Efficiency</span>
+                                        <span class="hp-badge hp-badge--budget" th:if="${prob.evaluationType == 'BUDGET'}">Budget</span>
+                                        <span class="hp-text-muted" style="font-size: 11px; font-weight: 500;" 
+                                              th:text="'조건 ' + ${prob.requirementsCount} + '개'">조건 0개</span>
+                                    </div>
                                 </td>
+                                
                                 <td class="text-center">
                                     <label class="hp-switch" style="justify-content: center;"> 
                                         <input type="checkbox" class="hp-switch__input" th:checked="${prob.isPublic}" th:attr="data-id=${prob.id}"> 
@@ -122,9 +131,15 @@
                                 <td class="text-center">
                                     <span th:text="${statsMap != null && statsMap.containsKey(prob.id) ? statsMap[prob.id].totalCount + '건' : '0건'}">0건</span>
                                 </td>
-                                <td class="text-center hp-text-muted" style="font-weight: 600;">
+                                
+                                <td class="text-center hp-text-muted" style="font-weight: 600; vertical-align: middle;">
                                     <span th:text="${statsMap != null && statsMap.containsKey(prob.id) ? #numbers.formatDecimal(statsMap[prob.id].avgScore, 1, 1) + '점' : '-'}">-</span>
+                                    <div th:if="${statsMap != null && statsMap.containsKey(prob.id)}" 
+                                         style="font-size: 11px; font-weight: 500; color: #2b8a3e; margin-top: 3px;">
+                                        (🎯 통과 <span th:text="${#numbers.formatDecimal(statsMap[prob.id].passRate, 1, 0)}">0</span>%)
+                                    </div>
                                 </td>
+                                
                                 <td class="text-center">
                                     <div class="hp-action-group">
                                         <a th:href="@{/admin/problems/edit/{id}(id=${prob.id})}" class="hp-btn hp-btn--outline" style="white-space: nowrap;">수정</a>
@@ -262,18 +277,30 @@
 
     /* 엔티티 및 스위치 이벤트 처리 유지 */
     document.addEventListener("DOMContentLoaded", function() {
-        const message = /*[[${message}]]*/ 'default';
-        if (message) {
+        // 알림창 버그 방지를 위해 기본값을 null로 수정
+        const message = /*[[${message}]]*/ null;
+        if (message && message !== 'default') {
             alert(message);
         }
     });
 
+    // [수정] 공개/비공개 토글 처리 이벤트 리스너 (CSRF 적용)
     document.querySelectorAll('.hp-switch__input').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             const isPublic = this.checked;
             const id = this.getAttribute('data-id');
             const labelEl = this.closest('.hp-switch').querySelector('.hp-switch__label');
-            fetch('/admin/problems/toggle/' + id + '?isPublic=' + isPublic, { method: 'POST' }).then(response => {
+            
+            // CSRF 토큰 정보 메타 태그에서 파싱
+            const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+            fetch('/admin/problems/toggle/' + id + '?isPublic=' + isPublic, { 
+                method: 'POST',
+                headers: {
+                    [header]: token // 헤더에 인증 토큰 실어주기
+                }
+            }).then(response => {
                 if (response.ok) {
                     labelEl.textContent = isPublic ? '공개' : '비공개';
                     searchManageAdvanced();
@@ -282,13 +309,29 @@
                     this.checked = !isPublic;
                     labelEl.textContent = !isPublic ? '공개' : '비공개';
                 }
+            }).catch(error => {
+                console.error('Error:', error);
+                alert('네트워크 오류가 발생했습니다.');
+                this.checked = !isPublic;
+                labelEl.textContent = !isPublic ? '공개' : '비공개';
             });
         });
     });
 
+    // [수정] 문제 삭제 비동기 처리 함수 (CSRF 적용)
     function deleteProblem(id) {
         if (!confirm("정말 이 문제를 삭제하시겠습니까?")) return;
-        fetch(`/admin/problems/delete/${id}`, { method: 'POST' })
+        
+        // CSRF 토큰 정보 메타 태그에서 파싱
+        const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+        fetch(`/admin/problems/delete/${id}`, { 
+            method: 'POST',
+            headers: {
+                [header]: token // 헤더에 인증 토큰 실어주기
+            }
+        })
         .then(async res => {
             const message = await res.text();
             if (res.ok) {
@@ -297,6 +340,9 @@
             } else {
                 alert("삭제 처리에 실패하였습니다.\n\n" + message);
             }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('삭제 중 네트워크 오류가 발생했습니다.');
         });
     }
     </script>

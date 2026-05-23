@@ -19,8 +19,14 @@ import java.time.LocalDateTime;
 @Repository
 public interface ProblemRepository extends JpaRepository<Problem, Long> {
 
-    @Query("SELECT new com.howprom.admin.dto.ProblemStatsDTO(s.problem.id, COUNT(s.id), AVG(s.score)) " +
-               "FROM Submission s GROUP BY s.problem.id")
+	@Query("SELECT new com.howprom.admin.dto.ProblemStatsDTO(" +
+	           "  s.problem.id, " +
+	           "  COUNT(s.id), " +
+	           "  AVG(s.score), " +
+	           "  SUM(CASE WHEN s.status = 'PASSED' THEN 1L ELSE 0L END)" +
+	           ") " +
+	           "FROM Submission s " +
+	           "GROUP BY s.problem.id")
     List<ProblemStatsDTO> getProblemStatistics();
 
     List<Problem> findByTitleContaining(String title);

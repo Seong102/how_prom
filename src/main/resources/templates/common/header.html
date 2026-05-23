@@ -7,14 +7,8 @@
 </head>
 <body>
 
-<!-- ============================================ -->
-<!-- Header Fragment                              -->
-<!-- 사용법: <div th:replace="~{common/header :: header('dashboard')}"></div> -->
-<!-- active 파라미터: dashboard | problems | community | admin -->
-<!-- ============================================ -->
 <header th:fragment="header(active)" class="hp-header">
     <div class="hp-header__inner">
-        <!-- 로고 + 네비게이션 (왼쪽 그룹) -->
         <div class="hp-header__left">
             <a th:href="@{/}" class="hp-logo">HowProm</a>
 
@@ -98,10 +92,6 @@
     </div>
 </header>
 
-<!-- ============================================ -->
-<!-- 공통 스타일 fragment                          -->
-<!-- 사용법: <th:block th:replace="~{common/header :: styles}"></th:block> -->
-<!-- ============================================ -->
 <th:block th:fragment="styles">
     <style>
         /* ===== Design tokens ===== */

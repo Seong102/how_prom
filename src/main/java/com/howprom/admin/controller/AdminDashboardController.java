@@ -3,12 +3,15 @@ package com.howprom.admin.controller;
 import com.howprom.admin.dto.AdminDashboardDTO;
 import com.howprom.admin.service.AdminDashboardService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminDashboardController {
 
     private final AdminDashboardService adminDashboardService;
