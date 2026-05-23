@@ -9,5 +9,7 @@ public interface RequirementRepository extends JpaRepository<Requirement, Long> 
  
     // 문제별 요구사항 목록 조회 - 화면 표시 순서대로 (SCR-PROB-02 요구사항 목록)
     List<Requirement> findByProblemIdOrderByDisplayOrderAsc(Long problemId);
+    
+    long countByProblemId(Long problemId);
 }
  

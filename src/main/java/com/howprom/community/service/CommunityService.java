@@ -1,7 +1,7 @@
 package com.howprom.community.service;
 
 import com.howprom.common.entity.Submission;
-import com.howprom.common.entity.Submission.SubmissionStatus;
+import com.howprom.common.entity.SubmissionStatus;
 import com.howprom.community.dto.CommunityListDto;
 import com.howprom.repository.SubmissionRepository;
 import com.howprom.submission.dto.MyPageDetailResponseDto;

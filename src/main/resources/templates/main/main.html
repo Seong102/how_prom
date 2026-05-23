@@ -3,112 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>대시보드 - HowProm</title>
+    <title>대시보드 · HowProm</title>
 
     <th:block th:replace="~{common/header :: styles}"></th:block>
-    
     <link rel="stylesheet" th:href="@{/css/main.css}">
 </head>
 <body>
 
-<!-- 헤더 fragment include (현재 페이지: dashboard) -->
+<!-- 헤더 -->
 <div th:replace="~{common/header :: header('dashboard')}"></div>
 
 <main class="hp-main">
 
-    <!-- 페이지 헤더 -->
-    <section class="hp-page-header">
-        <h1 class="hp-page-header__title">대시보드</h1>
-        <p class="hp-page-header__subtitle">AI 프롬프트 작성 실력을 향상시키세요</p>
+    <!-- ============================================ -->
+    <!-- 환영 메시지                                   -->
+    <!-- ============================================ -->
+    <!-- 로그인 상태: 시간대별 인사 -->
+    <section class="hp-welcome" th:if="${isLoggedIn}">
+        <h1 class="hp-welcome__title" th:text="${greeting}">안녕하세요, 사용자님</h1>
+        <p class="hp-welcome__subtitle">오늘도 프롬프트 실력을 키워봅시다</p>
     </section>
 
-    <!-- 통계 카드 -->
-    <section class="hp-stats">
-        <div class="hp-stat-card">
-            <div class="hp-stat-card__label">해결한 문제</div>
-            <div class="hp-stat-card__value" th:text="${stats?.solvedCount ?: 42}">42</div>
+    <!-- 비로그인 상태: CTA 환영 메시지 -->
+    <section class="hp-welcome hp-welcome--guest" th:unless="${isLoggedIn}">
+        <div class="hp-welcome__body">
+            <h1 class="hp-welcome__title">HowProm에서 AI 프롬프트 실력을 키워보세요</h1>
+            <p class="hp-welcome__subtitle">로그인하면 추천 문제와 학습 이력 등 더 많은 기능을 이용할 수 있어요</p>
         </div>
-        <div class="hp-stat-card">
-            <div class="hp-stat-card__label">성공률</div>
-            <div class="hp-stat-card__value">
-                <span th:text="${stats?.successRate ?: 78}">78</span>%
+        <a th:href="@{/auth/login}" class="hp-btn hp-btn--primary">로그인하기 →</a>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 이어서 풀기 (로그인 사용자만)                  -->
+    <!-- ============================================ -->
+    <th:block th:if="${isLoggedIn}">
+        <section class="hp-continue" th:if="${continueProblem != null}">
+            <div class="hp-continue__inner">
+                <div class="hp-continue__body">
+                    <div class="hp-continue__label">🔄 이어서 풀기</div>
+                    <h2 class="hp-continue__title" th:text="${continueProblem.title}">버블 정렬 구현</h2>
+                    <div class="hp-continue__meta">
+                        <span class="hp-eval-badge"
+                              th:classappend="${'hp-eval-badge--' + continueProblem.evaluationType.toLowerCase()}"
+                              th:text="${continueProblem.evaluationType}">STANDARD</span>
+                        <span class="hp-continue__status"
+                              th:switch="${continueProblem.lastStatus}">
+                            <span th:case="'GRADING'">채점 중</span>
+                            <span th:case="'FAILED'">컴파일 실패 · 재도전 가능</span>
+                            <span th:case="'ERROR'">시스템 오류 · 다시 시도</span>
+                        </span>
+                    </div>
+                </div>
+				<a th:href="@{/problems/{id}(id=${continueProblem.problemId})}"
+				   class="hp-btn hp-btn--primary">이어서 풀기 →</a>
             </div>
+        </section>
+
+        <section class="hp-continue hp-continue--empty" th:if="${continueProblem == null}">
+            <div class="hp-continue__inner">
+                <div class="hp-continue__body">
+                    <div class="hp-continue__label">👋 시작해볼까요?</div>
+                    <h2 class="hp-continue__title">아직 풀어본 문제가 없어요</h2>
+                    <p class="hp-continue__hint">아래 추천 문제로 첫 도전을 시작해보세요</p>
+                </div>
+            </div>
+        </section>
+    </th:block>
+
+    <!-- ============================================ -->
+    <!-- 추천 문제 (로그인 사용자만)                    -->
+    <!-- ============================================ -->
+    <section class="hp-section" th:if="${isLoggedIn}">
+        <header class="hp-section__header">
+            <h2 class="hp-section__title">🎯 추천 문제</h2>
+            <p class="hp-section__subtitle">평가 유형별로 한 문제씩 골라봤어요</p>
+        </header>
+
+        <div class="hp-rec-grid" th:if="${!#lists.isEmpty(recommendedProblems)}">
+            <article class="hp-rec-card" th:each="p : ${recommendedProblems}">
+                <header class="hp-rec-card__top">
+                    <span class="hp-eval-badge"
+                          th:classappend="${'hp-eval-badge--' + p.evaluationType.toLowerCase()}"
+                          th:text="${p.evaluationType}">STANDARD</span>
+                </header>
+
+                <h3 class="hp-rec-card__title" th:text="${p.title}">문제 제목</h3>
+
+                <ul class="hp-rec-card__info">
+                    <li>요구사항 <strong th:text="${p.requirementCount}">3</strong>개</li>
+                    <li th:if="${p.avgUserTokens != null}">
+                        평균 토큰 <strong th:text="${p.avgUserTokens}">280</strong>
+                    </li>
+                    <li th:if="${p.tokenLimit != null}">
+                        토큰 상한 <strong th:text="${p.tokenLimit}">500</strong>
+                    </li>
+                </ul>
+
+				<a th:href="@{/problems/{id}(id=${p.problemId})}"
+				   class="hp-btn hp-btn--primary hp-btn--full">풀러 가기 →</a>
+            </article>
         </div>
-        <div class="hp-stat-card">
-            <div class="hp-stat-card__label">평균 토큰</div>
-            <div class="hp-stat-card__value" th:text="${stats?.avgTokens ?: 312}">312</div>
+
+        <div class="hp-empty" th:if="${#lists.isEmpty(recommendedProblems)}">
+            모든 문제를 다 풀었어요. 새 문제를 기다려주세요 👏
         </div>
     </section>
 
-    <!-- 최근 제출 -->
-    <section class="hp-card">
-        <header class="hp-card__header">최근 제출</header>
-        <table class="hp-table">
-            <thead>
-                <tr>
-                    <th>문제명</th>
-                    <th>점수</th>
-                    <th>제출일</th>
-                    <th>상태</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- 동적 데이터 (recentSubmissions가 있으면 사용) -->
-                <tr th:each="sub : ${recentSubmissions}" th:if="${recentSubmissions != null and !recentSubmissions.isEmpty()}">
-                    <td th:text="${sub.problemName}">문제명</td>
-                    <td class="hp-table__score" th:text="${sub.score}">0</td>
-                    <td class="hp-table__date" th:text="${sub.submittedAt}">YYYY-MM-DD</td>
-                    <td>
-                        <span class="hp-badge"
-                              th:classappend="${sub.passed} ? 'hp-badge--success' : 'hp-badge--danger'"
-                              th:text="${sub.passed} ? 'PASSED' : 'FAILED'">PASSED</span>
-                    </td>
-                </tr>
+    <!-- ============================================ -->
+    <!-- 새로 등록된 문제 (공통)                       -->
+    <!-- ============================================ -->
+    <section class="hp-section">
+        <header class="hp-section__header">
+            <h2 class="hp-section__title">🆕 새로 등록된 문제</h2>
+            <p class="hp-section__subtitle">최근 일주일 사이 추가된 문제예요</p>
+        </header>
 
-                <!-- 정적 fallback 데이터 (데이터가 없을 때 디자인 확인용) -->
-                <th:block th:if="${recentSubmissions == null or recentSubmissions.isEmpty()}">
-                    <tr>
-                        <td>Two Sum 프롬프트</td>
-                        <td class="hp-table__score">88</td>
-                        <td class="hp-table__date">2026-05-14</td>
-                        <td><span class="hp-badge hp-badge--success">PASSED</span></td>
-                    </tr>
-                    <tr>
-                        <td>이진 탐색 생성기</td>
-                        <td class="hp-table__score">92</td>
-                        <td class="hp-table__date">2026-05-13</td>
-                        <td><span class="hp-badge hp-badge--success">PASSED</span></td>
-                    </tr>
-                    <tr>
-                        <td>피보나치 최적화</td>
-                        <td class="hp-table__score">58</td>
-                        <td class="hp-table__date">2026-05-12</td>
-                        <td><span class="hp-badge hp-badge--danger">FAILED</span></td>
-                    </tr>
-                    <tr>
-                        <td>배열 조작</td>
-                        <td class="hp-table__score">88</td>
-                        <td class="hp-table__date">2026-05-11</td>
-                        <td><span class="hp-badge hp-badge--success">PASSED</span></td>
-                    </tr>
-                </th:block>
-            </tbody>
-        </table>
+        <ul class="hp-list" th:if="${!#lists.isEmpty(newProblems)}">
+            <li class="hp-list__item" th:each="p : ${newProblems}">
+                <div class="hp-list__main">
+                    <span class="hp-eval-badge"
+                          th:classappend="${'hp-eval-badge--' + p.evaluationType.toLowerCase()}"
+                          th:text="${p.evaluationType}">STANDARD</span>
+                    <span class="hp-list__title" th:text="${p.title}">문제 제목</span>
+                </div>
+                <div class="hp-list__side">
+                    <span class="hp-list__date">
+                        <span th:text="${#temporals.format(p.createdAt, 'M월 d일')}">5월 14일</span>
+                        <span class="hp-list__date-dot">·</span>
+                        <span th:text="${p.relativeDate}">1일 전</span>
+                    </span>
+                    <!-- 로그인 여부에 따라 동작 분기 -->
+					<a th:if="${isLoggedIn}"
+					   th:href="@{/problems/{id}(id=${p.problemId})}"
+					   class="hp-btn hp-btn--ghost">풀러 가기 →</a>
+					<a th:unless="${isLoggedIn}"
+					   href="#"
+					   class="hp-btn hp-btn--ghost"
+					   data-requires-auth="true">풀러 가기 →</a>
+                </div>
+            </li>
+        </ul>
+
+        <div class="hp-empty" th:if="${#lists.isEmpty(newProblems)}">
+            새로 등록된 문제가 없어요
+        </div>
     </section>
 
-    <!-- 액션 카드 -->
-    <section class="hp-actions">
-        <a th:href="@{/problems}" class="hp-action-card hp-action-card--primary">
-            <h3 class="hp-action-card__title">문제 풀기</h3>
-            <p class="hp-action-card__desc">다양한 문제를 풀어보세요</p>
-        </a>
-        <a th:href="@{/community}" class="hp-action-card hp-action-card--outline">
-            <h3 class="hp-action-card__title">커뮤니티</h3>
-            <p class="hp-action-card__desc">다른 사용자의 풀이를 확인하세요</p>
-        </a>
+    <!-- ============================================ -->
+    <!-- 이번 주 우수 풀이 (공통)                      -->
+    <!-- ============================================ -->
+    <section class="hp-section">
+        <header class="hp-section__header">
+            <h2 class="hp-section__title">🏆 이번 주 우수 풀이</h2>
+            <p class="hp-section__subtitle">다른 사용자들의 높은 점수 풀이를 살펴보세요</p>
+        </header>
+
+        <ul class="hp-list" th:if="${!#lists.isEmpty(topSubmissions)}">
+            <li class="hp-list__item" th:each="s : ${topSubmissions}">
+                <div class="hp-list__main">
+                    <span class="hp-score-badge" th:text="${s.score} + '점'">95점</span>
+                    <div class="hp-list__text">
+                        <div class="hp-list__title" th:text="${s.problemTitle}">버블 정렬 구현</div>
+                        <div class="hp-list__sub">
+                            <span th:text="${s.nickname}">userA</span>님의 풀이
+                        </div>
+                    </div>
+                </div>
+                <div class="hp-list__side">
+                    <!-- 로그인 상태 분기 -->
+					<th:block th:if="${isLoggedIn}">
+					    <!-- 본인이 푼 문제 → 해당 풀이 상세로 이동 -->
+					    <a th:if="${s.solved}"
+					       th:href="@{/result/{id}(id=${s.submissionId})}"
+					       class="hp-btn hp-btn--outline">풀이 보기</a>
+
+					    <!-- 본인이 안 푼 문제 → 문제 풀이 페이지로 이동 -->
+					    <a th:unless="${s.solved}"
+					       th:href="@{/problems/{id}(id=${s.problemId})}"
+					       class="hp-btn hp-btn--primary">풀러 가기 →</a>
+					</th:block>
+					<!-- 비로그인: 그대로 confirm 처리 -->
+					<a th:unless="${isLoggedIn}"
+					   href="#"
+					   class="hp-btn hp-btn--primary"
+					   data-requires-auth="true">풀러 가기 →</a>
+                </div>
+            </li>
+        </ul>
+
+        <div class="hp-empty" th:if="${#lists.isEmpty(topSubmissions)}">
+            이번 주에 등록된 풀이가 없어요
+        </div>
     </section>
 
 </main>
+
+<!-- 비로그인 시 인증 필요 안내 스크립트 -->
+<th:block th:replace="~{common/header :: auth-script}"></th:block>
 
 </body>
 </html>

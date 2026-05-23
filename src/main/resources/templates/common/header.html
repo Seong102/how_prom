@@ -19,10 +19,10 @@
             <a th:href="@{/}" class="hp-logo">HowProm</a>
 
             <nav class="hp-nav">
+                <!-- 대시보드: 비로그인도 접근 가능 -->
                 <a th:href="@{/}"
                    th:classappend="${active == 'dashboard'} ? 'hp-nav__link--active' : ''"
                    class="hp-nav__link">
-                    <!-- Home icon -->
                     <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                         <polyline points="9 22 9 12 15 12 15 22"/>
@@ -30,67 +30,71 @@
                     <span>대시보드</span>
                 </a>
 
-                <a th:href="@{/problems}"
-                   th:classappend="${active == 'problems'} ? 'hp-nav__link--active' : ''"
-                   class="hp-nav__link">
-                    <!-- List icon -->
-                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="8" y1="6" x2="21" y2="6"/>
-                        <line x1="8" y1="12" x2="21" y2="12"/>
-                        <line x1="8" y1="18" x2="21" y2="18"/>
-                        <line x1="3" y1="6" x2="3.01" y2="6"/>
-                        <line x1="3" y1="12" x2="3.01" y2="12"/>
-                        <line x1="3" y1="18" x2="3.01" y2="18"/>
-                    </svg>
-                    <span>문제</span>
-                </a>
+                <!-- 문제: 로그인 필요 -->
+				<a th:href="@{/problems}"
+				   th:classappend="${active == 'problems'} ? 'hp-nav__link--active' : ''"
+				   class="hp-nav__link">
+				    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				        <line x1="8" y1="6" x2="21" y2="6"/>
+				        <line x1="8" y1="12" x2="21" y2="12"/>
+				        <line x1="8" y1="18" x2="21" y2="18"/>
+				        <line x1="3" y1="6" x2="3.01" y2="6"/>
+				        <line x1="3" y1="12" x2="3.01" y2="12"/>
+				        <line x1="3" y1="18" x2="3.01" y2="18"/>
+				    </svg>
+				    <span>문제</span>
+				</a>
 
-                <a th:href="@{/mypage}"
+                <!-- 마이페이지: 로그인 필요 -->
+                <a th:href="${#authorization.expression('isAuthenticated()')} ? @{/mypage} : '#'"
+                   th:attr="data-requires-auth=${#authorization.expression('isAnonymous()')} ? 'true' : null"
                    th:classappend="${active == 'mypage'} ? 'hp-nav__link--active' : ''"
                    class="hp-nav__link">
-                    <!-- Person icon -->
-					<svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                         <circle cx="12" cy="7" r="4"/>
                     </svg>
                     <span>마이페이지</span>
                 </a>
 
-                <a th:href="@{/admin}"
-                   th:classappend="${active == 'admin'} ? 'hp-nav__link--active' : ''"
-                   class="hp-nav__link">
-                    <!-- Settings icon -->
-                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                    <span>관리자(관리사 계정 전용)</span>
-                </a>
+				<!-- 관리자: ADMIN 권한만 노출 -->
+				<a sec:authorize="hasRole('ADMIN')"
+				   th:href="@{/admin}"
+				   th:classappend="${active == 'admin'} ? 'hp-nav__link--active' : ''"
+				   class="hp-nav__link">
+				    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+				        <circle cx="12" cy="12" r="3"/>
+				    </svg>
+				    <span>관리자</span>
+				</a>
             </nav>
         </div>
 
-		<!-- 사용자 아이콘 + 닉네임 + 로그아웃 (오른쪽) -->
-		<div class="hp-header__right">
-		    <!-- 닉네임 -->
-		    <span class="hp-header__nickname" sec:authentication="principal.nickname">닉네임</span>
+        <!-- 사용자 영역 (오른쪽) -->
+        <div class="hp-header__right">
+            <!-- 로그인 상태 -->
+            <th:block sec:authorize="isAuthenticated()">
+                <span class="hp-header__nickname" sec:authentication="principal.nickname">닉네임</span>
+                <span class="hp-header__divider">|</span>
+                <form th:action="@{/logout}" method="post" class="hp-header__logout-form">
+                    <button type="submit" class="hp-header__logout-btn">로그아웃</button>
+                </form>
+                <span class="hp-header__divider">|</span>
+                <a th:href="@{/profile}" class="hp-header__user" aria-label="내 정보">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </a>
+            </th:block>
 
-		    <span class="hp-header__divider">|</span>
-
-		    <!-- 로그아웃 (POST form) -->
-		    <form th:action="@{/logout}" method="post" class="hp-header__logout-form">
-		        <button type="submit" class="hp-header__logout-btn">로그아웃</button>
-		    </form>
-
-		    <span class="hp-header__divider">|</span>
-
-		    <!-- 프로필 아이콘 -->
-		    <a th:href="@{/profile}" class="hp-header__user" aria-label="내 정보">
-		        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-		            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-		            <circle cx="12" cy="7" r="4"/>
-		        </svg>
-		    </a>
-		</div>
+            <!-- 비로그인 상태 -->
+            <th:block sec:authorize="isAnonymous()">
+                <a th:href="@{/auth/login}" class="hp-header__login-btn">로그인</a>
+                <a th:href="@{/auth/signup}" class="hp-header__signup-link">가입하기</a>
+            </th:block>
+        </div>
     </div>
 </header>
 
@@ -130,6 +134,7 @@
             color: var(--hp-text);
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+			scrollbar-gutter: stable;
         }
 
         a { text-decoration: none; color: inherit; }
@@ -181,20 +186,15 @@
             color: var(--hp-text-muted);
             border-bottom: 2px solid transparent;
             transition: color 0.15s ease;
+            cursor: pointer;
         }
 
-        .hp-nav__link:hover {
-            color: var(--hp-text);
-        }
-
+        .hp-nav__link:hover { color: var(--hp-text); }
         .hp-nav__link--active {
             color: var(--hp-primary);
             border-bottom-color: var(--hp-primary);
         }
-
-        .hp-nav__icon {
-            flex-shrink: 0;
-        }
+        .hp-nav__icon { flex-shrink: 0; }
 
         .hp-header__user {
             display: inline-flex;
@@ -206,47 +206,69 @@
             color: var(--hp-text-muted);
             transition: background-color 0.15s ease, color 0.15s ease;
         }
-
         .hp-header__user:hover {
             background-color: var(--hp-border-soft);
             color: var(--hp-text);
         }
-		
-		.hp-header__right {
-		    display: flex;
-		    align-items: center;
-		    gap: 12px;
-		}
 
-		.hp-header__nickname {
-		    font-size: 14px;
-		    color: var(--hp-text);
-		    font-weight: 500;
-		}
+        .hp-header__right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
-		.hp-header__divider {
-		    color: var(--hp-border);
-		    font-size: 12px;
-		}
+        .hp-header__nickname {
+            font-size: 14px;
+            color: var(--hp-text);
+            font-weight: 500;
+        }
 
-		.hp-header__logout-form {
-		    margin: 0;
-		}
+        .hp-header__divider {
+            color: var(--hp-border);
+            font-size: 12px;
+        }
 
-		.hp-header__logout-btn {
-		    background: none;
-		    border: none;
-		    font-size: 14px;
-		    color: var(--hp-text-muted);
-		    cursor: pointer;
-		    padding: 0;
-		    font-family: inherit;
-		    transition: color 0.15s ease;
-		}
+        .hp-header__logout-form { margin: 0; }
 
-		.hp-header__logout-btn:hover {
-		    color: var(--hp-text);
-		}
+        .hp-header__logout-btn {
+            background: none;
+            border: none;
+            font-size: 14px;
+            color: var(--hp-text-muted);
+            cursor: pointer;
+            padding: 0;
+            font-family: inherit;
+            transition: color 0.15s ease;
+        }
+        .hp-header__logout-btn:hover { color: var(--hp-text); }
+
+        /* 비로그인 상태 헤더 */
+        .hp-header__login-btn {
+            display: inline-flex;
+            align-items: center;
+            height: 32px;
+            padding: 0 14px;
+            background: var(--hp-primary);
+            color: #fff;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.15s;
+        }
+        .hp-header__login-btn:hover {
+            background: var(--hp-primary-hover);
+            color: #fff;
+        }
+
+        .hp-header__signup-link {
+            font-size: 13px;
+            color: var(--hp-text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.15s;
+        }
+        .hp-header__signup-link:hover { color: var(--hp-text); }
 
         /* ===== Responsive ===== */
         @media (max-width: 768px) {
@@ -256,6 +278,28 @@
             .hp-nav__link { padding: 8px; }
         }
     </style>
+</th:block>
+
+<!-- ============================================ -->
+<!-- 인증 필요 안내 스크립트 (비로그인 사용자 전용)   -->
+<!-- 사용법: <th:block th:replace="~{common/header :: auth-script}"></th:block> -->
+<!-- ============================================ -->
+<th:block th:fragment="auth-script" sec:authorize="isAnonymous()">
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginUrl = /*[[@{/auth/login}]]*/ '/auth/login';
+            document.querySelectorAll('[data-requires-auth="true"]').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (confirm('로그인이 필요한 기능입니다.\n로그인 페이지로 이동할까요?')) {
+                        window.location.href = loginUrl;
+                    }
+                });
+            });
+        });
+        /*]]>*/
+    </script>
 </th:block>
 
 </body>
