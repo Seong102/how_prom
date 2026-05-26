@@ -436,7 +436,7 @@
         <div class="token-sec" th:if="${problem.evaluationType.name() == 'BUDGET'}">
             <div class="token-head">
                 <span class="token-lbl">🪙 토큰 사용량</span>
-                <span class="token-val" id="tokenCount">0 / 1500</span>
+                <span class="token-val" id="tokenCount">0 / <span th:text="${problem.tokenLimit}">0</span></span>
             </div>
             <div class="token-bg">
                 <div class="token-fill" id="tokenFill" style="width:0%"></div>
@@ -527,7 +527,7 @@
                 <div class="bav ai">AI</div>
                 <div>
                     <div class="bubble ai">안녕하세요! 문제를 함께 풀어볼게요.<br>어떤 부분부터 시작할까요?</div>
-                    <div class="btime">오후 4:28</div>
+                    <div class="btime" id="initBtime"></div>
                 </div>
             </div>
         </div>
@@ -560,7 +560,9 @@
 <script>
     /* ── 상수 ── */
     const PROBLEM_ID  = /*[[${problem.id}]]*/ 1;
-    const TOKEN_LIMIT = /*[[${problem.tokenLimit != null ? problem.tokenLimit : 0}]]*/ 0;
+    const EVAL_TYPE   = /*[[${problem.evaluationType.name()}]]*/ 'STANDARD';
+    const TOKEN_LIMIT = /*[[${problem.tokenLimit != null ? problem.tokenLimit : -1}]]*/ -1;
+    /* TOKEN_LIMIT == -1 : BUDGET 모드 아님 (게이지 비활성) */
  
     /* Judge0 공개 API (RapidAPI 키 없이 사용 가능한 엔드포인트) */
     const JUDGE0_URL = 'https://judge0-ce.p.rapidapi.com';
@@ -568,45 +570,14 @@
     const JAVA_ID    = 62;        /* Judge0 language_id: Java (OpenJDK 13) */
  
     /* ── Monaco Editor 초기 코드 ── */
-    const INITIAL_CODE = `import java.util.Arrays;
-import java.util.Scanner;
- 
+    const INITIAL_CODE = `import java.util.Scanner;
+
 public class Main {
- 
-    static int[] bubbleSort(int[] arr) {
-        int n = arr.length;
-        for (int i = 0; i < n; i++) {
-            boolean swapped = false;
-            for (int j = 0; j < n - i - 1; j++) {
-                if (arr[j] > arr[j + 1]) {
-                    int tmp = arr[j];
-                    arr[j] = arr[j + 1];
-                    arr[j + 1] = tmp;
-                    swapped = true;
-                }
-            }
-            if (!swapped) break;
-        }
-        return arr;
-    }
- 
     public static void main(String[] args) {
-        int[] arr;
- 
         Scanner sc = new Scanner(System.in);
-        if (sc.hasNextLine()) {
-            // stdin에 값이 있으면 읽어서 사용
-            String[] tokens = sc.nextLine().trim().split("\\\\s+");
-            arr = new int[tokens.length];
-            for (int i = 0; i < tokens.length; i++) {
-                arr[i] = Integer.parseInt(tokens[i]);
-            }
-        } else {
-            // stdin이 비어있으면 기본값 사용
-            arr = new int[]{5, 3, 8, 1, 9, 2};
-        }
- 
-        System.out.println(Arrays.toString(bubbleSort(arr)));
+
+        // TODO: 여기에 코드를 작성하세요
+
     }
 }`;
  
@@ -738,9 +709,11 @@ public class Main {
        토큰 게이지
     ════════════════════════════════════ */
     function updateGauge(val) {
+        if (TOKEN_LIMIT <= 0) return;   /* BUDGET 모드가 아니면 게이지 없음 */
         const fill = document.getElementById('tokenFill');
         const cnt  = document.getElementById('tokenCount');
         const warn = document.getElementById('tokenWarn');
+        if (!fill || !cnt || !warn) return;
         const pct  = Math.min((val / TOKEN_LIMIT) * 100, 100);
         fill.style.width      = pct.toFixed(1) + '%';
         cnt.textContent       = val + ' / ' + TOKEN_LIMIT;
@@ -775,10 +748,16 @@ public class Main {
                 body:    JSON.stringify({ problemId: PROBLEM_ID, messages: conversation })
             });
             if (!res.ok) throw new Error('HTTP ' + res.status);
-            const { content } = await res.json();
+            const data = await res.json();
+            /* 서버가 확정 토큰 수(promptTokens)를 반환하면 추정치를 보정 */
+            if (typeof data.promptTokens === 'number' && data.promptTokens > 0) {
+                const estimated = Math.ceil(conversation[conversation.length - 1].content.length / 4);
+                totalUserTokens = totalUserTokens - estimated + data.promptTokens;
+                updateGauge(totalUserTokens);
+            }
             removeTyping();
-            addBubble('assistant', content, true);
-            conversation.push({ role: 'assistant', content });
+            addBubble('assistant', data.content, true);
+            conversation.push({ role: 'assistant', content: data.content });
         } catch (e) {
             removeTyping();
             addBubble('assistant', '⚠ 응답을 받지 못했습니다. 다시 시도해주세요.');
@@ -873,6 +852,16 @@ public class Main {
     function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
  
     updateGauge(0);
+
+    /* 초기 AI 인사말 시각 동적 설정 */
+    (function() {
+        const el = document.getElementById('initBtime');
+        if (el) {
+            const now = new Date();
+            const h = now.getHours(), m = String(now.getMinutes()).padStart(2, '0');
+            el.textContent = (h >= 12 ? '오후 ' : '오전 ') + (h > 12 ? h - 12 : h || 12) + ':' + m;
+        }
+    })();
 </script>
 
 <!-- 프로필 수정 모달 스크립트 -->
