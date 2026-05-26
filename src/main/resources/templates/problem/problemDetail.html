@@ -645,44 +645,37 @@ public class Main {
         const startTime = Date.now();
  
         try {
-            /*
-              Judge0 CE 공개 인스턴스: https://ce.judge0.com
-              RapidAPI 키가 없어도 아래 공개 인스턴스로 테스트 가능
-              (속도 제한 있음 — 학습/개발 용도)
-            */
-            const submitRes = await fetch('https://ce.judge0.com/submissions?base64_encoded=false&wait=true', {
+            /* Spring Boot 서버에서 직접 javac + java 실행 */
+            const res = await fetch('/api/code/run', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    source_code:  code,
-                    language_id:  JAVA_ID,
-                    stdin:        stdin   /* 사용자가 입력한 stdin 값 */
-                })
+                body: JSON.stringify({ code, stdin })
             });
- 
-            if (!submitRes.ok) throw new Error('Judge0 연결 실패 (' + submitRes.status + ')');
-            const result = await submitRes.json();
+
+            const result = await res.json();
             const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
- 
             document.getElementById('execTime').textContent = elapsed + 's';
- 
-            /* status.id: 3=Accepted, 4=Wrong, 5=TLE, 6=CE, 11=RE 등 */
-            if (result.stdout) {
+
+            if (!res.ok) {
+                body.innerHTML = `<span class="r-err">${esc(result.error || '서버 오류가 발생했습니다.')}</span>`;
+                switchTabById('error');
+            } else if (result.compileError) {
+                body.innerHTML = `<span class="r-err">${esc(result.compileError)}</span>`;
+                switchTabById('error');
+            } else if (result.runtimeError) {
+                body.innerHTML = `<span class="r-err">${esc(result.runtimeError)}</span>`;
+                switchTabById('error');
+            } else if (result.stdout !== undefined && result.stdout !== '') {
                 body.innerHTML = `<span class="r-ok">${esc(result.stdout)}</span>`;
                 switchTabById('result');
-            }
-            if (result.stderr || result.compile_output) {
-                const errText = result.stderr || result.compile_output;
-                /* 오류 탭에 표시 */
-                body.innerHTML = `<span class="r-err">${esc(errText)}</span>`;
-                switchTabById('error');
-            }
-            if (!result.stdout && !result.stderr && !result.compile_output) {
+            } else {
                 body.innerHTML = '<span style="color:var(--hp-text-muted)">(출력 없음)</span>';
+                switchTabById('result');
             }
- 
+
         } catch (e) {
-            body.innerHTML = `<span class="r-err">실행 오류: ${esc(e.message)}\n\n※ 네트워크 문제이거나 Judge0 서버가 응답하지 않습니다.\n  로컬 Judge0 설치 또는 서버 사이드 실행으로 전환 필요.</span>`;
+            body.innerHTML = `<span class="r-err">서버 연결 실패: ${esc(e.message)}</span>`;
+            switchTabById('error');
         } finally {
             runBtn.classList.remove('running');
             runBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" style="width:13px;height:13px"><polygon points="5 3 19 12 5 21 5 3"/></svg> 실행`;
