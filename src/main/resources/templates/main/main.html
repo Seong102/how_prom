@@ -40,7 +40,7 @@
         <section class="hp-continue" th:if="${continueProblem != null}">
             <div class="hp-continue__inner">
                 <div class="hp-continue__body">
-                    <div class="hp-continue__label">🔄 이어서 풀기</div>
+                    <div class="hp-continue__label">&nbsp; 이어서 풀기</div>
                     <h2 class="hp-continue__title" th:text="${continueProblem.title}">버블 정렬 구현</h2>
                     <div class="hp-continue__meta">
                         <span class="hp-eval-badge"
@@ -62,7 +62,7 @@
         <section class="hp-continue hp-continue--empty" th:if="${continueProblem == null}">
             <div class="hp-continue__inner">
                 <div class="hp-continue__body">
-                    <div class="hp-continue__label">👋 시작해볼까요?</div>
+                    <div class="hp-continue__label"> 시작해볼까요?</div>
                     <h2 class="hp-continue__title">아직 풀어본 문제가 없어요</h2>
                     <p class="hp-continue__hint">아래 추천 문제로 첫 도전을 시작해보세요</p>
                 </div>
@@ -75,8 +75,8 @@
     <!-- ============================================ -->
     <section class="hp-section" th:if="${isLoggedIn}">
         <header class="hp-section__header">
-            <h2 class="hp-section__title">🎯 추천 문제</h2>
-            <p class="hp-section__subtitle">평가 유형별로 한 문제씩 골라봤어요</p>
+            <h2 class="hp-section__title">&nbsp; 추천 문제</h2>
+            <p class="hp-section__subtitle">&nbsp; 평가 유형별로 한 문제씩 골라봤어요</p>
         </header>
 
         <div class="hp-rec-grid" th:if="${!#lists.isEmpty(recommendedProblems)}">
@@ -105,7 +105,7 @@
         </div>
 
         <div class="hp-empty" th:if="${#lists.isEmpty(recommendedProblems)}">
-            모든 문제를 다 풀었어요. 새 문제를 기다려주세요 👏
+            모든 문제를 다 풀었어요. 새 문제를 기다려주세요 
         </div>
     </section>
 
@@ -114,8 +114,8 @@
     <!-- ============================================ -->
     <section class="hp-section">
         <header class="hp-section__header">
-            <h2 class="hp-section__title">🆕 새로 등록된 문제</h2>
-            <p class="hp-section__subtitle">최근 일주일 사이 추가된 문제예요</p>
+            <h2 class="hp-section__title">&nbsp; 새로 등록된 문제</h2>
+            <p class="hp-section__subtitle">&nbsp; 최근 일주일 사이 추가된 문제예요</p>
         </header>
 
         <ul class="hp-list" th:if="${!#lists.isEmpty(newProblems)}">
@@ -154,8 +154,8 @@
     <!-- ============================================ -->
     <section class="hp-section">
         <header class="hp-section__header">
-            <h2 class="hp-section__title">🏆 이번 주 우수 풀이</h2>
-            <p class="hp-section__subtitle">다른 사용자들의 높은 점수 풀이를 살펴보세요</p>
+            <h2 class="hp-section__title">&nbsp; 이번 주 우수 풀이</h2>
+            <p class="hp-section__subtitle">&nbsp; 다른 사용자들의 높은 점수 풀이를 살펴보세요</p>
         </header>
 
         <ul class="hp-list" th:if="${!#lists.isEmpty(topSubmissions)}">
