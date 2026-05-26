@@ -185,6 +185,9 @@
 </div>
 <th:block th:fragment="styles">
     <style>
+		html {
+			scrollbar-gutter: stable;
+		}
         /* ===== Design tokens ===== */
         :root {
             --hp-primary: #5B47D6;
@@ -215,7 +218,6 @@
             color: var(--hp-text);
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-			scrollbar-gutter: stable;
         }
 
         a { text-decoration: none; color: inherit; }
