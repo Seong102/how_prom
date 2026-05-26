@@ -20,13 +20,13 @@ public class CommunityController {
     private final CommunityService communityService;
 
     /**
-     * 다른 풀이 보기 목록 페이지 (본인 제출 제외)
+     * 다른 풀이 보기 목록 페이지 (전체 유저 순위 정렬)
      * GET /community/problems/{problemId}
      */
     @GetMapping("/community/problems/{problemId}")
     public String communityList(@AuthenticationPrincipal CustomUserPrincipal principal,
                                 @PathVariable Long problemId, Model model) {
-        List<CommunityListDto> submissions = communityService.getCommunityList(problemId, principal.getId());
+        List<CommunityListDto> submissions = communityService.getCommunityList(problemId);
         model.addAttribute("submissions", submissions);
         model.addAttribute("problemId", problemId);
         return "community/community";

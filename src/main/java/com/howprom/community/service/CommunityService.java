@@ -21,10 +21,9 @@ public class CommunityService {
     /**
      * 특정 문제의 PASSED 제출 목록 (본인 제외, 점수 내림차순)
      */
-    public List<CommunityListDto> getCommunityList(Long problemId, Long excludeUserId) {
-        return submissionRepository.findCommunityList(problemId, SubmissionStatus.PASSED, excludeUserId);
+    public List<CommunityListDto> getCommunityList(Long problemId) {
+        return submissionRepository.findCommunityList(problemId, SubmissionStatus.PASSED);
     }
-
     /**
      * 다른 유저의 제출 상세 조회 (소유권 검사 없이 공개 열람)
      */

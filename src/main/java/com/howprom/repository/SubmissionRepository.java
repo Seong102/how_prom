@@ -53,7 +53,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     @Query("SELECT new com.howprom.community.dto.CommunityListDto(" +
             "s.id, u.nickname, s.score, s.totalUserTokens, s.submittedAt) " +
             "FROM Submission s JOIN s.user u " +
-            "WHERE s.problem.id = :problemId AND s.status = :status AND s.user.id <> :excludeUserId " +
+            "WHERE s.problem.id = :problemId AND s.status = :status " +
             "ORDER BY s.score DESC, s.totalUserTokens ASC")
     List<CommunityListDto> findCommunityList(@Param("problemId") Long problemId,
                                              @Param("status") SubmissionStatus status,
