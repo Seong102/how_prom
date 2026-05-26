@@ -3,7 +3,6 @@ package com.howprom.repository;
 import com.howprom.admin.dto.ProblemStatsDTO;
 import com.howprom.common.entity.EvaluationType;
 import com.howprom.common.entity.Problem;
-import com.howprom.common.entity.SubmissionStatus;
 import com.howprom.problem.dto.ProblemListItem;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,14 +18,17 @@ import java.time.LocalDateTime;
 @Repository
 public interface ProblemRepository extends JpaRepository<Problem, Long> {
 
-	@Query("SELECT new com.howprom.admin.dto.ProblemStatsDTO(" +
-	           "  s.problem.id, " +
-	           "  COUNT(s.id), " +
-	           "  AVG(s.score), " +
-	           "  SUM(CASE WHEN s.status = 'PASSED' THEN 1L ELSE 0L END)" +
-	           ") " +
-	           "FROM Submission s " +
-	           "GROUP BY s.problem.id")
+    /**
+     * 관리자 대시보드용 문제별 통계 조회
+     */
+    @Query("SELECT new com.howprom.admin.dto.ProblemStatsDTO(" +
+           "  s.problem.id, " +
+           "  COUNT(s.id), " +
+           "  AVG(s.score), " +
+           "  SUM(CASE WHEN s.status = 'PASSED' THEN 1L ELSE 0L END)" +
+           ") " +
+           "FROM Submission s " +
+           "GROUP BY s.problem.id")
     List<ProblemStatsDTO> getProblemStatistics();
 
     List<Problem> findByTitleContaining(String title);
@@ -35,15 +37,10 @@ public interface ProblemRepository extends JpaRepository<Problem, Long> {
 
     Optional<Problem> findByIdAndIsPublicTrue(Long id);
     
-    List<Problem> findByIsPublicTrueAndCreatedAtAfterOrderByCreatedAtDesc(
-            LocalDateTime since, Pageable pageable);
+    List<Problem> findByIsPublicTrueAndCreatedAtAfterOrderByCreatedAtDesc(LocalDateTime since, Pageable pageable);
     
-    
- // ===== 문제 목록용 (SCR-PROB-01) =====
-
     /**
-     * 비로그인용 — 공개 문제 목록 (필터/정렬/페이지네이션)
-     * evaluationType이 null이면 전체 유형
+     * [비로그인용] 공개 문제 목록 조회 (필터 및 페이징)
      */
     @Query("""
         SELECT new com.howprom.problem.dto.ProblemListItem(
@@ -58,17 +55,9 @@ public interface ProblemRepository extends JpaRepository<Problem, Long> {
             Pageable pageable);
 
     /**
-     * 로그인용 — 공개 문제 목록 + 사용자별 풀이 상태/최고 점수
-     *
-     * 정책 A 반영:
-     *   - PASSED 있으면 status=PASSED, bestScore=MAX(score WHERE status=PASSED)
-     *   - PASSED 없으면 status=가장 최근 제출의 status, bestScore=null
-     *   - 제출 없으면 status=null, bestScore=null
-     *
-     * 풀이 상태 필터(statusFilter):
-     *   - 'ALL'         : 모든 문제
-     *   - 'NOT_SOLVED'  : PASSED 받은 적 없는 문제만 (FAILED/GRADING만 있거나 제출 없음)
-     *   - 'PASSED_ONLY' : PASSED 받은 적 있는 문제만
+     * [로그인용] 공개 문제 목록 + 사용자별 풀이 상태 및 최고 점수 조회
+     * * 정렬 방어 조치: 네이ティブ 쿼리 특성상 Pageable의 Sort 객체가 자바 필드명(createdAt)으로 
+     * 바인딩되면 SQL 에러가 발생하므로, 쿼리 내부에 고정 정렬(ORDER BY p.created_at DESC)을 명시함.
      */
     @Query(value = """
         SELECT
@@ -94,6 +83,7 @@ public interface ProblemRepository extends JpaRepository<Problem, Long> {
             OR (:statusFilter = 'PASSED_ONLY' AND SUM(CASE WHEN s.status = 'PASSED' THEN 1 ELSE 0 END) > 0)
             OR (:statusFilter = 'NOT_SOLVED' AND SUM(CASE WHEN s.status = 'PASSED' THEN 1 ELSE 0 END) = 0)
         )
+        ORDER BY p.created_at DESC
         """,
         countQuery = """
         SELECT COUNT(*) FROM (
@@ -118,15 +108,8 @@ public interface ProblemRepository extends JpaRepository<Problem, Long> {
             @Param("statusFilter") String statusFilter,
             Pageable pageable);
     
-    
     /**
-     * 대시보드 추천 — 평가 유형별 안 푼 문제 중 최신 1개
-     *
-     * "안 푼 문제" = 해당 user가 PASSED 받은 적 없는 문제
-     *
-     * @param evaluationType  STANDARD / EFFICIENCY / BUDGET
-     * @param userId          사용자 ID
-     * @param pageable        최신 1개만 가져오기 위함 (size=1)
+     * [대시보드 추천] 평가 유형별 해결하지 않은 최신 문제 조회
      */
     @Query("""
         SELECT p FROM Problem p
