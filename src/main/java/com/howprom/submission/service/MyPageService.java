@@ -2,7 +2,7 @@ package com.howprom.submission.service;
 
 import com.howprom.submission.dto.*;
 import com.howprom.common.entity.Submission;
-import com.howprom.common.entity.Submission.SubmissionStatus;
+import com.howprom.common.entity.SubmissionStatus;
 import com.howprom.repository.SubmissionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

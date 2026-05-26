@@ -13,23 +13,36 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     	http
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/main","/auth/**", "/css/**", "/js/**", "/images/**").permitAll()
+    	.authorizeHttpRequests(auth -> auth
+                .requestMatchers("/", "/main", "/problems", "/auth/**",
+                                 "/css/**", "/js/**", "/images/**",
+                                 "/error/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/profile/**").authenticated()
                 .anyRequest().authenticated()
             )
+    		.csrf(csrf -> csrf.ignoringRequestMatchers("/profile/**"))
             .formLogin(form -> form
-                .loginPage("/auth/login")
-                .loginProcessingUrl("/login")
-                .usernameParameter("email")
-                .passwordParameter("password")
-                .defaultSuccessUrl("/main", true)
-                .failureUrl("/auth/login?error")
-                .permitAll()
-            )
+        	    .loginPage("/auth/login")
+        	    .loginProcessingUrl("/login")
+        	    .usernameParameter("email")
+        	    .defaultSuccessUrl("/", true)
+        	    .failureUrl("/auth/login?error")
+        	    .permitAll()
+        	)
+            .exceptionHandling(ex -> ex
+                    .authenticationEntryPoint((request, response, authException) -> {
+                        // 비로그인 → 메인으로 (기존 정책 유지)
+                        response.sendRedirect("/");
+                    })
+                    .accessDeniedHandler((request, response, accessDeniedException) -> {
+                        // 권한 부족 (USER가 /admin 접근 등) → 커스텀 403
+                        response.sendRedirect("/error/403");
+                    })
+                )
             .logout(logout -> logout
                 .logoutUrl("/logout")
-                .logoutSuccessUrl("/auth/login?logout")
+                .logoutSuccessUrl("/")
                 .permitAll()
             );
         return http.build();

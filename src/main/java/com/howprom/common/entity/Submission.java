@@ -67,10 +67,6 @@ public class Submission {
     @Column(name = "graded_at")
     private LocalDateTime gradedAt;
 
-    public enum SubmissionStatus {
-        GRADING, PASSED, FAILED, ERROR
-    }
-
     // 엔티티 저장 전 자동으로 시간 설정
     @PrePersist
     protected void onSubmit() {

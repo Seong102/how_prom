@@ -1,191 +1,423 @@
+/* =====================================================
+   HowProm - 대시보드 (main.css)
+   디자인 토큰(--hp-*)은 header.html의 styles fragment에서 정의됨
+   ===================================================== */
+
 /* ===== Layout ===== */
 .hp-main {
-    max-width: 1400px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 40px 32px 80px;
 }
 
-/* ===== Page header ===== */
-.hp-page-header {
-    margin-bottom: 28px;
-}
-
-.hp-page-header__title {
-    margin: 0 0 6px;
-    font-size: 28px;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-}
-
-.hp-page-header__subtitle {
-    margin: 0;
+/* ===== 공통 버튼 ===== */
+.hp-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    padding: 0 18px;
+    border-radius: 8px;
     font-size: 14px;
-    color: var(--hp-text-muted);
-}
-
-/* ===== Stats cards ===== */
-.hp-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    margin-bottom: 24px;
-}
-
-.hp-stat-card {
-    background-color: var(--hp-surface);
-    border: 1px solid var(--hp-border);
-    border-radius: var(--hp-radius);
-    padding: 22px 28px;
-    box-shadow: var(--hp-shadow);
-}
-
-.hp-stat-card__label {
-    font-size: 13px;
-    color: var(--hp-text-muted);
-    margin-bottom: 10px;
-}
-
-.hp-stat-card__value {
-    font-size: 32px;
-    font-weight: 700;
-    color: var(--hp-primary);
-    letter-spacing: -0.5px;
-}
-
-/* ===== Recent submissions ===== */
-.hp-card {
-    background-color: var(--hp-surface);
-    border: 1px solid var(--hp-border);
-    border-radius: var(--hp-radius);
-    box-shadow: var(--hp-shadow);
-    overflow: hidden;
-    margin-bottom: 28px;
-}
-
-.hp-card__header {
-    padding: 18px 28px;
-    border-bottom: 1px solid var(--hp-border-soft);
-    font-size: 15px;
     font-weight: 600;
-}
-
-.hp-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-}
-
-.hp-table thead th {
-    text-align: left;
-    padding: 14px 28px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--hp-text-muted);
-    background-color: #FAFBFC;
-    border-bottom: 1px solid var(--hp-border-soft);
-}
-
-.hp-table tbody td {
-    padding: 16px 28px;
-    border-bottom: 1px solid var(--hp-border-soft);
-    color: var(--hp-text);
-}
-
-.hp-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-.hp-table__score {
-    color: var(--hp-primary);
-    font-weight: 600;
-}
-
-.hp-table__date {
-    color: var(--hp-text-muted);
-}
-
-/* ===== Status badge ===== */
-.hp-badge {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: var(--hp-radius-sm);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-}
-
-.hp-badge--success {
-    background-color: var(--hp-success-bg);
-    color: var(--hp-success-text);
-}
-
-.hp-badge--danger {
-    background-color: var(--hp-danger-bg);
-    color: var(--hp-danger-text);
-}
-
-/* ===== Action cards ===== */
-.hp-actions {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-}
-
-.hp-action-card {
-    display: block;
-    padding: 28px;
-    border-radius: var(--hp-radius);
-    border: 2px solid transparent;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
     cursor: pointer;
-    text-decoration: none; /* 추가: a 태그 기본 스타일 제거용 */
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    font-family: inherit;
 }
 
-.hp-action-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(91, 71, 214, 0.15);
-}
-
-.hp-action-card--primary {
-    background-color: var(--hp-primary);
+.hp-btn--primary {
+    background: var(--hp-primary);
     color: #fff;
 }
+.hp-btn--primary:hover {
+    background: var(--hp-primary-hover);
+}
 
-.hp-action-card--outline {
-    background-color: var(--hp-surface);
+.hp-btn--outline {
+    background: var(--hp-surface);
     border-color: var(--hp-primary);
     color: var(--hp-primary);
 }
+.hp-btn--outline:hover {
+    background: var(--hp-primary-soft);
+}
 
-.hp-action-card__title {
-    margin: 0 0 8px;
-    font-size: 18px;
+.hp-btn--ghost {
+    background: transparent;
+    color: var(--hp-text-muted);
+}
+.hp-btn--ghost:hover {
+    background: var(--hp-border-soft);
+    color: var(--hp-text);
+}
+
+.hp-btn--full {
+    width: 100%;
+}
+
+/* ===== 환영 메시지 ===== */
+.hp-welcome {
+    margin-bottom: 28px;
+}
+
+.hp-welcome__title {
+    margin: 0 0 6px;
+    font-size: 26px;
     font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
-.hp-action-card__desc {
+.hp-welcome__subtitle {
     margin: 0;
-    font-size: 13px;
-    opacity: 0.9;
+    font-size: 14px;
+    color: var(--hp-text-muted);
 }
 
-.hp-action-card--outline .hp-action-card__desc {
+/* 비로그인용 CTA 환영 메시지 */
+.hp-welcome--guest {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    background: var(--hp-primary-soft);
+    border: 1px solid var(--hp-border);
+    border-radius: var(--hp-radius);
+	padding: 32px 32px;
+	margin-bottom: 40px;
+}
+
+.hp-welcome--guest .hp-welcome__title {
+	font-size: 22px;
+	margin-bottom: 6px;
+}
+
+.hp-welcome--guest .hp-welcome__subtitle {
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.hp-welcome--guest .hp-btn {
+    flex-shrink: 0;
+}
+
+/* ===== 이어서 풀기 ===== */
+.hp-continue {
+    margin-bottom: 36px;
+    background: linear-gradient(135deg, var(--hp-primary) 0%, #6d5be0 100%);
+    border-radius: var(--hp-radius);
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(91, 71, 214, 0.18);
+}
+
+.hp-continue__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 24px 28px;
+    color: #fff;
+}
+
+.hp-continue__label {
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0.85;
+    margin-bottom: 8px;
+}
+
+.hp-continue__title {
+    margin: 0 0 10px;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+}
+
+.hp-continue__meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+}
+
+.hp-continue__status {
+    opacity: 0.92;
+}
+
+.hp-continue__hint {
+    margin: 4px 0 0;
+    font-size: 13px;
+    opacity: 0.85;
+}
+
+/* 이어서 풀기 카드의 버튼은 흰색 배경 */
+.hp-continue .hp-btn--primary {
+    background: #fff;
+    color: var(--hp-primary);
+}
+.hp-continue .hp-btn--primary:hover {
+    background: #f3f0ff;
+}
+
+/* 빈 상태 (이어서 풀 문제 없음) — 보라색 그라데이션 대신 잔잔한 배경 */
+.hp-continue--empty {
+    background: var(--hp-primary-soft);
+    box-shadow: none;
+    border: 1px solid var(--hp-border);
+}
+.hp-continue--empty .hp-continue__inner {
+    color: var(--hp-text);
+}
+.hp-continue--empty .hp-continue__label {
+    color: var(--hp-primary);
+    opacity: 1;
+}
+.hp-continue--empty .hp-continue__hint {
     color: var(--hp-text-muted);
     opacity: 1;
 }
 
+/* ===== 공통 섹션 (추천/새 문제/우수 풀이) ===== */
+.hp-section {
+    margin-bottom: 48px;
+}
+
+.hp-section__header {
+    
+	margin-bottom: 20px;
+}
+
+.hp-section__title {
+    margin: 0 0 4px;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+}
+
+.hp-section__subtitle {
+    margin: 0;
+    font-size: 13px;
+    color: var(--hp-text-muted);
+}
+
+/* ===== 추천 문제 그리드 ===== */
+.hp-rec-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.hp-rec-card {
+    background: var(--hp-surface);
+    border: 1px solid var(--hp-border);
+    border-radius: var(--hp-radius);
+    padding: 22px 22px 20px;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.hp-rec-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+}
+
+.hp-rec-card__top {
+    margin-bottom: 14px;
+}
+
+.hp-rec-card__title {
+    margin: 0 0 14px;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    line-height: 1.35;
+    min-height: 46px;
+}
+
+.hp-rec-card__info {
+    list-style: none;
+    margin: 0 0 18px;
+    padding: 0;
+    font-size: 13px;
+    color: var(--hp-text-muted);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.hp-rec-card__info strong {
+    color: var(--hp-text);
+    font-weight: 600;
+}
+
+/* ===== 평가 유형 배지 ===== */
+.hp-eval-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    border: 1px solid transparent;
+}
+
+.hp-eval-badge--standard {
+    background: #EFF6FF;
+    color: #1D4ED8;
+    border-color: #DBEAFE;
+}
+
+.hp-eval-badge--efficiency {
+    background: #ECFDF5;
+    color: #047857;
+    border-color: #D1FAE5;
+}
+
+.hp-eval-badge--budget {
+    background: #FEF3C7;
+    color: #92400E;
+    border-color: #FDE68A;
+}
+
+/* 이어서 풀기 카드 안의 배지 (어두운 배경 위) */
+.hp-continue .hp-eval-badge {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ===== 리스트 (새 문제 / 우수 풀이 공통) ===== */
+.hp-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    background: var(--hp-surface);
+    border: 1px solid var(--hp-border);
+    border-radius: var(--hp-radius);
+    overflow: hidden;
+}
+
+.hp-list__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--hp-border-soft);
+}
+
+.hp-list__item:last-child {
+    border-bottom: none;
+}
+
+.hp-list__main {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+    flex: 1;
+}
+
+.hp-list__text {
+    min-width: 0;
+}
+
+.hp-list__title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--hp-text);
+    line-height: 1.4;
+}
+
+.hp-list__sub {
+    font-size: 12px;
+    color: var(--hp-text-muted);
+    margin-top: 2px;
+}
+
+.hp-list__side {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.hp-list__date {
+    font-size: 12px;
+    color: var(--hp-text-muted);
+}
+
+.hp-list__date-dot {
+    margin: 0 4px;
+    color: var(--hp-border);
+}
+
+/* ===== 점수 배지 (우수 풀이) ===== */
+.hp-score-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--hp-primary-soft);
+    color: var(--hp-primary);
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+/* ===== 빈 상태 ===== */
+.hp-empty {
+    background: var(--hp-surface);
+    border: 1px dashed var(--hp-border);
+    border-radius: var(--hp-radius);
+    padding: 32px 22px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--hp-text-muted);
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 900px) {
-    .hp-stats { grid-template-columns: 1fr; }
-    .hp-actions { grid-template-columns: 1fr; }
+    .hp-rec-grid {
+        grid-template-columns: 1fr;
+    }
+    .hp-continue__inner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .hp-continue .hp-btn--primary {
+        align-self: stretch;
+    }
 }
 
 @media (max-width: 600px) {
-    .hp-main { padding: 24px 16px 60px; }
-    .hp-page-header__title { font-size: 24px; }
-    .hp-stat-card { padding: 18px 20px; }
-    .hp-stat-card__value { font-size: 28px; }
-    .hp-table thead th,
-    .hp-table tbody td { padding: 12px 16px; }
-    .hp-card__header { padding: 16px 20px; }
+    .hp-main { padding: 20px 16px 60px; }
+    .hp-welcome__title { font-size: 22px; }
+    .hp-continue__title { font-size: 18px; }
+
+    .hp-list__item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 14px 18px;
+    }
+    .hp-list__side {
+        width: 100%;
+        justify-content: space-between;
+    }
+	.hp-welcome--guest {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px;
+    }
+    .hp-welcome--guest .hp-btn {
+        align-self: stretch;
+    }
 }
+
