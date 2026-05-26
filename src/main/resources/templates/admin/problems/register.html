@@ -98,12 +98,12 @@
                     <div id="reqList">
                         <div class="hp-req-row" th:if="${problem.requirements == null or #lists.isEmpty(problem.requirements)}">
                             <input type="text" name="reqDesc" class="hp-input" placeholder="요구사항 명세" required>
-                            <input type="number" name="reqWeight" class="hp-input hp-weight" value="0" min="0" oninput="calc(this)">
+                            <input type="number" name="reqWeight" class="hp-input hp-weight" value="0" min="0" oninput="calc()">
                         </div>
 
                         <div class="hp-req-row" th:if="${problem.requirements != null}" th:each="req, iterStat : ${problem.requirements}">
                             <input type="text" name="reqDesc" class="hp-input" th:value="${req.description}" placeholder="요구사항 명세" required>
-                            <input type="number" name="reqWeight" class="hp-input hp-weight" th:value="${req.weight}" min="0" oninput="calc(this)">
+                            <input type="number" name="reqWeight" class="hp-input hp-weight" th:value="${req.weight}" min="0" oninput="calc()">
                             <button th:if="${iterStat.index > 0}" type="button" class="hp-btn hp-btn--danger-outline hp-btn--del" onclick="this.parentElement.remove(); calc();">×</button>
                         </div>
                     </div>
@@ -128,12 +128,12 @@
 
         calc();
 
-        // 🛠️ querySelector('form') 대신 지정한 ID 엘리먼트를 정확하게 조준하도록 수정
         const form = document.getElementById('problemForm');
         if (form) {
             form.addEventListener('submit', function(e) {
                 let total = 0;
-                document.querySelectorAll('.hp-weight').forEach(i => total += Number(i.value));
+                // 🛠️ 부동 소수점 합산 예외 처리 적용하여 검사 안정성 보장
+                document.querySelectorAll('.hp-weight').forEach(i => total += Math.round(Number(i.value) || 0));
                 
                 if (total !== 100) {
                     e.preventDefault();
@@ -147,30 +147,23 @@
     function addReq() {
         const div = document.createElement('div');
         div.className = 'hp-req-row';
+        // 🛠️ 템플릿 리터럴 내부의 oninput 역시 calc() 기본형으로 변경
         div.innerHTML = `
             <input type="text" name="reqDesc" class="hp-input" placeholder="요구사항 명세" required>
-            <input type="number" name="reqWeight" class="hp-input hp-weight" value="0" min="0" oninput="calc(this)">
+            <input type="number" name="reqWeight" class="hp-input hp-weight" value="0" min="0" oninput="calc()">
             <button type="button" class="hp-btn hp-btn--danger-outline hp-btn--del" onclick="this.parentElement.remove(); calc();">×</button>
         `;
         document.getElementById('reqList').appendChild(div);
         calc();
     }
     
-    function calc(currentInput) {
+    function calc() {
         let total = 0;
         const inputs = document.querySelectorAll('.hp-weight');
         
-        inputs.forEach(i => total += Number(i.value));
-        
-        if (total > 100 && currentInput) {
-            const overScore = total - 100;
-            const originalValue = Number(currentInput.value);
-            
-            currentInput.value = originalValue - overScore;
-            
-            total = 0;
-            inputs.forEach(i => total += Number(i.value));
-        }
+        // 🛠️ 자바스크립트 부동 소수점 에러(ex. 33.3+33.3+33.4 = 99.9999...)로 인해 
+        // 100점 분기 검증이 영원히 실패하는 프론트 락앤트랩 방어 (반올림 및 결측치 우회)
+        inputs.forEach(i => total += Math.round(Number(i.value) || 0));
         
         const display = document.getElementById('scoreDisplay');
         const btn = document.getElementById('submitBtn');
@@ -182,5 +175,9 @@
         btn.style.opacity = isExactly100 ? '1' : '0.5';
     }
 </script>
+
+<!-- 프로필 수정 모달 스크립트 (로그인 사용자만 활성화) -->
+<th:block th:replace="~{common/header :: profile-modal-script}"></th:block>
+
 </body>
 </html>

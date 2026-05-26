@@ -36,14 +36,15 @@
 			</div>
 			<div class="hp-stat-card">
 				<div class="hp-stat-card__label">활성 사용자 수</div>
-				<div class="hp-stat-card__value" style="color: #4A90E2;"
+				<div class="hp-stat-card__value"
 					th:text="${stats.activeUserCount}">0</div>
-				<div class="hp-stat-card__sub">문제를 풀고 프롬프트 검증에 참여한 실사용자 수</div>
+				<div class="hp-stat-card__sub">프롬프트 검증 참여 실사용자 수</div>
 			</div>
 			<div class="hp-stat-card">
 				<div class="hp-stat-card__label">공개 / 총 문제 수</div>
 				<div class="hp-stat-card__value"
-					th:text="${stats.publicProblemCount} + ' / ' + ${stats.totalProblemCount}">0 / 0</div>
+					th:text="${stats.publicProblemCount} + ' / ' + ${stats.totalProblemCount}">0
+					/ 0</div>
 				<div class="hp-stat-card__sub">학습자에게 노출 중인 활성 문항과 전체 문항 수</div>
 			</div>
 		</div>
@@ -71,57 +72,75 @@
 						<table class="hp-table" id="problemStatsTable">
 							<thead>
 								<tr>
-									<th style="width: 20%; text-align: left;"
+									<th style="width: 24%; text-align: left; white-space: nowrap;"
 										onclick="sortTable('problemStatsTable', 0)" title="클릭하여 정렬">문제명
 										↕</th>
-									<th style="width: 12%; text-align: left;"
+									<th
+										style="width: 12%; text-align: center; white-space: nowrap;"
 										onclick="sortTable('problemStatsTable', 1)" title="클릭하여 정렬">유형
 										↕</th>
-									<th style="width: 11%; text-align: left;"
+									<th
+										style="width: 11%; text-align: center; white-space: nowrap;"
 										onclick="sortTable('problemStatsTable', 2)" title="클릭하여 정렬">총
 										제출 ↕</th>
-									<th style="width: 12%; text-align: left;"
+									<th
+										style="width: 13%; text-align: center; white-space: nowrap;"
 										onclick="sortTable('problemStatsTable', 3)" title="클릭하여 정렬">정상
 										통과 ↕</th>
-									<th style="width: 12%; text-align: left;"
+									<th
+										style="width: 13%; text-align: center; white-space: nowrap;"
 										onclick="sortTable('problemStatsTable', 4)" title="클릭하여 정렬">제출
 										실패 ↕</th>
-									<th style="width: 12%; text-align: left;"
+									<th
+										style="width: 12%; text-align: center; white-space: nowrap;"
 										onclick="sortTable('problemStatsTable', 5)" title="클릭하여 정렬">통과율
 										↕</th>
-									<th style="width: 18%; text-align: left;"
+									<th
+										style="width: 15%; text-align: center; white-space: nowrap;"
 										onclick="sortTable('problemStatsTable', 6)" title="클릭하여 정렬">평균
 										점수 ↕</th>
 								</tr>
 							</thead>
 							<tbody>
 								<tr th:each="prob : ${stats.problemList}">
-									<td style="text-align: left;"><strong
-										th:text="'#' + ${prob.id} + ' ' + ${prob.title}">문제명</strong></td>
-									<td style="text-align: left;"><span
+									<td style="text-align: left;" th:data-sort-value="${prob.id}">
+										<strong th:text="'#' + ${prob.id} + ' ' + ${prob.title}">문제명</strong>
+									</td>
+									<td style="text-align: center;"><span
 										th:if="${prob.evaluationType == 'STANDARD'}"
 										class="hp-badge hp-badge--standard">Standard</span> <span
 										th:if="${prob.evaluationType == 'EFFICIENCY'}"
 										class="hp-badge hp-badge--efficiency">Efficiency</span> <span
 										th:if="${prob.evaluationType == 'BUDGET'}"
 										class="hp-badge hp-badge--budget">Budget</span></td>
-									<td style="text-align: left;" th:text="${prob.totalCount}">0건</td>
+									<td style="text-align: center;"
+										th:data-sort-value="${prob.totalCount}"
+										th:text="${prob.totalCount}">0건</td>
 									<td
-										style="text-align: left; color: var(--hp-success-text); font-weight: 600;"
+										style="text-align: center; color: var(--hp-success-text); font-weight: 600;"
 										th:text="${prob.passedCount}"
+										th:data-sort-value="${prob.passedCount}"
 										th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0건</td>
-									<td style="text-align: left; color: #E28743; font-weight: 600;"
+									<td
+										style="text-align: center; color: #E28743; font-weight: 600;"
 										th:text="${prob.failedCount}"
+										th:data-sort-value="${prob.failedCount}"
 										th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0건</td>
 									<td class="hp-pass-rate"
-										style="text-align: left; font-weight: 600; color: #4A90E2;"
+										style="text-align: center; font-weight: 600; color: #4A90E2;"
 										th:data-has-submissions="${prob.hasSubmissions}"
 										th:data-total="${prob.totalCount}"
 										th:data-passed="${prob.passedCount}"
 										th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">-</td>
-									<td style="text-align: left; font-weight: 600;"
+									<td style="text-align: center; font-weight: 600;"
 										th:text="${prob.avgScore}"
+										th:data-sort-value="${prob.avgScore}"
 										th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0점</td>
+								</tr>
+								<tr id="noData-problemStatsTable" style="display: none;">
+									<td colspan="7" class="hp-text-muted"
+										style="text-align: center; padding: 32px 0;">검색 조건에 맞는
+										문제별 통계 내역이 없습니다.</td>
 								</tr>
 							</tbody>
 						</table>
@@ -130,7 +149,16 @@
 			</div>
 
 			<div class="hp-card">
-				<div class="hp-card__header">EFFICIENCY 모드 · 평균 토큰 현황</div>
+				<div class="hp-card__header" style="display: flex; justify-content: space-between; align-items: center;">
+					<span>유형별 평균 토큰 현황</span>
+					<select id="tokenTypeFilter" onchange="searchProgressAdvanced('searchEfficiency', 'filterEfficiency', 'efficiencyList')" 
+						class="hp-sort-btn" style="width: auto; height: 32px !important; padding: 4px 8px; font-size: 13px; color: var(--hp-text); border-color: var(--hp-border);">
+						<option value="ALL">모든 모드 보기</option>
+						<option value="EFFICIENCY">EFFICIENCY 모드</option>
+						<option value="STANDARD">STANDARD 모드</option>
+						<option value="BUDGET">BUDGET 모드</option>
+					</select>
+				</div>
 				<div class="hp-search-bar">
 					<select id="filterEfficiency" class="hp-sort-btn"
 						style="color: var(--hp-text); border-color: var(--hp-border); padding: 7px 10px; margin-right: 4px;">
@@ -146,13 +174,12 @@
 						style="margin-left: 8px;">토큰 ↕</button>
 				</div>
 				<div class="hp-card__body hp-progress-scroll">
-					<p
-						style="font-size: 12px; color: var(--hp-text-muted); margin-bottom: 24px; margin-top: -4px;"></p>
-					<div class="hp-progress-container" id="efficiencyList"
-						style="margin-top: 0; gap: 22px;">
+					<p style="font-size: 12px; color: var(--hp-text-muted); margin-bottom: 24px; margin-top: -4px;"></p>
+					<div class="hp-progress-container" id="efficiencyList" style="margin-top: 0; gap: 22px;">
 						<div class="hp-progress-item"
 							th:each="eff : ${stats.efficiencyList}"
-							th:attr="data-title=${eff.title}, data-token=${eff.avgUserTokens}">
+							th:attr="data-title=${eff.title}, data-token=${eff.avgUserTokens}"
+							th:data-type="${eff.evaluationType}">
 							<div class="hp-progress-info" style="text-align: left;">
 								<span th:text="'#' + ${eff.id} + ' ' + ${eff.title}">문제명</span>
 								<span class="hp-progress-meta">avg <strong
@@ -207,18 +234,22 @@
 						</thead>
 						<tbody>
 							<tr th:each="req : ${stats.requirementList}">
-								<td style="text-align: left;" th:text="${req.probId}">#000</td>
+								<td style="text-align: left;" th:data-sort-value="${req.probId}"
+									th:text="${req.probId}">#000</td>
 								<td th:text="${req.title}"
 									style="font-weight: 500; color: var(--hp-text); text-align: left;">문제명</td>
 								<td style="text-align: left;"><strong
 									th:text="${req.description}">요구사항 명세</strong></td>
 								<td
 									style="text-align: left; font-weight: 700; color: var(--hp-primary);"
+									th:data-sort-value="${req.weight}"
 									th:text="${req.weight} + '점'">0점</td>
 								<td
 									th:style="|text-align: left; color: ${req.color}; font-weight: 600;|"
+									th:data-sort-value="${req.avgAchieve}"
 									th:text="${req.avgAchieve}">0%</td>
-								<td style="text-align: left;" th:text="${req.failRate}">0%</td>
+								<td style="text-align: left;"
+									th:data-sort-value="${req.failRate}" th:text="${req.failRate}">0%</td>
 								<td>
 									<div class="hp-progress-bar-bg" style="height: 8px;">
 										<div class="hp-progress-bar-fill"
@@ -226,11 +257,17 @@
 									</div>
 								</td>
 							</tr>
-							<tr th:if="${#lists.isEmpty(stats.requirementList)}">
+							<tr th:if="${#lists.isEmpty(stats.requirementList)}"
+								class="hp-empty-warning">
 								<td colspan="7"
 									style="text-align: left; color: var(--hp-text-muted); padding: 32px 0;">
 									분석된 요구사항 통계 데이터가 존재하지 않습니다.</td>
 							</tr>
+							<tr id="noData-reqTable" style="display: none;">
+								<td colspan="7" class="hp-text-muted"
+									style="text-align: center; padding: 32px 0;">조건 검색 명세 결과가
+									매칭되지 않습니다.</td>
+								</tr>
 						</tbody>
 					</table>
 				</div>
@@ -314,23 +351,32 @@
 							</thead>
 							<tbody>
 								<tr th:each="top : ${stats.topScoreList}">
-									<td style="text-align: left;" th:text="'#' + ${top.problemId}">#000</td>
+									<td style="text-align: left;"
+										th:data-sort-value="${top.problemId}"
+										th:text="'#' + ${top.problemId}">#000</td>
 									<td th:text="${top.problemTitle}"
 										style="font-weight: 500; text-align: left;">문제명</td>
 									<td style="text-align: left;" th:text="${top.nickname}">닉네임</td>
 									<td
 										style="text-align: left; font-weight: 700; color: var(--hp-primary);"
-										th:text="${top.score} + '점'">0점</td>
+										th:data-sort-value="${top.score}" th:text="${top.score} + '점'">0점</td>
 									<td style="text-align: left; color: var(--hp-text-muted);"
+										th:data-sort-value="${top.totalUserTokens}"
 										th:text="${top.totalUserTokens} + ' tokens'">0 tokens</td>
 									<td
 										style="text-align: left; color: var(--hp-text-muted); font-size: 12px;"
 										th:text="${top.submittedAt}">2026.01.01 00:00</td>
 								</tr>
-								<tr th:if="${#lists.isEmpty(stats.topScoreList)}">
+								<tr th:if="${#lists.isEmpty(stats.topScoreList)}"
+									class="hp-empty-warning">
 									<td colspan="6"
 										style="text-align: left; color: var(--hp-text-muted); padding: 32px 0;">
 										랭킹 데이터가 없습니다.</td>
+								</tr>
+								<tr id="noData-topScoreTable" style="display: none;">
+									<td colspan="6" class="hp-text-muted"
+										style="text-align: center; padding: 32px 0;">랭킹 리스트 내
+										일치하는 검색 레코드가 없습니다.</td>
 								</tr>
 							</tbody>
 						</table>
@@ -346,11 +392,14 @@
     const sortState = {};
 
     document.addEventListener("DOMContentLoaded", function () {
+        // 1. 실시간 통과율 연산 및 UI 바인딩
         document.querySelectorAll('.hp-pass-rate').forEach(function (td) {
             const hasSub = td.getAttribute('data-has-submissions') === 'true';
             if (!hasSub) { td.textContent = '-'; return; }
+            
             const totalNum = parseInt((td.getAttribute('data-total') || '').replace(/[^0-9]/g, ''), 10);
             const passedNum = parseInt((td.getAttribute('data-passed') || '').replace(/[^0-9]/g, ''), 10);
+            
             if (!isNaN(totalNum) && totalNum > 0 && !isNaN(passedNum)) {
                 td.textContent = ((passedNum / totalNum) * 100).toFixed(1) + '%';
             } else {
@@ -358,41 +407,53 @@
             }
         });
 
+        // 2. 최고 점수 랭킹 초기 정렬 실행
         sortTable('topScoreTable', 0);
+        
+        // 3. 토큰 현황 초기 모드 설정 (전체보기 연산 자동 동기화)
+        searchProgressAdvanced('searchEfficiency', 'filterEfficiency', 'efficiencyList');
     });
 
     function sortTable(tableId, colIndex) {
         const table = document.getElementById(tableId);
         const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr:not([style*="display: none"])'));
+        
+        const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => {
+            return row.id !== 'noData-' + tableId && !row.classList.contains('hp-empty-warning');
+        });
 
         sortState[tableId + colIndex] = !sortState[tableId + colIndex];
         const asc = sortState[tableId + colIndex];
 
         rows.sort((a, b) => {
-            const aText = a.cells[colIndex]?.innerText.trim() ?? '';
-            const bText = b.cells[colIndex]?.innerText.trim() ?? '';
-            const aNum = parseFloat(aText.replace(/[^0-9.\-]/g, ''));
-            const bNum = parseFloat(bText.replace(/[^0-9.\-]/g, ''));
+            const aCell = a.cells[colIndex];
+            const bCell = b.cells[colIndex];
+            if (!aCell || !bCell) return 0;
+
+            let aVal = aCell.getAttribute('data-sort-value') ?? aCell.innerText.trim();
+            let bVal = bCell.getAttribute('data-sort-value') ?? bCell.innerText.trim();
+
+            const aNum = parseFloat(aVal.replace(/[^0-9.\-]/g, ''));
+            const bNum = parseFloat(bVal.replace(/[^0-9.\-]/g, ''));
+            
             if (!isNaN(aNum) && !isNaN(bNum)) return asc ? aNum - bNum : bNum - aNum;
-            return asc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+            return asc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
         });
 
         rows.forEach(row => tbody.appendChild(row));
 
+        const noDataRow = document.getElementById('noData-' + tableId);
+        if (noDataRow) tbody.appendChild(noDataRow);
+
         const headers = table.querySelectorAll('thead th[onclick]');
         headers.forEach(th => {
             const base = th.innerText.replace(/ [↑↓↕]$/, '');
-            const idx = parseInt(th.getAttribute('onclick').match(/\d+$/)[0]);
-            th.innerText = base + (idx === colIndex ? (asc ? ' ↑' : ' ↓') : ' ↕');
-        });
-    }
-
-    function searchTable(inputId, tableId) {
-        const keyword = document.getElementById(inputId).value.toLowerCase();
-        const tbody = document.getElementById(tableId).querySelector('tbody');
-        tbody.querySelectorAll('tr').forEach(row => {
-            row.style.display = row.innerText.toLowerCase().includes(keyword) ? '' : 'none';
+            const onclickAttr = th.getAttribute('onclick') || '';
+            const match = onclickAttr.match(/\d+(?=\))/);
+            if (match) {
+                const idx = parseInt(match[0], 10);
+                th.innerText = base + (idx === colIndex ? (asc ? ' ↑' : ' ↓') : ' ↕');
+            }
         });
     }
 
@@ -400,12 +461,15 @@
         const keyword = document.getElementById(inputId).value.toLowerCase().trim();
         const filterType = document.getElementById(filterId).value;
         const tbody = document.getElementById(tableId).querySelector('tbody');
+        const rows = tbody.querySelectorAll('tr:not([id^="noData-"]):not(.hp-empty-warning)');
+        let visibleCount = 0;
 
-        tbody.querySelectorAll('tr').forEach(row => {
-            if (!keyword) { row.style.display = ''; return; }
+        rows.forEach(row => {
+            if (!keyword) { row.style.display = ''; visibleCount++; return; }
 
             const titleText = row.cells[0]?.innerText.toLowerCase() ?? '';
             const typeText  = row.cells[1]?.innerText.toLowerCase() ?? '';
+            
             const idMatch = titleText.match(/#(\d+)/);
             const probId = idMatch ? idMatch[1] : '';
             const totalCount = parseFloat(row.cells[2]?.innerText.replace(/[^0-9]/g, '')) || 0;
@@ -421,18 +485,27 @@
             else if (filterType === 'score_gte') isMatch = !isNaN(inputNum) && avgScore >= inputNum;
             else if (filterType === 'score_lte') isMatch = !isNaN(inputNum) && avgScore <= inputNum;
 
-            row.style.display = isMatch ? '' : 'none';
+            if (isMatch) { row.style.display = ''; visibleCount++; } 
+            else { row.style.display = 'none'; }
         });
+
+        const msgRow = document.getElementById('noData-' + tableId);
+        const hasEmptyWarning = tbody.querySelector('.hp-empty-warning') !== null;
+        if (msgRow) {
+            msgRow.style.display = (visibleCount === 0 && !hasEmptyWarning) ? '' : 'none';
+        }
     }
 
     function searchReqAdvanced(inputId, filterId, tableId) {
         const keyword = document.getElementById(inputId).value.toLowerCase().trim();
         const filterType = document.getElementById(filterId).value;
         const tbody = document.getElementById(tableId).querySelector('tbody');
+        const rows = tbody.querySelectorAll('tr:not([id^="noData-"]):not(.hp-empty-warning)');
+        let visibleCount = 0;
 
-        tbody.querySelectorAll('tr').forEach(row => {
+        rows.forEach(row => {
             if (row.cells.length < 5) return;
-            if (!keyword) { row.style.display = ''; return; }
+            if (!keyword) { row.style.display = ''; visibleCount++; return; }
 
             const rawProbId = row.cells[0]?.innerText.toLowerCase() ?? '';
             const cleanProbId = rawProbId.replace('#', '');
@@ -444,22 +517,76 @@
             else if (filterType === 'id')  isMatch = cleanProbId.includes(keyword) || rawProbId.includes(keyword);
             else if (filterType === 'desc') isMatch = descText.includes(keyword);
 
-            row.style.display = isMatch ? '' : 'none';
+            if (isMatch) { row.style.display = ''; visibleCount++; } 
+            else { row.style.display = 'none'; }
         });
+
+        const msgRow = document.getElementById('noData-' + tableId);
+        const hasEmptyWarning = tbody.querySelector('.hp-empty-warning') !== null;
+        if (msgRow) {
+            msgRow.style.display = (visibleCount === 0 && !hasEmptyWarning) ? '' : 'none';
+        }
     }
 
+    function searchTopScoreAdvanced() {
+        const keyword = document.getElementById('searchTopScore').value.toLowerCase().trim();
+        const filterType = document.getElementById('filterTopScore').value;
+        const tableId = 'topScoreTable';
+        const tbody = document.getElementById(tableId).querySelector('tbody');
+        const rows = tbody.querySelectorAll('tr:not([id^="noData-"]):not(.hp-empty-warning)');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            if (row.cells.length < 6) return;
+            if (!keyword) { row.style.display = ''; visibleCount++; return; }
+
+            const rawProbId = row.cells[0]?.innerText.toLowerCase() ?? ''; 
+            const cleanProbId = rawProbId.replace('#', '');                
+            const titleText = row.cells[1]?.innerText.toLowerCase() ?? '';  
+            const nicknameText = row.cells[2]?.innerText.toLowerCase() ?? ''; 
+
+            let isMatch = false;
+            if (filterType === 'title')       isMatch = titleText.includes(keyword);
+            else if (filterType === 'id')     isMatch = cleanProbId.includes(keyword) || rawProbId.includes(keyword);
+            else if (filterType === 'nickname') isMatch = nicknameText.includes(keyword);
+
+            if (isMatch) { row.style.display = ''; visibleCount++; } 
+            else { row.style.display = 'none'; }
+        });
+
+        const msgRow = document.getElementById('noData-' + tableId);
+        const hasEmptyWarning = tbody.querySelector('.hp-empty-warning') !== null;
+        if (msgRow) {
+            msgRow.style.display = (visibleCount === 0 && !hasEmptyWarning) ? '' : 'none';
+        }
+    }
+
+    /**
+     * 💡 고도화 수정 완료: 드롭다운 모드 필터링과 검색 입력란 연동 처리
+     */
     function searchProgressAdvanced(inputId, filterId, containerId) {
         const keyword = document.getElementById(inputId).value.toLowerCase().trim();
         const filterType = document.getElementById(filterId).value;
+        const selectedType = document.getElementById('tokenTypeFilter').value; // 유형 드롭다운 값
         const inputNum = parseFloat(keyword);
 
         document.getElementById(containerId).querySelectorAll('.hp-progress-item').forEach(item => {
+            // 1차 필터: 상단 평가 유형 검사
+            const rowType = item.getAttribute('data-type');
+            const typeMatch = (selectedType === 'ALL' || rowType === selectedType);
+
+            if (!typeMatch) {
+                item.style.display = 'none';
+                return;
+            }
+
+            // 2차 필터: 키워드 검색 검사 (검색어가 없을 땐 타입 매칭된 항목 무조건 노출)
             if (!keyword) { item.style.display = ''; return; }
 
             const title = (item.dataset.title || '').toLowerCase();
             const idMatch = item.querySelector('.hp-progress-info span')?.innerText.match(/#(\d+)/);
             const probId = idMatch ? idMatch[1] : '';
-            const tokenVal = parseFloat(item.dataset.token || 0);
+            const tokenVal = parseFloat((item.dataset.token || '0').replace(/[^0-9.]/g, ''));
 
             let isMatch = false;
             if (filterType === 'title')          isMatch = title.includes(keyword);
@@ -479,8 +606,8 @@
         const asc = sortState[containerId];
 
         items.sort((a, b) => {
-            const aVal = parseFloat(a.dataset.token || 0);
-            const bVal = parseFloat(b.dataset.token || 0);
+            const aVal = parseFloat((a.dataset.token || '0').replace(/[^0-9.]/g, ''));
+            const bVal = parseFloat((b.dataset.token || '0').replace(/[^0-9.]/g, ''));
             return asc ? aVal - bVal : bVal - aVal;
         });
 
@@ -489,34 +616,10 @@
         const btn = document.querySelector(`button[onclick="sortProgress('${containerId}', '${valClass}')"]`);
         if (btn) btn.innerText = '토큰 ' + (asc ? '↑' : '↓');
     }
-
-    function searchTopScoreAdvanced() {
-        const keyword = document.getElementById('searchTopScore').value.toLowerCase().trim();
-        const filterType = document.getElementById('filterTopScore').value;
-        const tbody = document.getElementById('topScoreTable').querySelector('tbody');
-
-        tbody.querySelectorAll('tr').forEach(row => {
-            if (row.cells.length < 6) return;
-            if (!keyword) { row.style.display = ''; return; }
-
-            const rawProbId = row.cells[0]?.innerText.toLowerCase() ?? ''; 
-            const cleanProbId = rawProbId.replace('#', '');                
-            const titleText = row.cells[1]?.innerText.toLowerCase() ?? '';  
-            const nicknameText = row.cells[2]?.innerText.toLowerCase() ?? ''; 
-
-            let isMatch = false;
-            if (filterType === 'title') {
-                isMatch = titleText.includes(keyword);
-            } else if (filterType === 'id') {
-                isMatch = cleanProbId.includes(keyword) || rawProbId.includes(keyword);
-            } else if (filterType === 'nickname') {
-                isMatch = nicknameText.includes(keyword);
-            }
-
-            row.style.display = isMatch ? '' : 'none';
-        });
-    }
 </script>
+
+<!-- 프로필 수정 모달 스크립트 (로그인 사용자만 활성화) -->
+<th:block th:replace="~{common/header :: profile-modal-script}"></th:block>
 
 </body>
 </html>
