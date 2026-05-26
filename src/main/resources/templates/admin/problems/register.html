@@ -182,5 +182,9 @@
         btn.style.opacity = isExactly100 ? '1' : '0.5';
     }
 </script>
+
+<!-- 프로필 수정 모달 스크립트 (로그인 사용자만 활성화) -->
+<th:block th:replace="~{common/header :: profile-modal-script}"></th:block>
+
 </body>
 </html>
