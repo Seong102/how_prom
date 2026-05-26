@@ -3,15 +3,16 @@ package com.howprom.admin.service;
 import com.howprom.admin.dto.AdminDashboardDTO;
 import com.howprom.repository.AdminDashboardRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +22,13 @@ public class AdminDashboardService {
     private final AdminDashboardRepository adminDashboardRepository;
     private static final DateTimeFormatter FORMATTER =
             DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm");
+
+    // 💡 대시보드 UI에 어울리는 풍부한 고품격 테마 색상 배열 확장 (12색)
+    private static final String[] EXTENDED_COLORS = {
+            "#4A90E2", "#76A1EF", "#79C3C4", "#2ECC71", 
+            "#E28743", "#E74C3C", "#9B59B6", "#1ABC9C", 
+            "#F1C40F", "#34495E", "#E67E22", "#3498DB"
+    };
 
     public AdminDashboardDTO getDashboardStats() {
 
@@ -32,7 +40,6 @@ public class AdminDashboardService {
 
         String formattedPassRate = passRate != null ? String.format("%.1f%%", passRate) : "0.0%";
 
-        // 2번: evaluationType 포함해서 조립
         List<Object[]> rawProblems = adminDashboardRepository.findProblemTableStatsRaw();
         List<AdminDashboardDTO.ProblemTableDTO> problemList = new ArrayList<>();
 
@@ -52,21 +59,15 @@ public class AdminDashboardService {
                     .avgScore(hasSub ? String.format("%.1f점", avgScore) : "-")
                     .passedCount(hasSub ? passed + "건" : "-")
                     .failedCount(hasSub ? failed + "건" : "-")
-                    .errorCount(hasSub ? error + "건" : "-")
+                    .errorCount(hasSub ? error > 0 ? error + "건" : "-" : "-")
                     .hasSubmissions(hasSub)
                     .hasErrors(error > 0)
                     .build());
         }
 
         List<AdminDashboardDTO.EfficiencyChartDTO> efficiencyList = getEfficiencyTokensList();
-        
-        // [수정 완료] RequirementListDTO 오타를 원래 타입인 RequirementAnalysisDTO로 복구했습니다.
         List<AdminDashboardDTO.RequirementAnalysisDTO> requirementList = getRequirementAnalysisList();
-
-        // 4번: 최근 제출 현황
         List<AdminDashboardDTO.RecentSubmissionDTO> recentSubmissionList = getRecentSubmissions();
-
-        // 5번: 최고 점수 랭킹 (방안 A 중복 제거 로직 유지)
         List<AdminDashboardDTO.TopScoreDTO> topScoreList = getTopScores();
 
         return AdminDashboardDTO.builder()
@@ -84,23 +85,36 @@ public class AdminDashboardService {
     }
 
     private List<AdminDashboardDTO.EfficiencyChartDTO> getEfficiencyTokensList() {
-        List<Object[]> rawStats = adminDashboardRepository.findEfficiencyTokenStats();
+        List<Object[]> rawStats = adminDashboardRepository.findProblemTableStatsRaw();
         List<AdminDashboardDTO.EfficiencyChartDTO> result = new ArrayList<>();
         if (rawStats.isEmpty()) return result;
 
-        double maxTokens = rawStats.stream()
-                .mapToDouble(row -> ((Number) row[2]).doubleValue())
+        // 1. 먼저 0 token 이하인 항목을 제외한 데이터만 필터링
+        List<Object[]> filteredStats = rawStats.stream()
+                .filter(row -> {
+                    Double avgTokens = row[4] != null ? ((Number) row[4]).doubleValue() : 0.0;
+                    return avgTokens > 0;   // 제출 이력이 있어 평균 토큰이 1 이상인 것만 포함
+                })
+                .collect(Collectors.toList());
+
+        if (filteredStats.isEmpty()) return result;
+
+        // 2. 필터링된 데이터 기준으로 maxTokens 계산
+        double maxTokens = filteredStats.stream()
+                .mapToDouble(row -> row[4] != null ? ((Number) row[4]).doubleValue() : 0.0)
                 .max().orElse(0.0);
 
-        String[] colors = {"#E28743", "#76A1EF", "#79C3C4", "#4A90E2"};
         int colorIdx = 0;
 
-        for (Object[] row : rawStats) {
+        for (Object[] row : filteredStats) {
             Long id = (Long) row[0];
             String title = (String) row[1];
-            Double avgUserTokens = ((Number) row[2]).doubleValue();
+            Double avgUserTokens = row[4] != null ? ((Number) row[4]).doubleValue() : 0.0;
+            String evalType = row[2] != null ? row[2].toString() : "STANDARD";
+
             String barWidth = maxTokens > 0 ? (int)((avgUserTokens / maxTokens) * 100) + "%" : "0%";
-            String color = colors[colorIdx % colors.length];
+            
+            String color = EXTENDED_COLORS[colorIdx % EXTENDED_COLORS.length];
             colorIdx++;
 
             result.add(AdminDashboardDTO.EfficiencyChartDTO.builder()
@@ -109,6 +123,7 @@ public class AdminDashboardService {
                     .avgUserTokens(String.format("%,d", avgUserTokens.intValue()))
                     .barWidth(barWidth)
                     .color(color)
+                    .evaluationType(evalType)
                     .build());
         }
         return result;
@@ -119,7 +134,6 @@ public class AdminDashboardService {
         List<Object[]> rawReqs = adminDashboardRepository.findRequirementStatsRaw();
         if (rawReqs == null || rawReqs.isEmpty()) return result;
 
-        String[] colors = {"#4A90E2", "#79C3C4", "#76A1EF", "#E28743"};
         int colorIdx = 0;
 
         for (Object[] row : rawReqs) {
@@ -129,7 +143,9 @@ public class AdminDashboardService {
             Integer weight = row[3] != null ? ((Number) row[3]).intValue() : 0;
             double avgAchieve = row[4] != null ? ((Number) row[4]).doubleValue() : 0.0;
             double failRate = row[5] != null ? ((Number) row[5]).doubleValue() : 0.0;
-            String color = colors[colorIdx % colors.length];
+            
+            // 💡 확장된 컬러 팔레트 적용
+            String color = EXTENDED_COLORS[colorIdx % EXTENDED_COLORS.length];
             colorIdx++;
 
             result.add(AdminDashboardDTO.RequirementAnalysisDTO.builder()
@@ -146,18 +162,15 @@ public class AdminDashboardService {
     }
 
     private List<AdminDashboardDTO.RecentSubmissionDTO> getRecentSubmissions() {
-        List<Object[]> raw = adminDashboardRepository.findRecentSubmissions();
+        List<Object[]> raw = adminDashboardRepository.findRecentSubmissions(PageRequest.of(0, 10));
         List<AdminDashboardDTO.RecentSubmissionDTO> result = new ArrayList<>();
 
-        int limit = Math.min(raw.size(), 10);
-        for (int i = 0; i < limit; i++) {
-            Object[] row = raw.get(i);
+        for (Object[] row : raw) {
             String nickname = row[0] != null ? (String) row[0] : "-";
             String problemTitle = row[1] != null ? (String) row[1] : "-";
             Integer score = row[2] != null ? ((Number) row[2]).intValue() : 0;
             String status = row[3] != null ? row[3].toString() : "-";
-            String submittedAt = row[4] != null
-                    ? ((LocalDateTime) row[4]).format(FORMATTER) : "-";
+            String submittedAt = toFormattedString(row[4]);
 
             result.add(AdminDashboardDTO.RecentSubmissionDTO.builder()
                     .nickname(nickname)
@@ -170,47 +183,44 @@ public class AdminDashboardService {
         return result;
     }
 
+    /**
+     * 💡 리팩토링 완료: ROW_NUMBER() 기반 랭킹 최적화 반영
+     * DB Native Query 레벨에서 이미 완벽한 순위 정렬 및 문제당 단 1건 필터링이 완료되어 넘어옵니다.
+     * 따라서 자바단에서 복잡하게 연산하던 LinkedHashMap 중복 제어 루프를 전부 제거했습니다.
+     */
     private List<AdminDashboardDTO.TopScoreDTO> getTopScores() {
         List<Object[]> raw = adminDashboardRepository.findTopScorePerProblem();
-        Map<Long, AdminDashboardDTO.TopScoreDTO> topScoreMap = new LinkedHashMap<>();
+        List<AdminDashboardDTO.TopScoreDTO> result = new ArrayList<>();
 
         for (Object[] row : raw) {
-            Long problemId = row[0] != null ? (Long) row[0] : 0L;
+            Long problemId = row[0] != null ? ((Number) row[0]).longValue() : 0L;
             String problemTitle = row[1] != null ? (String) row[1] : "-";
             String nickname = row[2] != null ? (String) row[2] : "-";
             Integer score = row[3] != null ? ((Number) row[3]).intValue() : 0;
             Integer totalUserTokens = row[4] != null ? ((Number) row[4]).intValue() : 0;
-            String submittedAt = row[5] != null ? ((LocalDateTime) row[5]).format(FORMATTER) : "-";
+            String submittedAt = toFormattedString(row[5]);
 
-            AdminDashboardDTO.TopScoreDTO current = AdminDashboardDTO.TopScoreDTO.builder()
+            result.add(AdminDashboardDTO.TopScoreDTO.builder()
                     .problemId(problemId)
                     .problemTitle(problemTitle)
                     .nickname(nickname)
                     .score(score)
                     .totalUserTokens(totalUserTokens)
                     .submittedAt(submittedAt)
-                    .build();
-
-            if (!topScoreMap.containsKey(problemId)) {
-                topScoreMap.put(problemId, current);
-            } else {
-                AdminDashboardDTO.TopScoreDTO existing = topScoreMap.get(problemId);
-                boolean shouldReplace = false;
-
-                if (current.getScore() > existing.getScore()) {
-                    shouldReplace = true;
-                } else if (current.getScore().equals(existing.getScore())) {
-                    if (current.getTotalUserTokens() < existing.getTotalUserTokens()) {
-                        shouldReplace = true;
-                    }
-                }
-
-                if (shouldReplace) {
-                    topScoreMap.put(problemId, current);
-                }
-            }
+                    .build());
         }
 
-        return new ArrayList<>(topScoreMap.values());
+        return result;
+    }
+
+    private String toFormattedString(Object dateObj) {
+        if (dateObj == null) return "-";
+        if (dateObj instanceof LocalDateTime) {
+            return ((LocalDateTime) dateObj).format(FORMATTER);
+        }
+        if (dateObj instanceof Timestamp) {
+            return ((Timestamp) dateObj).toLocalDateTime().format(FORMATTER);
+        }
+        return dateObj.toString();
     }
 }

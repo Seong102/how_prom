@@ -40,6 +40,7 @@ public class AdminDashboardDTO {
         private String avgUserTokens;
         private String barWidth;
         private String color;
+        private String evaluationType;
     }
 
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
