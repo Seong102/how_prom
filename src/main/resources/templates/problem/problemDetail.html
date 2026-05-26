@@ -95,7 +95,7 @@
  
         /* ── 왼쪽: 문제 패널 ── */
         .prob-panel {
-            width: 284px;
+            width: 260px;
             background: var(--hp-surface);
             border-right: 1px solid var(--hp-border);
             display: flex; flex-direction: column;
@@ -235,7 +235,7 @@
  
         /* ── 오른쪽: 채팅 패널 ── */
         .chat-panel {
-            width: 340px; background: var(--hp-surface); border-left: 1px solid var(--hp-border);
+            width: 480px; background: var(--hp-surface); border-left: 1px solid var(--hp-border);
             display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden;
         }
         .chat-head {
@@ -264,7 +264,7 @@
         }
         .bav.ai   { background: var(--hp-primary-soft); color: var(--hp-primary); }
         .bav.user { background: var(--hp-border-soft); color: var(--hp-text-muted); }
-        .bubble { max-width: 228px; padding: 9px 12px; font-size: 12.5px; line-height: 1.6; word-break: keep-all; }
+        .bubble { max-width: 360px; padding: 9px 12px; font-size: 12.5px; line-height: 1.6; word-break: keep-all; }
         .bubble.ai {
             background: var(--hp-bg); color: var(--hp-text);
             border: 1px solid var(--hp-border); border-radius: 4px 12px 12px 12px;
@@ -767,41 +767,64 @@ public class Main {
     function addBubble(role, text, showApply) {
         const msgs = document.getElementById('chatMsgs');
         const now  = new Date();
-        const time = `오후 ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
-        const cm   = text.match(/```[\w]*\n?([\s\S]*?)```/);
-        const code = cm ? esc(cm[1].trim()) : '';
-        const body = esc(cm ? text.replace(/```[\w]*\n?[\s\S]*?```/, '').trim() : text);
+        const h    = now.getHours();
+        const m    = String(now.getMinutes()).padStart(2, '0');
+        const time = (h >= 12 ? '오후 ' : '오전 ') + (h > 12 ? h - 12 : h || 12) + ':' + m;
+        const cm   = text.match(/```(?:[\w]*)\n?([\s\S]*?)```/);
+        const rawCode = cm ? cm[1].trim() : '';
+        const code = rawCode ? esc(rawCode) : '';
+        const body = esc(cm ? text.replace(/```(?:[\w]*)\n?[\s\S]*?```/, '').trim() : text);
         const isAI = role === 'assistant';
         const wrap = document.createElement('div');
         wrap.className = 'bw' + (isAI ? '' : ' u');
+
+        /* 코드 블록 요소 */
+        const codeEl = code
+            ? `<div class="bcode">${code}</div>`
+            : '';
+
+        /* 에디터 적용 버튼 — data-code 속성으로 코드 전달 (onclick 이스케이프 문제 방지) */
+        const applyEl = (code && isAI && showApply)
+            ? `<button class="apply-btn" data-apply-code="1">
+                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
+                   에디터에 적용
+               </button>`
+            : '';
+
         wrap.innerHTML = `
             <div class="bav ${isAI ? 'ai' : 'user'}">${isAI ? 'AI' : 'U'}</div>
-            <div>
+            <div style="min-width:0;flex:1">
                 <div class="bubble ${isAI ? 'ai' : 'user'}">
                     ${body}
-                    ${code ? `<div class="bcode">${code}</div>` : ''}
-                    ${code && isAI && showApply
-                        ? `<button class="apply-btn" onclick="applyCode(this,${JSON.stringify(cm[1].trim())})">
-                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
-                               에디터에 적용
-                           </button>`
-                        : ''}
+                    ${codeEl}
+                    ${applyEl}
                 </div>
                 <div class="btime">${time}</div>
             </div>`;
+
+        /* 버튼에 rawCode를 JS 프로퍼티로 직접 저장 (이스케이프 문제 없음) */
+        if (rawCode && isAI && showApply) {
+            const btn = wrap.querySelector('[data-apply-code]');
+            if (btn) btn._code = rawCode;
+        }
+
         msgs.appendChild(wrap);
         msgs.scrollTop = msgs.scrollHeight;
     }
  
-    /* AI가 준 코드를 Monaco 에디터에 적용 */
-    function applyCode(btn, code) {
+    /* AI가 준 코드를 Monaco 에디터에 적용 — 이벤트 위임 방식 */
+    document.getElementById('chatMsgs').addEventListener('click', function(e) {
+        const btn = e.target.closest('[data-apply-code]');
+        if (!btn) return;
+        const code = btn._code;
+        if (!code) return;
         if (monacoEditor) {
             monacoEditor.setValue(code);
             monacoEditor.focus();
         }
         btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px;height:11px"><polyline points="20 6 9 17 4 12"/></svg> 에디터에 적용됨`;
         btn.className = 'apply-btn done';
-    }
+    });
  
     function showTyping() {
         const msgs = document.getElementById('chatMsgs');
