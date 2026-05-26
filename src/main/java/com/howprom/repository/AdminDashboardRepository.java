@@ -21,12 +21,15 @@ public interface AdminDashboardRepository extends JpaRepository<Submission, Long
     @Query("SELECT COUNT(p) FROM Problem p WHERE p.isPublic = true")
     Long countPublicProblems();
 
-    @Query("SELECT p.id, p.title, COUNT(s), COALESCE(AVG(s.score), 0.0), "
+    @Query("SELECT COUNT(p) FROM Problem p")
+    Long countTotalProblems();
+
+    @Query("SELECT p.id, p.title, p.evaluationType, COUNT(s), COALESCE(AVG(s.score), 0.0), "
             + "SUM(CASE WHEN s.status = 'PASSED' THEN 1L ELSE 0L END), "
             + "SUM(CASE WHEN s.status = 'FAILED' THEN 1L ELSE 0L END), "
             + "SUM(CASE WHEN s.status = 'ERROR' THEN 1L ELSE 0L END) "
             + "FROM Problem p LEFT JOIN Submission s ON s.problem = p "
-            + "GROUP BY p.id, p.title")
+            + "GROUP BY p.id, p.title, p.evaluationType")
     List<Object[]> findProblemTableStatsRaw();
 
     @Query("SELECT p.id, p.title, AVG(s.totalUserTokens) "
@@ -35,20 +38,39 @@ public interface AdminDashboardRepository extends JpaRepository<Submission, Long
             + "GROUP BY p.id, p.title")
     List<Object[]> findEfficiencyTokenStats();
 
-    // 🔥 [수정] 문제 테이블(problems)을 JOIN 하고 p.title을 SELECT 및 GROUP BY에 추가
     String REQUIREMENT_STATS_QUERY =
-            "SELECT r.problem_id, p.title, r.description, " +
+            "SELECT r.problem_id, p.title, r.description, r.weight, " +
             "AVG(jt.score) as avg_achieve, " +
             "(COUNT(CASE WHEN jt.score < 50 THEN 1 END) * 100.0 / COUNT(*)) as fail_rate " +
             "FROM requirements r " +
-            "JOIN problems p ON p.id = r.problem_id " + 
+            "JOIN problems p ON p.id = r.problem_id " +
             "JOIN submissions sub ON sub.problem_id = r.problem_id " +
             "JOIN JSON_TABLE(sub.requirements_result, '$[*]' COLUMNS( " +
             "    req_id BIGINT PATH '$.id', " +
             "    score INT PATH '$.score' " +
             ")) AS jt ON jt.req_id = r.id " +
-            "GROUP BY r.problem_id, p.title, r.description";
+            "GROUP BY r.problem_id, p.title, r.description, r.weight";
 
     @Query(value = REQUIREMENT_STATS_QUERY, nativeQuery = true)
     List<Object[]> findRequirementStatsRaw();
+
+    //최근 제출 현황 10건
+    @Query("SELECT s.user.nickname, p.title, s.score, s.status, s.submittedAt "
+            + "FROM Submission s "
+            + "JOIN s.problem p "
+            + "WHERE s.status != 'GRADING' "
+            + "ORDER BY s.submittedAt DESC")
+    List<Object[]> findRecentSubmissions();
+
+    //문제별 최고 점수 랭킹
+    @Query("SELECT p.id, p.title, s.user.nickname, s.score, s.totalUserTokens, s.submittedAt "
+            + "FROM Submission s "
+            + "JOIN s.problem p "
+            + "WHERE s.status = 'PASSED' "
+            + "AND s.score = ("
+            + "    SELECT MAX(s2.score) FROM Submission s2 "
+            + "    WHERE s2.problem = s.problem AND s2.status = 'PASSED'"
+            + ") "
+            + "ORDER BY s.score DESC, s.totalUserTokens ASC")
+    List<Object[]> findTopScorePerProblem();
 }
