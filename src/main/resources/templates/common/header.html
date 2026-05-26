@@ -7,91 +7,182 @@
 </head>
 <body>
 
-<header th:fragment="header(active)" class="hp-header">
-    <div class="hp-header__inner">
-        <div class="hp-header__left">
-            <a th:href="@{/}" class="hp-logo">HowProm</a>
+<div th:fragment="header(active)">
+    <header class="hp-header">
+	    <div class="hp-header__inner">
+	        <div class="hp-header__left">
+	            <a th:href="@{/}" class="hp-logo">HowProm</a>
+	
+	            <nav class="hp-nav">
+	                <!-- 대시보드: 비로그인도 접근 가능 -->
+	                <a th:href="@{/}"
+	                   th:classappend="${active == 'dashboard'} ? 'hp-nav__link--active' : ''"
+	                   class="hp-nav__link">
+	                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+	                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+	                        <polyline points="9 22 9 12 15 12 15 22"/>
+	                    </svg>
+	                    <span>대시보드</span>
+	                </a>
+	
+	                <!-- 문제: 로그인 필요 -->
+					<a th:href="@{/problems}"
+					   th:classappend="${active == 'problems'} ? 'hp-nav__link--active' : ''"
+					   class="hp-nav__link">
+					    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					        <line x1="8" y1="6" x2="21" y2="6"/>
+					        <line x1="8" y1="12" x2="21" y2="12"/>
+					        <line x1="8" y1="18" x2="21" y2="18"/>
+					        <line x1="3" y1="6" x2="3.01" y2="6"/>
+					        <line x1="3" y1="12" x2="3.01" y2="12"/>
+					        <line x1="3" y1="18" x2="3.01" y2="18"/>
+					    </svg>
+					    <span>문제</span>
+					</a>
+	
+	                <!-- 마이페이지: 로그인 필요 -->
+	                <a th:href="${#authorization.expression('isAuthenticated()')} ? @{/mypage} : '#'"
+	                   th:attr="data-requires-auth=${#authorization.expression('isAnonymous()')} ? 'true' : null"
+	                   th:classappend="${active == 'mypage'} ? 'hp-nav__link--active' : ''"
+	                   class="hp-nav__link">
+	                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+	                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+	                        <circle cx="12" cy="7" r="4"/>
+	                    </svg>
+	                    <span>마이페이지</span>
+	                </a>
+	
+					<!-- 관리자: ADMIN 권한만 노출 -->
+					<a sec:authorize="hasRole('ADMIN')"
+					   th:href="@{/admin}"
+					   th:classappend="${active == 'admin'} ? 'hp-nav__link--active' : ''"
+					   class="hp-nav__link">
+					    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+					        <circle cx="12" cy="12" r="3"/>
+					    </svg>
+					    <span>관리자</span>
+					</a>
+	            </nav>
+	        </div>
+	
+	        <!-- 사용자 영역 (오른쪽) -->
+	        <div class="hp-header__right">
+	            <!-- 로그인 상태 -->
+	            <th:block sec:authorize="isAuthenticated()">
+	                <span class="hp-header__nickname" sec:authentication="principal.nickname">닉네임</span>
+	                <span class="hp-header__divider">|</span>
+	                <form th:action="@{/logout}" method="post" class="hp-header__logout-form">
+	                    <button type="submit" class="hp-header__logout-btn">로그아웃</button>
+	                </form>
+	                <span class="hp-header__divider">|</span>
+					<button type="button" class="hp-header__user"
+					        aria-label="내 정보"
+					        data-profile-modal-open>
+					    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+					        <circle cx="12" cy="7" r="4"/>
+					    </svg>
+					</button>
+	            </th:block>
+	
+	            <!-- 비로그인 상태 -->
+	            <th:block sec:authorize="isAnonymous()">
+	                <a th:href="@{/auth/login}" class="hp-header__login-btn">로그인</a>
+	                <a th:href="@{/auth/signup}" class="hp-header__signup-link">가입하기</a>
+	            </th:block>
+	        </div>
+	    </div>
+	</header>
+	
+		
+	<!-- ============================================ -->
+	<!-- 프로필 수정 모달 (로그인 사용자만 렌더링)      -->
+	<!-- ============================================ -->
+	<div sec:authorize="isAuthenticated()" class="hp-modal" id="profileModal" hidden>
+	    <div class="hp-modal__overlay" data-profile-modal-close></div>
 
-            <nav class="hp-nav">
-                <!-- 대시보드: 비로그인도 접근 가능 -->
-                <a th:href="@{/}"
-                   th:classappend="${active == 'dashboard'} ? 'hp-nav__link--active' : ''"
-                   class="hp-nav__link">
-                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                        <polyline points="9 22 9 12 15 12 15 22"/>
-                    </svg>
-                    <span>대시보드</span>
-                </a>
+	    <div class="hp-modal__card" role="dialog" aria-labelledby="profileModalTitle">
+	        <header class="hp-modal__header">
+	            <h2 class="hp-modal__title" id="profileModalTitle">프로필 수정</h2>
+	            <button type="button" class="hp-modal__close"
+	                    data-profile-modal-close aria-label="닫기">×</button>
+	        </header>
 
-                <!-- 문제: 로그인 필요 -->
-				<a th:href="@{/problems}"
-				   th:classappend="${active == 'problems'} ? 'hp-nav__link--active' : ''"
-				   class="hp-nav__link">
-				    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-				        <line x1="8" y1="6" x2="21" y2="6"/>
-				        <line x1="8" y1="12" x2="21" y2="12"/>
-				        <line x1="8" y1="18" x2="21" y2="18"/>
-				        <line x1="3" y1="6" x2="3.01" y2="6"/>
-				        <line x1="3" y1="12" x2="3.01" y2="12"/>
-				        <line x1="3" y1="18" x2="3.01" y2="18"/>
-				    </svg>
-				    <span>문제</span>
-				</a>
+	        <!-- 탭 버튼 -->
+	        <div class="hp-modal__tabs">
+	            <button type="button" class="hp-modal__tab hp-modal__tab--active"
+	                    data-tab="nickname">닉네임 변경</button>
+	            <button type="button" class="hp-modal__tab"
+	                    data-tab="password">비밀번호 변경</button>
+	        </div>
 
-                <!-- 마이페이지: 로그인 필요 -->
-                <a th:href="${#authorization.expression('isAuthenticated()')} ? @{/mypage} : '#'"
-                   th:attr="data-requires-auth=${#authorization.expression('isAnonymous()')} ? 'true' : null"
-                   th:classappend="${active == 'mypage'} ? 'hp-nav__link--active' : ''"
-                   class="hp-nav__link">
-                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                        <circle cx="12" cy="7" r="4"/>
-                    </svg>
-                    <span>마이페이지</span>
-                </a>
+	        <!-- 탭 컨텐츠 -->
+	        <div class="hp-modal__body">
 
-				<!-- 관리자: ADMIN 권한만 노출 -->
-				<a sec:authorize="hasRole('ADMIN')"
-				   th:href="@{/admin}"
-				   th:classappend="${active == 'admin'} ? 'hp-nav__link--active' : ''"
-				   class="hp-nav__link">
-				    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-				        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-				        <circle cx="12" cy="12" r="3"/>
-				    </svg>
-				    <span>관리자</span>
-				</a>
-            </nav>
-        </div>
+	            <!-- ===== 닉네임 변경 폼 ===== -->
+	            <form class="hp-modal__form hp-modal__form--active"
+	                  data-tab-content="nickname"
+	                  id="nicknameForm">
+	                <div class="hp-modal__field">
+	                    <label class="hp-modal__label" for="newNickname">새 닉네임</label>
+	                    <input type="text"
+	                           id="newNickname"
+	                           name="nickname"
+	                           class="hp-modal__input"
+	                           placeholder="2자 이상 50자 이하"
+	                           th:value="${#authentication.principal.nickname}"
+	                           required
+	                           minlength="2"
+	                           maxlength="50">
+	                </div>
+	                <div class="hp-modal__message" data-nickname-message hidden></div>
+	                <button type="submit" class="hp-modal__submit">닉네임 변경</button>
+	            </form>
 
-        <!-- 사용자 영역 (오른쪽) -->
-        <div class="hp-header__right">
-            <!-- 로그인 상태 -->
-            <th:block sec:authorize="isAuthenticated()">
-                <span class="hp-header__nickname" sec:authentication="principal.nickname">닉네임</span>
-                <span class="hp-header__divider">|</span>
-                <form th:action="@{/logout}" method="post" class="hp-header__logout-form">
-                    <button type="submit" class="hp-header__logout-btn">로그아웃</button>
-                </form>
-                <span class="hp-header__divider">|</span>
-                <a th:href="@{/profile}" class="hp-header__user" aria-label="내 정보">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                        <circle cx="12" cy="7" r="4"/>
-                    </svg>
-                </a>
-            </th:block>
+	            <!-- ===== 비밀번호 변경 폼 ===== -->
+	            <form class="hp-modal__form"
+	                  data-tab-content="password"
+	                  id="passwordForm"
+	                  hidden>
+	                <div class="hp-modal__field">
+	                    <label class="hp-modal__label" for="currentPassword">현재 비밀번호</label>
+	                    <input type="password"
+	                           id="currentPassword"
+	                           name="currentPassword"
+	                           class="hp-modal__input"
+	                           autocomplete="current-password"
+	                           required>
+	                </div>
+	                <div class="hp-modal__field">
+	                    <label class="hp-modal__label" for="newPassword">새 비밀번호</label>
+	                    <input type="password"
+	                           id="newPassword"
+	                           name="newPassword"
+	                           class="hp-modal__input"
+	                           placeholder="8자 이상"
+	                           autocomplete="new-password"
+	                           minlength="8"
+	                           required>
+	                </div>
+	                <div class="hp-modal__field">
+	                    <label class="hp-modal__label" for="newPasswordConfirm">새 비밀번호 확인</label>
+	                    <input type="password"
+	                           id="newPasswordConfirm"
+	                           name="newPasswordConfirm"
+	                           class="hp-modal__input"
+	                           autocomplete="new-password"
+	                           minlength="8"
+	                           required>
+	                </div>
+	                <div class="hp-modal__message" data-password-message hidden></div>
+	                <button type="submit" class="hp-modal__submit">비밀번호 변경</button>
+	            </form>
 
-            <!-- 비로그인 상태 -->
-            <th:block sec:authorize="isAnonymous()">
-                <a th:href="@{/auth/login}" class="hp-header__login-btn">로그인</a>
-                <a th:href="@{/auth/signup}" class="hp-header__signup-link">가입하기</a>
-            </th:block>
-        </div>
-    </div>
-</header>
-
+	        </div>
+	    </div>
+	</div>
+</div>
 <th:block th:fragment="styles">
     <style>
         /* ===== Design tokens ===== */
@@ -267,6 +358,206 @@
             .hp-nav__link span { display: none; }
             .hp-nav__link { padding: 8px; }
         }
+		
+		/* ===== 모달 ===== */
+		.hp-modal {
+		    position: fixed;
+		    inset: 0;
+		    z-index: 1000;
+		    display: flex;
+		    align-items: center;
+		    justify-content: center;
+		    padding: 20px;
+		}
+
+		.hp-modal[hidden] {
+		    display: none;
+		}
+
+		.hp-modal__overlay {
+		    position: absolute;
+		    inset: 0;
+		    background: rgba(0, 0, 0, 0.45);
+		    cursor: pointer;
+		}
+
+		.hp-modal__card {
+		    position: relative;
+		    background: var(--hp-surface);
+		    border-radius: var(--hp-radius);
+		    width: 100%;
+		    max-width: 440px;
+		    max-height: 90vh;
+		    overflow-y: auto;
+		    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+		    animation: hp-modal-pop 0.18s ease-out;
+		}
+
+		@keyframes hp-modal-pop {
+		    from { transform: scale(0.96); opacity: 0; }
+		    to   { transform: scale(1);    opacity: 1; }
+		}
+
+		.hp-modal__header {
+		    display: flex;
+		    align-items: center;
+		    justify-content: space-between;
+		    padding: 20px 24px 16px;
+		    border-bottom: 1px solid var(--hp-border-soft);
+		}
+
+		.hp-modal__title {
+		    margin: 0;
+		    font-size: 17px;
+		    font-weight: 700;
+		    letter-spacing: -0.2px;
+		}
+
+		.hp-modal__close {
+		    background: none;
+		    border: none;
+		    font-size: 24px;
+		    line-height: 1;
+		    color: var(--hp-text-muted);
+		    cursor: pointer;
+		    padding: 0 4px;
+		    transition: color 0.15s;
+		}
+
+		.hp-modal__close:hover {
+		    color: var(--hp-text);
+		}
+
+		/* 탭 */
+		.hp-modal__tabs {
+		    display: flex;
+		    border-bottom: 1px solid var(--hp-border-soft);
+		}
+
+		.hp-modal__tab {
+		    flex: 1;
+		    background: none;
+		    border: none;
+		    padding: 14px 16px;
+		    font-size: 14px;
+		    font-weight: 600;
+		    color: var(--hp-text-muted);
+		    cursor: pointer;
+		    border-bottom: 2px solid transparent;
+		    transition: color 0.15s, border-color 0.15s;
+		    font-family: inherit;
+		}
+
+		.hp-modal__tab:hover {
+		    color: var(--hp-text);
+		}
+
+		.hp-modal__tab--active {
+		    color: var(--hp-primary);
+		    border-bottom-color: var(--hp-primary);
+		}
+
+		/* 폼 */
+		.hp-modal__body {
+		    padding: 24px;
+			min-height: 380px;
+			display: flex;
+		    flex-direction: column;
+		}
+
+		.hp-modal__form[hidden] {
+		    display: none;
+		}
+
+		.hp-modal__field {
+		    margin-bottom: 16px;
+		}
+		
+		.hp-modal__form {
+		    flex: 1;
+		    display: flex;
+		    flex-direction: column;
+		}
+		
+		.hp-modal__form .hp-modal__submit {
+		    margin-top: auto;
+		}
+
+		.hp-modal__label {
+		    display: block;
+		    margin-bottom: 6px;
+		    font-size: 13px;
+		    font-weight: 600;
+		    color: var(--hp-text);
+		}
+
+		.hp-modal__input {
+		    width: 100%;
+		    height: 40px;
+		    padding: 0 12px;
+		    border: 1px solid var(--hp-border);
+		    border-radius: 8px;
+		    font-size: 14px;
+		    color: var(--hp-text);
+		    font-family: inherit;
+		    transition: border-color 0.15s;
+		}
+
+		.hp-modal__input:focus {
+		    outline: none;
+		    border-color: var(--hp-primary);
+		}
+
+		.hp-modal__message {
+		    margin-bottom: 12px;
+		    padding: 10px 12px;
+		    border-radius: 8px;
+		    font-size: 13px;
+		    line-height: 1.4;
+		}
+
+		.hp-modal__message--error {
+		    background: var(--hp-danger-bg);
+		    color: var(--hp-danger-text);
+		}
+
+		.hp-modal__message--success {
+		    background: var(--hp-success-bg);
+		    color: var(--hp-success-text);
+		}
+
+		.hp-modal__submit {
+		    width: 100%;
+		    height: 44px;
+		    background: var(--hp-primary);
+		    color: #fff;
+		    border: none;
+		    border-radius: 8px;
+		    font-size: 14px;
+		    font-weight: 600;
+		    cursor: pointer;
+		    transition: background 0.15s;
+		    font-family: inherit;
+		}
+
+		.hp-modal__submit:hover {
+		    background: var(--hp-primary-hover);
+		}
+
+		.hp-modal__submit:disabled {
+		    background: var(--hp-text-muted);
+		    cursor: not-allowed;
+		}
+
+		/* 모바일 */
+		@media (max-width: 480px) {
+		    .hp-modal__card {
+		        max-width: 100%;
+		    }
+		    .hp-modal__body {
+		        padding: 18px;
+		    }
+		}
     </style>
 </th:block>
 
@@ -292,5 +583,172 @@
     </script>
 </th:block>
 
+<!-- ============================================ -->
+<!-- 프로필 수정 모달 스크립트 (로그인 사용자만)     -->
+<!-- 사용법: <th:block th:replace="~{common/header :: profile-modal-script}"></th:block> -->
+<!-- ============================================ -->
+<th:block th:fragment="profile-modal-script" sec:authorize="isAuthenticated()">
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        (function() {
+            const NICKNAME_URL = /*[[@{/profile/nickname}]]*/ '/profile/nickname';
+            const PASSWORD_URL = /*[[@{/profile/password}]]*/ '/profile/password';
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const modal = document.getElementById('profileModal');
+                if (!modal) return;
+
+                // ===== 1. 모달 열기 / 닫기 =====
+                document.querySelectorAll('[data-profile-modal-open]').forEach(btn => {
+                    btn.addEventListener('click', () => openModal());
+                });
+
+                modal.querySelectorAll('[data-profile-modal-close]').forEach(el => {
+                    el.addEventListener('click', () => closeModal());
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && !modal.hidden) {
+                        closeModal();
+                    }
+                });
+
+                function openModal() {
+                    modal.hidden = false;
+                    const firstInput = modal.querySelector('.hp-modal__form--active .hp-modal__input');
+                    if (firstInput) firstInput.focus();
+                }
+
+                function closeModal() {
+                    modal.hidden = true;
+                    clearMessages();
+                    document.getElementById('passwordForm').reset();
+                    switchTab('nickname');
+                }
+
+                // ===== 2. 탭 전환 =====
+                modal.querySelectorAll('.hp-modal__tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        switchTab(tab.dataset.tab);
+                    });
+                });
+
+                function switchTab(tabName) {
+                    modal.querySelectorAll('.hp-modal__tab').forEach(t => {
+                        t.classList.toggle('hp-modal__tab--active', t.dataset.tab === tabName);
+                    });
+                    modal.querySelectorAll('.hp-modal__form').forEach(f => {
+                        const isActive = f.dataset.tabContent === tabName;
+                        f.hidden = !isActive;
+                        f.classList.toggle('hp-modal__form--active', isActive);
+                    });
+                    clearMessages();
+                }
+
+                // ===== 3. 메시지 표시 / 제거 =====
+                function showMessage(target, message, type) {
+                    const el = modal.querySelector(`[data-${target}-message]`);
+                    if (!el) return;
+                    el.textContent = message;
+                    el.className = 'hp-modal__message hp-modal__message--' + type;
+                    el.hidden = false;
+                }
+
+                function clearMessages() {
+                    modal.querySelectorAll('.hp-modal__message').forEach(el => {
+                        el.hidden = true;
+                        el.textContent = '';
+                    });
+                }
+
+                // ===== 4. 닉네임 변경 =====
+                const nicknameForm = document.getElementById('nicknameForm');
+                nicknameForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    clearMessages();
+
+                    const newNickname = nicknameForm.nickname.value.trim();
+                    if (newNickname.length < 2 || newNickname.length > 16) {
+                        showMessage('nickname', '닉네임은 2자 이상 16자 이하여야 합니다.', 'error');
+                        return;
+                    }
+
+                    const submitBtn = nicknameForm.querySelector('.hp-modal__submit');
+                    submitBtn.disabled = true;
+
+                    try {
+                        const res = await fetch(NICKNAME_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ nickname: newNickname })
+                        });
+                        const data = await res.json();
+
+                        if (data.success) {
+                            showMessage('nickname', '닉네임이 변경되었습니다.', 'success');
+                            document.querySelectorAll('.hp-header__nickname').forEach(el => {
+                                el.textContent = data.nickname;
+                            });
+                        } else {
+                            showMessage('nickname', data.message || '변경에 실패했습니다.', 'error');
+                        }
+                    } catch (err) {
+                        showMessage('nickname', '서버와 통신에 실패했습니다.', 'error');
+                    } finally {
+                        submitBtn.disabled = false;
+                    }
+                });
+
+                // ===== 5. 비밀번호 변경 =====
+                const passwordForm = document.getElementById('passwordForm');
+                passwordForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    clearMessages();
+
+                    const currentPassword = passwordForm.currentPassword.value;
+                    const newPassword = passwordForm.newPassword.value;
+                    const newPasswordConfirm = passwordForm.newPasswordConfirm.value;
+
+                    if (newPassword.length < 8) {
+                        showMessage('password', '새 비밀번호는 8자 이상이어야 합니다.', 'error');
+                        return;
+                    }
+                    if (newPassword !== newPasswordConfirm) {
+                        showMessage('password', '새 비밀번호와 확인이 일치하지 않습니다.', 'error');
+                        return;
+                    }
+
+                    const submitBtn = passwordForm.querySelector('.hp-modal__submit');
+                    submitBtn.disabled = true;
+
+                    try {
+                        const res = await fetch(PASSWORD_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                currentPassword: currentPassword,
+                                newPassword: newPassword,
+                                newPasswordConfirm: newPasswordConfirm
+                            })
+                        });
+                        const data = await res.json();
+
+                        if (data.success) {
+                            showMessage('password', '비밀번호가 변경되었습니다.', 'success');
+                            passwordForm.reset();
+                        } else {
+                            showMessage('password', data.message || '변경에 실패했습니다.', 'error');
+                        }
+                    } catch (err) {
+                        showMessage('password', '서버와 통신에 실패했습니다.', 'error');
+                    } finally {
+                        submitBtn.disabled = false;
+                    }
+                });
+            });
+        })();
+        /*]]>*/
+    </script>
+</th:block>
 </body>
 </html>

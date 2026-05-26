@@ -18,8 +18,10 @@ public class SecurityConfig {
                                  "/css/**", "/js/**", "/images/**",
                                  "/error/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/profile/**").authenticated()
                 .anyRequest().authenticated()
             )
+    		.csrf(csrf -> csrf.ignoringRequestMatchers("/profile/**"))
             .formLogin(form -> form
         	    .loginPage("/auth/login")
         	    .loginProcessingUrl("/login")

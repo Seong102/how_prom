@@ -111,8 +111,18 @@
                           th:classappend="${'hp-eval-badge--' + p.evaluationType.name().toLowerCase()}"
                           th:text="${p.evaluationType.name()}">STANDARD</span>
 
-                    <a th:href="@{/problems/{id}(id=${p.id})}" class="hp-list__title hp-list__title--link"
-                       th:text="${p.title}">문제 제목</a>
+					<!-- 로그인 사용자 -->
+					<a th:if="${isLoggedIn}"
+					   th:href="@{/problems/{id}(id=${p.id})}"
+					   class="hp-list__title hp-list__title--link"
+					   th:text="${p.title}">문제 제목</a>
+	
+					<!-- 비로그인 사용자: confirm으로 로그인 안내 -->
+					<a th:unless="${isLoggedIn}"
+					   href="#"
+					   class="hp-list__title hp-list__title--link"
+					   data-requires-auth="true"
+					   th:text="${p.title}">문제 제목</a>
                 </div>
 
                 <!-- 오른쪽: 최고 점수 + 풀러 가기 버튼 -->
@@ -123,13 +133,21 @@
                         최고 <strong th:text="${p.bestScore} + '점'">95점</strong>
                     </span>
 
-                    <a th:href="@{/problems/{id}(id=${p.id})}"
-                       class="hp-btn"
-                       th:classappend="${isLoggedIn and p.status != null and p.status.name() == 'PASSED'}
-                                       ? 'hp-btn--outline' : 'hp-btn--primary'">
-                        <span th:if="${isLoggedIn and p.status != null and p.status.name() == 'PASSED'}">다시 풀기</span>
-                        <span th:unless="${isLoggedIn and p.status != null and p.status.name() == 'PASSED'}">풀러 가기 →</span>
-                    </a>
+					<!-- 로그인 사용자 -->
+					<a th:if="${isLoggedIn}"
+					   th:href="@{/problems/{id}(id=${p.id})}"
+					   class="hp-btn"
+					   th:classappend="${p.status != null and p.status.name() == 'PASSED'}
+					                   ? 'hp-btn--outline' : 'hp-btn--primary'">
+					    <span th:if="${p.status != null and p.status.name() == 'PASSED'}">다시 풀기</span>
+					    <span th:unless="${p.status != null and p.status.name() == 'PASSED'}">풀러 가기 →</span>
+					</a>
+
+					<!-- 비로그인 사용자: confirm으로 로그인 안내 -->
+					<a th:unless="${isLoggedIn}"
+					   href="#"
+					   class="hp-btn hp-btn--primary"
+					   data-requires-auth="true">풀러 가기 →</a>
                 </div>
             </li>
         </ul>
@@ -170,6 +188,9 @@
 
 <!-- 인증 필요 안내 스크립트 (비로그인 시 자동 활성화) -->
 <th:block th:replace="~{common/header :: auth-script}"></th:block>
+
+<!-- 프로필 수정 모달 스크립트 (로그인 사용자만 활성화) -->
+<th:block th:replace="~{common/header :: profile-modal-script}"></th:block>
 
 </body>
 </html>
