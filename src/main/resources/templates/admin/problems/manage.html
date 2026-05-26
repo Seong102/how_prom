@@ -32,7 +32,7 @@
     overflow-y: auto;
     overflow-x: auto;
 }
-/* 스크롤 시 헤더 고정 (선택 사항이지만 UX 향상용) */
+/* 스크롤 시 헤더 고정 */
 .hp-manage-table-scroll thead th {
     position: sticky;
     top: 0;
@@ -87,7 +87,7 @@
                 <option value="비공개">비공개</option>
             </select>
 
-            <button type="button" class="hp-btn hp-btn--outline" onclick="resetManageFilter()" style="height: 38px; white-space: nowrap;">필터 초기화</button>
+            <button type="button" class="hp-btn hp-btn--outline" onclick="resetManageFilter()" style="height: 38px; white-space: nowrap;">필터/정렬 초기화</button>
         </div>
 
 		<div class="hp-card">
@@ -107,11 +107,13 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="prob : ${problemList}">
-                                <td style="padding-left: 24px;" th:text="'#' + ${#numbers.formatInteger(prob.id, 3)}">#001</td>
-                                <td><strong th:text="${prob.title}">문제 제목 명세</strong></td>
+                            <tr th:each="prob : ${problemList}" class="hp-prob-row">
+                                <td style="padding-left: 24px;" th:text="'#' + ${#numbers.formatInteger(prob.id, 3)}" th:data-sort-value="${prob.id}">#001</td>
+                                <td th:data-sort-value="${prob.title}"><strong th:text="${prob.title}">문제 제목 명세</strong></td>
                                 
-                                <td class="text-center" style="vertical-align: middle;">
+                                <td class="text-center" style="vertical-align: middle;" 
+                                    th:data-sort-value="${prob.evaluationType}"
+                                    th:data-sort-req="${prob.requirementsCount}">
                                     <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
                                         <span class="hp-badge hp-badge--standard" th:if="${prob.evaluationType == 'STANDARD'}">Standard</span>
                                         <span class="hp-badge hp-badge--efficiency" th:if="${prob.evaluationType == 'EFFICIENCY'}">Efficiency</span>
@@ -121,18 +123,20 @@
                                     </div>
                                 </td>
                                 
-                                <td class="text-center">
+                                <td class="text-center" th:data-sort-value="${prob.isPublic ? 1 : 0}">
                                     <label class="hp-switch" style="justify-content: center;"> 
                                         <input type="checkbox" class="hp-switch__input" th:checked="${prob.isPublic}" th:attr="data-id=${prob.id}"> 
                                         <span class="hp-switch__slider"></span> 
                                         <span class="hp-switch__label hp-status-text" th:text="${prob.isPublic} ? '공개' : '비공개'">비공개</span>
                                     </label>
                                 </td>
-                                <td class="text-center">
+                                
+                                <td class="text-center" th:data-sort-value="${statsMap != null && statsMap.containsKey(prob.id) ? statsMap[prob.id].totalCount : 0}">
                                     <span th:text="${statsMap != null && statsMap.containsKey(prob.id) ? statsMap[prob.id].totalCount + '건' : '0건'}">0건</span>
                                 </td>
                                 
-                                <td class="text-center hp-text-muted" style="font-weight: 600; vertical-align: middle;">
+                                <td class="text-center hp-text-muted" style="font-weight: 600; vertical-align: middle;" 
+                                    th:data-sort-value="${statsMap != null && statsMap.containsKey(prob.id) ? statsMap[prob.id].avgScore : -1}">
                                     <span th:text="${statsMap != null && statsMap.containsKey(prob.id) ? #numbers.formatDecimal(statsMap[prob.id].avgScore, 1, 1) + '점' : '-'}">-</span>
                                     <div th:if="${statsMap != null && statsMap.containsKey(prob.id)}" 
                                          style="font-size: 11px; font-weight: 500; color: #2b8a3e; margin-top: 3px;">
@@ -154,7 +158,7 @@
                                 </td>
                             </tr>
 
-                            <tr th:if="${#lists.isEmpty(problemList)}">
+                            <tr id="emptyDataRow" th:if="${#lists.isEmpty(problemList)}">
                                 <td colspan="7" class="hp-text-muted" style="text-align: center; padding: 40px 0; font-size: 14px;">
                                     출제 등록된 프롬프트 문제가 존재하지 않습니다.
                                 </td>
@@ -168,27 +172,58 @@
 
 	<script th:inline="javascript">
     const sortState = {};
+    let originalRows = []; 
 
-    /* 테이블 내 데이터 정렬 로직 */
+    /* 테이블 내 데이터 정렬 로직 (유형 정렬 선택 시 조건 수 2차 오름차순 메커니즘 탑재) */
     function sortTable(tableId, colIndex) {
         const table = document.getElementById(tableId);
         const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr:not(#noDataRow)'));
+        const rows = Array.from(tbody.querySelectorAll('.hp-prob-row')); 
 
         sortState[tableId + colIndex] = !sortState[tableId + colIndex];
         const asc = sortState[tableId + colIndex];
 
         rows.sort((a, b) => {
-            let aText = a.cells[colIndex]?.innerText.trim() ?? '';
-            let bText = b.cells[colIndex]?.innerText.trim() ?? '';
-            const aNum = parseFloat(aText.replace(/[^0-9.\-]/g, ''));
-            const bNum = parseFloat(bText.replace(/[^0-9.\-]/g, ''));
-            if (!isNaN(aNum) && !isNaN(bNum)) return asc ? aNum - bNum : bNum - aNum;
-            return asc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+            const aCell = a.cells[colIndex];
+            const bCell = b.cells[colIndex];
+            
+            let aVal = aCell.getAttribute('data-sort-value') ?? aCell.innerText.trim();
+            let bVal = bCell.getAttribute('data-sort-value') ?? bCell.innerText.trim();
+
+            // 🛠️ 유형 정렬(컬럼 인덱스 2) 처리 분기문
+            if (colIndex === 2) {
+                const primaryCompare = asc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                
+                // 1차 유형 정렬 텍스트 결과가 완벽하게 일치할 경우
+                if (primaryCompare === 0) {
+                    const aReq = parseInt(aCell.getAttribute('data-sort-req') ?? 0, 10);
+                    const bReq = parseInt(bCell.getAttribute('data-sort-req') ?? 0, 10);
+                    
+                    // 💡 조건 수 기준으로는 언제나 '작은 순서대로(오름차순)' 상단 우선 정렬 고정
+                    return aReq - bReq;
+                }
+                return primaryCompare;
+            }
+
+            // 일반 숫자 연산 및 일반 필드 문자열 비교 로직
+            const aNum = parseFloat(aVal);
+            const bNum = parseFloat(bVal);
+            
+            if (!isNaN(aNum) && !isNaN(bNum)) {
+                return asc ? aNum - bNum : bNum - aNum;
+            }
+            return asc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
         });
 
+        // 정렬된 엘리먼트 돔 재배치 구조화 갱신
         rows.forEach(row => tbody.appendChild(row));
+        
+        const noDataRow = document.getElementById('noDataRow');
+        if (noDataRow) tbody.appendChild(noDataRow);
+        const emptyDataRow = document.getElementById('emptyDataRow');
+        if (emptyDataRow) tbody.appendChild(emptyDataRow);
 
+        // 헤더 텍스트 화살표 기호 일괄 변경 조작
         const headers = table.querySelectorAll('thead th[onclick]');
         headers.forEach(th => {
             const base = th.innerText.replace(/ [↑↓↕]$/, '');
@@ -219,7 +254,7 @@
     function searchManageAdvanced() {
         const filterType = document.getElementById('filterManage').value;
         const tbody = document.getElementById('problemManageTable').querySelector('tbody');
-        const rows = tbody.querySelectorAll('tr:not(#noDataRow)');
+        const rows = tbody.querySelectorAll('.hp-prob-row');
         let visibleCount = 0;
 
         let keyword = '';
@@ -240,7 +275,7 @@
 
             const idText = row.cells[0]?.innerText.toLowerCase() ?? '';
             const titleText = row.cells[1]?.innerText.toLowerCase() ?? '';
-            const typeText = row.cells[2]?.innerText.toLowerCase() ?? '';
+            const typeText = row.cells[2]?.getAttribute('data-sort-value')?.toLowerCase() ?? '';
             const statusText = row.querySelector('.hp-status-text')?.innerText.toLowerCase() ?? '';
 
             let isMatch = false;
@@ -269,40 +304,63 @@
         }
     }
 
-    /* 필터 완벽 초기화 */
+    /* 필터 및 정렬 완전 초기화 구현 */
     function resetManageFilter() {
         document.getElementById('filterManage').value = 'title';
         toggleSearchInput();
+
+        const table = document.getElementById('problemManageTable');
+        const tbody = table.querySelector('tbody');
+        originalRows.forEach(row => tbody.appendChild(row));
+        
+        const noDataRow = document.getElementById('noDataRow');
+        if (noDataRow) tbody.appendChild(noDataRow);
+        const emptyDataRow = document.getElementById('emptyDataRow');
+        if (emptyDataRow) tbody.appendChild(emptyDataRow);
+
+        const headers = table.querySelectorAll('thead th[onclick]');
+        headers.forEach(th => {
+            th.innerText = th.innerText.replace(/ [↑↓↕]$/, '') + ' ↕';
+        });
+
+        for (const key in sortState) {
+            delete sortState[key];
+        }
+
+        searchManageAdvanced();
     }
 
-    /* 엔티티 및 스위치 이벤트 처리 유지 */
+    /* DOM 초기 로드 스냅샷 제어 */
     document.addEventListener("DOMContentLoaded", function() {
-        // 알림창 버그 방지를 위해 기본값을 null로 수정
+        const tbody = document.getElementById('problemManageTable').querySelector('tbody');
+        originalRows = Array.from(tbody.querySelectorAll('.hp-prob-row'));
+
         const message = /*[[${message}]]*/ null;
         if (message && message !== 'default') {
             alert(message);
         }
     });
 
-    // [수정] 공개/비공개 토글 처리 이벤트 리스너 (CSRF 적용)
+    // 공개/비공개 토글 처리 이벤트 리스너 (CSRF 적용)
     document.querySelectorAll('.hp-switch__input').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             const isPublic = this.checked;
             const id = this.getAttribute('data-id');
             const labelEl = this.closest('.hp-switch').querySelector('.hp-switch__label');
+            const tdEl = this.closest('td'); 
             
-            // CSRF 토큰 정보 메타 태그에서 파싱
             const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
             const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
             fetch('/admin/problems/toggle/' + id + '?isPublic=' + isPublic, { 
                 method: 'POST',
                 headers: {
-                    [header]: token // 헤더에 인증 토큰 실어주기
+                    [header]: token
                 }
             }).then(response => {
                 if (response.ok) {
                     labelEl.textContent = isPublic ? '공개' : '비공개';
+                    tdEl.setAttribute('data-sort-value', isPublic ? '1' : '0'); 
                     searchManageAdvanced();
                 } else {
                     alert('상태 변경에 실패했습니다.');
@@ -318,18 +376,17 @@
         });
     });
 
-    // [수정] 문제 삭제 비동기 처리 함수 (CSRF 적용)
+    // 문제 삭제 비동기 처리 함수 (CSRF 적용)
     function deleteProblem(id) {
         if (!confirm("정말 이 문제를 삭제하시겠습니까?")) return;
         
-        // CSRF 토큰 정보 메타 태그에서 파싱
         const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
         const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
         fetch(`/admin/problems/delete/${id}`, { 
             method: 'POST',
             headers: {
-                [header]: token // 헤더에 인증 토큰 실어주기
+                [header]: token
             }
         })
         .then(async res => {
