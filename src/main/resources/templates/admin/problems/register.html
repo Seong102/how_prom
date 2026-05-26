@@ -36,7 +36,7 @@
 
     <div th:replace="~{admin/adminSubNav :: subNav('register')}"></div>
 
-    <form th:action="${problem.id == null} ? @{/admin/problems/register} : @{/admin/problems/edit/{id}(id=${problem.id})}" method="post">
+    <form id="problemForm" th:action="${problem.id == null} ? @{/admin/problems/register} : @{/admin/problems/edit/{id}(id=${problem.id})}" method="post">
         <div class="hp-dashboard-row">
             
             <section class="hp-card">
@@ -128,7 +128,8 @@
 
         calc();
 
-        const form = document.querySelector('form');
+        // 🛠️ querySelector('form') 대신 지정한 ID 엘리먼트를 정확하게 조준하도록 수정
+        const form = document.getElementById('problemForm');
         if (form) {
             form.addEventListener('submit', function(e) {
                 let total = 0;
