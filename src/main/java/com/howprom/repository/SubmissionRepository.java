@@ -56,8 +56,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             "WHERE s.problem.id = :problemId AND s.status = :status " +
             "ORDER BY s.score DESC, s.totalUserTokens ASC")
     List<CommunityListDto> findCommunityList(@Param("problemId") Long problemId,
-                                             @Param("status") SubmissionStatus status,
-                                             @Param("excludeUserId") Long excludeUserId);
+                                             @Param("status") SubmissionStatus status);
     
     
     /**
