@@ -1,0 +1,89 @@
+/* =====================================================
+   HowProm - 에러 페이지 (403, 404 등)
+   ===================================================== */
+
+.hp-error {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 80px 32px;
+}
+
+.hp-error__inner {
+    background: var(--hp-surface);
+    border: 1px solid var(--hp-border);
+    border-radius: var(--hp-radius);
+    padding: 56px 40px;
+    text-align: center;
+    box-shadow: var(--hp-shadow);
+}
+
+.hp-error__icon {
+    font-size: 56px;
+    margin-bottom: 16px;
+}
+
+.hp-error__code {
+    margin: 0 0 8px;
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--hp-primary);
+    letter-spacing: -1px;
+}
+
+.hp-error__title {
+    margin: 0 0 16px;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--hp-text);
+}
+
+.hp-error__message {
+    margin: 0 0 32px;
+    font-size: 14px;
+    color: var(--hp-text-muted);
+    line-height: 1.6;
+}
+
+.hp-error__actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.hp-error__actions .hp-btn {
+    min-width: 140px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.hp-error__actions .hp-btn--primary {
+    background: var(--hp-primary);
+    color: #fff;
+}
+
+.hp-error__actions .hp-btn--primary:hover {
+    background: var(--hp-primary-hover);
+}
+
+@media (max-width: 600px) {
+    .hp-error {
+        padding: 40px 16px;
+    }
+    .hp-error__inner {
+        padding: 40px 24px;
+    }
+    .hp-error__code {
+        font-size: 40px;
+    }
+    .hp-error__title {
+        font-size: 18px;
+    }
+}

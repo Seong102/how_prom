@@ -1,0 +1,271 @@
+/* =====================================================
+   HowProm - 문제 목록 (problemList.css)
+   디자인 토큰(--hp-*)은 header.html, 공통 클래스는 main.css에서 정의됨
+   ===================================================== */
+
+/* ===== 페이지 헤더 ===== */
+.hp-page-header {
+    margin-bottom: 24px;
+}
+
+.hp-page-header__title {
+    margin: 0 0 6px;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.hp-page-header__subtitle {
+    margin: 0;
+    font-size: 14px;
+    color: var(--hp-text-muted);
+}
+
+.hp-page-header__subtitle strong {
+    color: var(--hp-text);
+    font-weight: 700;
+}
+
+/* ===== 필터 바 ===== */
+.hp-filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.hp-filter-form {
+    margin: 0;
+}
+
+.hp-filter-controls {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 평가 유형 탭 */
+.hp-filter-tabs {
+    display: inline-flex;
+    background: var(--hp-surface);
+    border: 1px solid var(--hp-border);
+    border-radius: 8px;
+    padding: 4px;
+    gap: 2px;
+}
+
+.hp-filter-tab {
+    background: none;
+    border: none;
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--hp-text-muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    font-family: inherit;
+}
+
+.hp-filter-tab:hover {
+    color: var(--hp-text);
+}
+
+.hp-filter-tab--active {
+    background: var(--hp-primary);
+    color: #fff;
+}
+
+.hp-filter-tab--active:hover {
+    color: #fff;
+}
+
+/* 셀렉트박스 */
+.hp-select {
+    height: 36px;
+    padding: 0 32px 0 14px;
+    border: 1px solid var(--hp-border);
+    border-radius: 8px;
+    background: var(--hp-surface);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--hp-text);
+    cursor: pointer;
+    font-family: inherit;
+    /* 화살표 아이콘 */
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    transition: border-color 0.15s;
+}
+
+.hp-select:hover {
+    border-color: var(--hp-primary);
+}
+
+.hp-select:focus {
+    outline: none;
+    border-color: var(--hp-primary);
+}
+
+/* ===== 상태 아이콘 ===== */
+.hp-status-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.hp-status-icon--passed {
+    background: var(--hp-success-bg);
+    color: var(--hp-success-text);
+}
+
+.hp-status-icon--failed {
+    background: var(--hp-danger-bg);
+    color: var(--hp-danger-text);
+}
+
+.hp-status-icon--grading {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+.hp-status-icon--none {
+    background: var(--hp-border-soft);
+    color: var(--hp-text-light, #9CA3AF);
+}
+
+/* ===== 리스트 아이템 안의 제목 링크 ===== */
+.hp-list__title--link {
+    color: var(--hp-text);
+    transition: color 0.15s;
+}
+
+.hp-list__title--link:hover {
+    color: var(--hp-primary);
+}
+
+/* ===== 최고 점수 표시 ===== */
+.hp-best-score {
+    font-size: 13px;
+    color: var(--hp-text-muted);
+}
+
+.hp-best-score strong {
+    color: var(--hp-primary);
+    font-weight: 700;
+}
+
+/* ===== 페이지네이션 ===== */
+.hp-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 32px;
+}
+
+.hp-pagination__btn {
+    display: inline-flex;
+    align-items: center;
+    height: 36px;
+    padding: 0 14px;
+    background: var(--hp-surface);
+    border: 1px solid var(--hp-border);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--hp-text);
+    text-decoration: none;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.hp-pagination__btn:hover {
+    border-color: var(--hp-primary);
+    color: var(--hp-primary);
+}
+
+.hp-pagination__btn--disabled {
+    color: var(--hp-text-light, #9CA3AF);
+    background: var(--hp-border-soft);
+    cursor: not-allowed;
+}
+
+.hp-pagination__btn--disabled:hover {
+    border-color: var(--hp-border);
+    color: var(--hp-text-light, #9CA3AF);
+}
+
+.hp-pagination__pages {
+    display: inline-flex;
+    gap: 4px;
+    margin: 0 4px;
+}
+
+.hp-pagination__num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--hp-text-muted);
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+}
+
+.hp-pagination__num:hover {
+    background: var(--hp-border-soft);
+    color: var(--hp-text);
+}
+
+.hp-pagination__num--active {
+    background: var(--hp-primary);
+    color: #fff;
+}
+
+.hp-pagination__num--active:hover {
+    background: var(--hp-primary);
+    color: #fff;
+}
+
+/* ===== 반응형 ===== */
+@media (max-width: 768px) {
+    .hp-filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .hp-filter-tabs {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .hp-filter-controls {
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 600px) {
+    .hp-list__main {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .hp-pagination {
+        flex-wrap: wrap;
+    }
+}

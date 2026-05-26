@@ -1,11 +1,11 @@
 -- =====================================================
 --  HowProm - 프롬프트 코딩 학습 플랫폼 DB 생성 스크립트
---  Version : v2.2
+--  Version : v2.3
 --  DBMS    : MySQL 8.0+
 --  문자셋  : utf8mb4 / utf8mb4_unicode_ci
 --  테이블  : users / problems / requirements / submissions
 --
---  v1.0 → v2.2 변경 이력
+--  v1.0 → v2.3 변경 이력
 --    [users]
 --      + nickname (UNIQUE) 추가 - 다른 풀이 열람 시 작성자 표시용
 --    [problems]
@@ -15,12 +15,16 @@
 --      + completion_tokens 추가 - LLM 출력 토큰 (참고/통계용)
 --      + graded_at 추가 - 비동기 채점 완료 시점
 --      + final_code 추가 - 최종 제출 코드 본문 (v2.2)
---      ~ status ENUM에 GRADING 추가 - 채점 중 상태
+--      ~ status ENUM 의미 재정의 (v2.3) - 컴파일 기준으로 변경
+--          GRADING: 처리 중 / PASSED: 컴파일 성공 / FAILED: 컴파일 실패 / ERROR: 시스템 오류
 --      ~ created_at → submitted_at 으로 명칭 변경 (의미 명확화)
 --      ~ prompt_tokens → total_user_tokens 로 명칭 변경 (v2.2)
 --
 --    v2.0 → v2.1: category 컬럼 제거 (YAGNI - 필요 시점에 추가)
 --    v2.1 → v2.2: final_code 추가, 토큰 관련 컬럼 명칭 통일
+--    v2.2 → v2.3: submissions.status ENUM 의미 재정의 (컴파일 기준)
+--                 - 컴파일 실패도 submissions에 저장 (학습 기록 보존)
+--                 - PASSED/FAILED는 LLM 점수가 아닌 컴파일 성공/실패로 구분
 -- =====================================================
 
 -- 1) 데이터베이스 생성 -------------------------------------------
@@ -59,7 +63,7 @@ CREATE TABLE problems (
     token_limit          INT          NULL                         COMMENT 'BUDGET 모드 토큰 상한 (다른 모드는 NULL)',
     correctness_weight   FLOAT        NOT NULL DEFAULT 0.7         COMMENT 'EFFICIENCY 정확도 가중치',
     efficiency_weight    FLOAT        NOT NULL DEFAULT 0.3         COMMENT 'EFFICIENCY 효율성 가중치',
-    avg_user_tokens      FLOAT        NOT NULL DEFAULT 0           COMMENT 'EFFICIENCY 기준값 - 제출들의 total_user_tokens 평균 (실시간 갱신)',
+    avg_user_tokens      FLOAT        NOT NULL DEFAULT 0           COMMENT 'EFFICIENCY 기준값 - PASSED 제출들의 total_user_tokens 평균 (실시간 갱신)',
     is_public            TINYINT(1)   NOT NULL DEFAULT 0           COMMENT '0=비공개, 1=공개',
     created_by           BIGINT       NOT NULL                     COMMENT '출제자 (users.id, 관리자만 가능)',
     created_at           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '등록 일시',
@@ -108,6 +112,13 @@ CREATE TABLE requirements (
 
 
 -- 5) submissions -------------------------------------------------
+-- ※ v2.3 status ENUM 의미 재정의:
+--    GRADING: 처리 중 (제출 직후 ~ Judge0/LLM 처리 완료 전)
+--    PASSED : 컴파일 성공 (점수는 score 컬럼 참조, 0~100 모두 가능)
+--    FAILED : 컴파일 실패 (Judge0에서 컴파일 에러 → 채점으로 못 넘어감, score=0)
+--    ERROR  : 시스템 오류 (LLM 응답 파싱 실패 등)
+--
+--    ※ 컴파일 실패 케이스도 저장됨 (FAILED status, 학습 기록/대화 이력 보존)
 CREATE TABLE submissions (
     id                  BIGINT      NOT NULL AUTO_INCREMENT        COMMENT '제출 고유 ID',
     user_id             BIGINT      NOT NULL                       COMMENT '사용자 ID (users.id)',
@@ -116,10 +127,10 @@ CREATE TABLE submissions (
     final_code          TEXT        NOT NULL                       COMMENT '최종 제출 코드 (Java 소스)',
     total_user_tokens   INT         NOT NULL DEFAULT 0             COMMENT '제출 내 사용자 프롬프트 토큰 총합 (EFFICIENCY 평가 기준)',
     completion_tokens   INT         NOT NULL DEFAULT 0             COMMENT 'LLM 출력 토큰 수 (참고/통계용)',
-    score               INT         NOT NULL DEFAULT 0             COMMENT '최종 점수 0~100',
-    requirements_result JSON        NULL                           COMMENT '요구사항별 달성도 [{id, score, comment}]',
+    score               INT         NOT NULL DEFAULT 0             COMMENT '최종 점수 0~100 (FAILED는 항상 0)',
+    requirements_result JSON        NULL                           COMMENT '요구사항별 달성도 [{id, score, comment}] (FAILED/GRADING은 NULL)',
     status              ENUM('GRADING','PASSED','FAILED','ERROR') NOT NULL DEFAULT 'GRADING'
-                                                                   COMMENT 'GRADING: 채점 중 / PASSED·FAILED: 채점 완료 / ERROR: LLM 실패',
+                                                                   COMMENT 'GRADING: 처리 중 / PASSED: 컴파일 성공 / FAILED: 컴파일 실패 / ERROR: 시스템 오류',
     submitted_at        DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '제출 일시',
     graded_at           DATETIME    NULL                           COMMENT '채점 완료 일시 (GRADING 동안 NULL)',
     PRIMARY KEY (id),
@@ -144,4 +155,4 @@ CREATE TABLE submissions (
     CONSTRAINT chk_submissions_score
         CHECK (score BETWEEN 0 AND 100)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  COMMENT='사용자 제출 기록 (대화/최종코드/토큰/점수/채점결과). 모든 제출은 자동 공개.';
+  COMMENT='사용자 제출 기록 (대화/최종코드/토큰/점수/채점결과). 모든 제출은 자동 공개. 컴파일 실패도 저장.';

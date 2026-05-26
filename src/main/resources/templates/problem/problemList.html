@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>문제 목록 · HowProm</title>
+
+    <th:block th:replace="~{common/header :: styles}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/problemList.css}">
+</head>
+<body>
+
+<!-- 헤더 -->
+<div th:replace="~{common/header :: header('problems')}"></div>
+
+<main class="hp-main">
+
+    <!-- 페이지 헤더 -->
+    <section class="hp-page-header">
+        <h1 class="hp-page-header__title">문제 목록</h1>
+        <p class="hp-page-header__subtitle">
+            전체 <strong th:text="${totalElements}">0</strong>개의 문제
+        </p>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 필터 + 정렬 바                                -->
+    <!-- ============================================ -->
+    <section class="hp-filter-bar">
+        <form th:action="@{/problems}" method="get" class="hp-filter-form">
+
+            <!-- 평가 유형 탭 -->
+            <div class="hp-filter-tabs">
+                <button type="submit" name="type" value=""
+                        class="hp-filter-tab"
+                        th:classappend="${currentType == null or currentType == '' or currentType == 'ALL'} ? 'hp-filter-tab--active' : ''">
+                    전체
+                </button>
+                <button type="submit" name="type" value="STANDARD"
+                        class="hp-filter-tab"
+                        th:classappend="${currentType == 'STANDARD'} ? 'hp-filter-tab--active' : ''">
+                    STANDARD
+                </button>
+                <button type="submit" name="type" value="EFFICIENCY"
+                        class="hp-filter-tab"
+                        th:classappend="${currentType == 'EFFICIENCY'} ? 'hp-filter-tab--active' : ''">
+                    EFFICIENCY
+                </button>
+                <button type="submit" name="type" value="BUDGET"
+                        class="hp-filter-tab"
+                        th:classappend="${currentType == 'BUDGET'} ? 'hp-filter-tab--active' : ''">
+                    BUDGET
+                </button>
+            </div>
+
+            <!-- 현재 선택된 다른 파라미터 유지 -->
+            <input type="hidden" name="status" th:value="${currentStatus}">
+            <input type="hidden" name="sort" th:value="${currentSort}">
+        </form>
+
+        <form th:action="@{/problems}" method="get" class="hp-filter-controls">
+            <!-- 풀이 상태 필터 (로그인 사용자만) -->
+            <select th:if="${isLoggedIn}"
+                    name="status"
+                    class="hp-select"
+                    onchange="this.form.submit()">
+                <option value="ALL"         th:selected="${currentStatus == 'ALL'}">전체</option>
+                <option value="NOT_SOLVED"  th:selected="${currentStatus == 'NOT_SOLVED'}">안 푼 문제</option>
+                <option value="PASSED_ONLY" th:selected="${currentStatus == 'PASSED_ONLY'}">PASSED 받은 문제</option>
+            </select>
+
+            <!-- 정렬 -->
+            <select name="sort"
+                    class="hp-select"
+                    onchange="this.form.submit()">
+                <option value="latest" th:selected="${currentSort == 'latest'}">최신순</option>
+                <option value="oldest" th:selected="${currentSort == 'oldest'}">오래된순</option>
+            </select>
+
+            <!-- 현재 선택된 다른 파라미터 유지 -->
+            <input type="hidden" name="type" th:value="${currentType}">
+        </form>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 문제 리스트                                   -->
+    <!-- ============================================ -->
+    <section>
+        <ul class="hp-list" th:if="${!#lists.isEmpty(problems)}">
+            <li class="hp-list__item" th:each="p : ${problems}">
+                <!-- 왼쪽: 상태 아이콘 + 제목/유형 -->
+                <div class="hp-list__main">
+                    <!-- 상태 아이콘 (로그인 사용자만) -->
+                    <span th:if="${isLoggedIn}"
+                          class="hp-status-icon"
+                          th:classappend="${
+                              p.status == null ? 'hp-status-icon--none' :
+                              p.status.name() == 'PASSED' ? 'hp-status-icon--passed' :
+                              p.status.name() == 'GRADING' ? 'hp-status-icon--grading' :
+                              'hp-status-icon--failed'
+                          }"
+                          th:text="${
+                              p.status == null ? '-' :
+                              p.status.name() == 'PASSED' ? '✓' :
+                              p.status.name() == 'GRADING' ? '⏱' :
+                              '✗'
+                          }">-</span>
+
+                    <span class="hp-eval-badge"
+                          th:classappend="${'hp-eval-badge--' + p.evaluationType.name().toLowerCase()}"
+                          th:text="${p.evaluationType.name()}">STANDARD</span>
+
+					<!-- 로그인 사용자 -->
+					<a th:if="${isLoggedIn}"
+					   th:href="@{/problems/{id}(id=${p.id})}"
+					   class="hp-list__title hp-list__title--link"
+					   th:text="${p.title}">문제 제목</a>
+	
+					<!-- 비로그인 사용자: confirm으로 로그인 안내 -->
+					<a th:unless="${isLoggedIn}"
+					   href="#"
+					   class="hp-list__title hp-list__title--link"
+					   data-requires-auth="true"
+					   th:text="${p.title}">문제 제목</a>
+                </div>
+
+                <!-- 오른쪽: 최고 점수 + 풀러 가기 버튼 -->
+                <div class="hp-list__side">
+                    <!-- 최고 점수 (PASSED 받은 적 있을 때만) -->
+                    <span th:if="${isLoggedIn and p.bestScore != null}"
+                          class="hp-best-score">
+                        최고 <strong th:text="${p.bestScore} + '점'">95점</strong>
+                    </span>
+
+					<!-- 로그인 사용자 -->
+					<a th:if="${isLoggedIn}"
+					   th:href="@{/problems/{id}(id=${p.id})}"
+					   class="hp-btn"
+					   th:classappend="${p.status != null and p.status.name() == 'PASSED'}
+					                   ? 'hp-btn--outline' : 'hp-btn--primary'">
+					    <span th:if="${p.status != null and p.status.name() == 'PASSED'}">다시 풀기</span>
+					    <span th:unless="${p.status != null and p.status.name() == 'PASSED'}">풀러 가기 →</span>
+					</a>
+
+					<!-- 비로그인 사용자: confirm으로 로그인 안내 -->
+					<a th:unless="${isLoggedIn}"
+					   href="#"
+					   class="hp-btn hp-btn--primary"
+					   data-requires-auth="true">풀러 가기 →</a>
+                </div>
+            </li>
+        </ul>
+
+        <!-- 빈 상태 -->
+        <div class="hp-empty" th:if="${#lists.isEmpty(problems)}">
+            조건에 맞는 문제가 없어요
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 페이지네이션                                  -->
+    <!-- ============================================ -->
+    <nav class="hp-pagination" th:if="${totalPages > 1}">
+        <!-- 이전 페이지 -->
+        <a th:if="${currentPage > 0}"
+           th:href="@{/problems(type=${currentType}, status=${currentStatus}, sort=${currentSort}, page=${currentPage - 1})}"
+           class="hp-pagination__btn">‹ 이전</a>
+        <span th:unless="${currentPage > 0}" class="hp-pagination__btn hp-pagination__btn--disabled">‹ 이전</span>
+
+        <!-- 페이지 번호 -->
+        <span class="hp-pagination__pages">
+            <a th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+               th:href="@{/problems(type=${currentType}, status=${currentStatus}, sort=${currentSort}, page=${i})}"
+               class="hp-pagination__num"
+               th:classappend="${i == currentPage} ? 'hp-pagination__num--active' : ''"
+               th:text="${i + 1}">1</a>
+        </span>
+
+        <!-- 다음 페이지 -->
+        <a th:if="${currentPage < totalPages - 1}"
+           th:href="@{/problems(type=${currentType}, status=${currentStatus}, sort=${currentSort}, page=${currentPage + 1})}"
+           class="hp-pagination__btn">다음 ›</a>
+        <span th:unless="${currentPage < totalPages - 1}" class="hp-pagination__btn hp-pagination__btn--disabled">다음 ›</span>
+    </nav>
+
+</main>
+
+<!-- 인증 필요 안내 스크립트 (비로그인 시 자동 활성화) -->
+<th:block th:replace="~{common/header :: auth-script}"></th:block>
+
+<!-- 프로필 수정 모달 스크립트 (로그인 사용자만 활성화) -->
+<th:block th:replace="~{common/header :: profile-modal-script}"></th:block>
+
+</body>
+</html>
