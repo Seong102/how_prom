@@ -37,6 +37,20 @@ public class AdminProblemService {
     @Transactional
     public void createProblem(ProblemAdminDTO dto, List<String> reqDescs, List<Integer> reqWeights, User creator) {
         
+        // 🔗 [추가] 1&2번 피드백: 요구사항 데이터 유효성 및 배점 총합(100점) 검증
+        if (reqDescs != null && reqWeights != null) {
+            if (reqDescs.size() != reqWeights.size()) {
+                throw new IllegalArgumentException("요구사항 설명과 배점의 개수가 일치하지 않습니다.");
+            }
+            int totalWeight = reqWeights.stream().mapToInt(Integer::intValue).sum();
+            if (totalWeight != 100) {
+                throw new IllegalArgumentException("요구사항 배점의 총합은 100점이어야 합니다. (현재: " + totalWeight + "점)");
+            }
+        } else if (reqDescs != null || reqWeights != null) {
+            // 둘 중 하나만 null로 들어오는 비정상적인 요청 방어
+            throw new IllegalArgumentException("요구사항 명세와 배점은 동시에 존재해야 합니다.");
+        }
+        
         // String -> Enum 변환
         EvaluationType evalType = EvaluationType.valueOf(dto.getEvaluationType());
         
@@ -56,13 +70,12 @@ public class AdminProblemService {
                 .evaluationType(evalType)
                 .exampleInput(dto.getExampleInput())
                 .exampleOutput(dto.getExampleOutput())
-                // ❌ .difficulty() 라인 제거
                 .isPublic(dto.getIsPublic())
                 .tokenLimit(dto.getTokenLimit()) 
                 .correctnessWeight(correctness)
                 .efficiencyWeight(efficiency)
-                .avgUserTokens(0.0f) // 🔄 [명칭 변경] avgPromptTokens -> avgUserTokens
-                .createdBy(creator)  // 🔗 [추가] 출제자 연관관계 세팅 (fk_problems_creator)
+                .avgUserTokens(0.0f) 
+                .createdBy(creator)  
                 .build();
 
         // Lombok 빌더 직후 연관관계 컬렉션 초기화
@@ -72,7 +85,7 @@ public class AdminProblemService {
         if (reqDescs != null && reqWeights != null) {
             for (int i = 0; i < reqDescs.size(); i++) {
                 Requirement requirement = Requirement.builder()
-                        .description(reqDescs.get(i)) // 변경: content -> description
+                        .description(reqDescs.get(i)) 
                         .weight(reqWeights.get(i))
                         .displayOrder(i + 1)
                         .problem(problem)
@@ -92,20 +105,28 @@ public class AdminProblemService {
         Problem problem = problemRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 문제가 존재하지 않습니다. id=" + id));
 
+        if (reqDescs != null && reqWeights != null) {
+            if (reqDescs.size() != reqWeights.size()) {
+                throw new IllegalArgumentException("요구사항 설명과 배점의 개수가 일치하지 않습니다.");
+            }
+            int totalWeight = reqWeights.stream().mapToInt(Integer::intValue).sum();
+            if (totalWeight != 100) {
+                throw new IllegalArgumentException("요구사항 배점의 총합은 100점이어야 합니다. (현재: " + totalWeight + "점)");
+            }
+        } else if (reqDescs != null || reqWeights != null) {
+            throw new IllegalArgumentException("요구사항 명세와 배점은 동시에 존재해야 합니다.");
+        }
+
         EvaluationType evalType = EvaluationType.valueOf(dto.getEvaluationType());
 
-        // 1. 마스터 정보 수정
         problem.setTitle(dto.getTitle());
         problem.setDescription(dto.getDescription());
         problem.setEvaluationType(evalType);
         problem.setExampleInput(dto.getExampleInput());
         problem.setExampleOutput(dto.getExampleOutput());
-        
-        // ❌ problem.setDifficulty() 라인 제거
         problem.setIsPublic(dto.getIsPublic());
         problem.setTokenLimit(dto.getTokenLimit());
 
-        // 평가 유형 변경에 따른 배점 비율 갱신
         if (EvaluationType.EFFICIENCY.equals(evalType)) {
             problem.setCorrectnessWeight(0.7f);
             problem.setEfficiencyWeight(0.3f);
@@ -114,10 +135,8 @@ public class AdminProblemService {
             problem.setEfficiencyWeight(0.0f);
         }
 
-        // 2. 기존 연관관계 컬렉션 비우기
         problem.getRequirements().clear();
 
-        // 3. 수정 및 추가된 요구사항 새로 조립
         if (reqDescs != null && reqWeights != null) {
             for (int i = 0; i < reqDescs.size(); i++) {
                 Requirement requirement = Requirement.builder()
