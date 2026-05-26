@@ -19,9 +19,13 @@ public class SecurityConfig {
                                  "/error/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/profile/**").authenticated()
+                .requestMatchers("/api/chat/**").authenticated()
                 .anyRequest().authenticated()
             )
-    		.csrf(csrf -> csrf.ignoringRequestMatchers("/profile/**"))
+    		.csrf(csrf -> csrf.ignoringRequestMatchers(
+    				"/profile/**",
+    				"/api/**"
+    		))
             .formLogin(form -> form
         	    .loginPage("/auth/login")
         	    .loginProcessingUrl("/login")
