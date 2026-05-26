@@ -36,7 +36,7 @@
 
     <div th:replace="~{admin/adminSubNav :: subNav('register')}"></div>
 
-    <form th:action="${problem.id == null} ? @{/admin/problems/register} : @{/admin/problems/edit/{id}(id=${problem.id})}" method="post">
+    <form id="problemForm" th:action="${problem.id == null} ? @{/admin/problems/register} : @{/admin/problems/edit/{id}(id=${problem.id})}" method="post">
         <div class="hp-dashboard-row">
             
             <section class="hp-card">
@@ -50,17 +50,17 @@
                         <label>문제 설명</label>
                         <textarea name="description" class="hp-textarea" rows="10" placeholder="구체적인 문제 정의를 입력하세요" th:text="${problem.description}" required></textarea>
                     </div>
-                    <div class="hp-form-group">
-                        <label>평가 유형</label>
-                        <select name="evaluationType" class="hp-input" required>
-                            <option value="" disabled th:selected="${problem.evaluationType == null}">평가 유형을 선택하세요</option>
-                            <option value="STANDARD" th:selected="${problem.evaluationType == 'STANDARD'}">STANDARD — 표준 모드</option>
-                            <option value="EFFICIENCY" th:selected="${problem.evaluationType == 'EFFICIENCY'}">EFFICIENCY — 효율성 모드</option>
-                            <option value="BUDGET" th:selected="${problem.evaluationType == 'BUDGET'}">BUDGET — 예산 최적화 모드</option>
-                        </select>
-                    </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="hp-form-group">
+                            <label>평가 유형</label>
+                            <select name="evaluationType" class="hp-input" required>
+                                <option value="" disabled th:selected="${problem.evaluationType == null}">평가 유형을 선택하세요</option>
+                                <option value="STANDARD" th:selected="${problem.evaluationType == 'STANDARD'}">STANDARD — 표준 모드</option>
+                                <option value="EFFICIENCY" th:selected="${problem.evaluationType == 'EFFICIENCY'}">EFFICIENCY — 효율성 모드</option>
+                                <option value="BUDGET" th:selected="${problem.evaluationType == 'BUDGET'}">BUDGET — 예산 최적화 모드</option>
+                            </select>
+                        </div>
                         <div class="hp-form-group">
                             <label>공개 여부</label>
                             <select name="isPublic" class="hp-input" required>
@@ -121,14 +121,15 @@
 
 <script th:inline="javascript">
     document.addEventListener("DOMContentLoaded", function() {
-        const serverMessage = [[${message}]];
+        const serverMessage = /*[[${message}]]*/ null;
         if (serverMessage) {
             alert(serverMessage);
         }
 
         calc();
 
-        const form = document.querySelector('form');
+        // 🛠️ querySelector('form') 대신 지정한 ID 엘리먼트를 정확하게 조준하도록 수정
+        const form = document.getElementById('problemForm');
         if (form) {
             form.addEventListener('submit', function(e) {
                 let total = 0;
