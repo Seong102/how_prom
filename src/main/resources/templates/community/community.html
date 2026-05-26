@@ -173,9 +173,9 @@
                 <tr th:each="sub, stat : ${submissions}">
                     <td class="td-center">
                         <span th:class="${stat.index == 0} ? 'rank-badge rank-1'
-                                      : ${stat.index == 1} ? 'rank-badge rank-2'
-                                      : ${stat.index == 2} ? 'rank-badge rank-3'
-                                      : 'rank-badge rank-n'"
+                                      : (${stat.index == 1} ? 'rank-badge rank-2'
+                                      : (${stat.index == 2} ? 'rank-badge rank-3'
+                                      : 'rank-badge rank-n'))"
                               th:text="${stat.count}">1</span>
                     </td>
                     <td th:text="${sub.nickname}">홍길동</td>
@@ -195,7 +195,7 @@
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                                 <circle cx="12" cy="12" r="3"/>
                             </svg>
-                            풀이 보기
+                            보기
                         </button>
                     </td>
                 </tr>

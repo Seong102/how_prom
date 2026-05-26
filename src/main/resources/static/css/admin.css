@@ -34,11 +34,12 @@ html { overflow-y: scroll; }
 .hp-stat-card__sub { font-size: 12px; color: var(--hp-text-muted); }
 
 /* 대시보드 2열 카드 레이아웃 */
-.hp-dashboard-row { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; margin-bottom: 24px; }
+.hp-dashboard-row { display: grid; grid-template-columns: 1.3fr 0.7fr; gap: 20px; margin-bottom: 24px; }
 .hp-card { background-color: var(--hp-surface); border: 1px solid var(--hp-border); border-radius: var(--hp-radius); box-shadow: var(--hp-shadow); overflow: hidden; }
 .hp-card__header { padding: 20px 24px; border-bottom: 1px solid var(--hp-border-soft); font-size: 15px; font-weight: 700; color: #1A1A1A; }
 .hp-card__body { padding: 24px; }
-
+.hp-dashboard-row--stats {grid-template-columns: 1.3fr 0.7fr;}
+.hp-dashboard-row--recent {grid-template-columns: 1.1fr 0.9fr;}
 /* 프로그레스 바 */
 .hp-progress-container { margin-top: 16px; display: flex; flex-direction: column; gap: 12px; }
 .hp-progress-item { font-size: 13px; }
