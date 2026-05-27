@@ -143,4 +143,7 @@ public interface ProblemRepository extends JpaRepository<Problem, Long> {
             @Param("evaluationType") EvaluationType evaluationType,
             @Param("userId") Long userId,
             Pageable pageable);
+    
+    @Query("SELECT p FROM Problem p JOIN FETCH p.requirements WHERE p.id = :id")
+    Optional<Problem> findByIdWithRequirements(@Param("id") Long id);
 }

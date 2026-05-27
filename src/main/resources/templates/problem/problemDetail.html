@@ -557,7 +557,7 @@
     <div class="loading-txt">채점 중입니다...</div>
 </div>
  
-<script>
+<script th:inline="javascript">
     /* ── 상수 ── */
     const PROBLEM_ID  = /*[[${problem.id}]]*/ 1;
     const EVAL_TYPE   = /*[[${problem.evaluationType.name()}]]*/ 'STANDARD';
@@ -844,18 +844,20 @@ public class Main {
         if (!confirm('대화를 종료하고 제출하시겠습니까?\n제출 후 채점이 시작됩니다.')) return;
         document.getElementById('loadingOv').classList.add('show');
         try {
+            const editorCode = monacoEditor ? monacoEditor.getValue() : '';
             const res = await fetch('/api/submissions', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body:    JSON.stringify({
                     problemId:       PROBLEM_ID,
                     conversation:    conversation,
-                    totalUserTokens: totalUserTokens
+                    totalUserTokens: totalUserTokens,
+                    finalCode:       editorCode   /* 에디터 코드 직접 전송 */
                 })
             });
             if (!res.ok) throw new Error(res.status);
             const { submissionId } = await res.json();
-            window.location.href = '/result/' + submissionId;
+            window.location.href = '/submission/' + submissionId + '/review';
         } catch (e) {
             document.getElementById('loadingOv').classList.remove('show');
             alert('제출 실패: ' + e.message);

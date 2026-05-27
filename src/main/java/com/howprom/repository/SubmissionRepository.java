@@ -124,4 +124,10 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     List<ContinueProblemRow> findContinueProblem(
             @Param("userId") Long userId,
             Pageable pageable);
+    
+    /**
+     * EFFICIENCY avg_user_tokens 갱신용
+     * ERROR 상태 제외한 해당 문제 전체 제출 조회
+     */
+    List<Submission> findByProblemIdAndStatusNot(Long problemId, SubmissionStatus status);
 }
