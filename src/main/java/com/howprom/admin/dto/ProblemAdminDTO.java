@@ -1,9 +1,7 @@
 package com.howprom.admin.dto;
 
 import com.howprom.common.entity.Problem;
-import com.howprom.common.entity.EvaluationType; // Enum import 필요
 import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,15 +13,13 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @Builder
 public class ProblemAdminDTO {
+
     private Long id;
     private String title;
     private String description;
     private String exampleInput;
     private String exampleOutput;
-    
-    // Enum을 문자열로 노출하기 위해 String 유지
-    private String evaluationType; 
-    
+    private String evaluationType;
     private Integer tokenLimit;
     private Float correctnessWeight;
     private Float efficiencyWeight;
@@ -31,36 +27,34 @@ public class ProblemAdminDTO {
     private Boolean isPublic;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    
-    private List<RequirementAdminDTO> requirements; 
+    private List<RequirementAdminDTO> requirements;
 
-    /**
-     * 🔥 [추가] 요구사항 개수 반환 헬퍼 메서드
-     * 타임리프 단에서 복잡한 내장함수 대신 ${prob.requirementsCount}로 콤팩트하게 부를 수 있습니다.
-     */
     public int getRequirementsCount() {
         return this.requirements != null ? this.requirements.size() : 0;
     }
 
+    // 7번 수정: @Transactional 컨텍스트 안에서만 호출되도록 주석 명시
+    // requirements는 반드시 트랜잭션 내부에서 fetch된 상태로 전달받아야 함
     public static ProblemAdminDTO from(Problem problem) {
         if (problem == null) return null;
-        
+
+        // 5번 수정: boolean 타입이므로 isPublic() 으로 호출
         return ProblemAdminDTO.builder()
                 .id(problem.getId())
                 .title(problem.getTitle())
                 .description(problem.getDescription())
                 .exampleInput(problem.getExampleInput())
                 .exampleOutput(problem.getExampleOutput())
-                // Enum 객체에서 이름을 문자열로 추출 (null 체크 추가)
-                .evaluationType(problem.getEvaluationType() != null ? problem.getEvaluationType().name() : null)
+                .evaluationType(problem.getEvaluationType() != null
+                        ? problem.getEvaluationType().name() : null)
                 .tokenLimit(problem.getTokenLimit())
                 .correctnessWeight(problem.getCorrectnessWeight())
                 .efficiencyWeight(problem.getEfficiencyWeight())
                 .avgUserTokens(problem.getAvgUserTokens())
-                .isPublic(problem.getIsPublic())
+                .isPublic(problem.isPublic())   // 5번 수정: getIsPublic() → isPublic()
                 .createdAt(problem.getCreatedAt())
                 .updatedAt(problem.getUpdatedAt())
-                .requirements(problem.getRequirements() != null ? 
+                .requirements(problem.getRequirements() != null ?
                         problem.getRequirements().stream()
                                 .map(RequirementAdminDTO::from)
                                 .collect(Collectors.toList()) : new ArrayList<>())
