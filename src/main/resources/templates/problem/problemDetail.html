@@ -95,7 +95,7 @@
  
         /* ── 왼쪽: 문제 패널 ── */
         .prob-panel {
-            width: 284px;
+            width: 260px;
             background: var(--hp-surface);
             border-right: 1px solid var(--hp-border);
             display: flex; flex-direction: column;
@@ -235,7 +235,7 @@
  
         /* ── 오른쪽: 채팅 패널 ── */
         .chat-panel {
-            width: 340px; background: var(--hp-surface); border-left: 1px solid var(--hp-border);
+            width: 480px; background: var(--hp-surface); border-left: 1px solid var(--hp-border);
             display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden;
         }
         .chat-head {
@@ -264,7 +264,7 @@
         }
         .bav.ai   { background: var(--hp-primary-soft); color: var(--hp-primary); }
         .bav.user { background: var(--hp-border-soft); color: var(--hp-text-muted); }
-        .bubble { max-width: 228px; padding: 9px 12px; font-size: 12.5px; line-height: 1.6; word-break: keep-all; }
+        .bubble { max-width: 360px; padding: 9px 12px; font-size: 12.5px; line-height: 1.6; word-break: keep-all; }
         .bubble.ai {
             background: var(--hp-bg); color: var(--hp-text);
             border: 1px solid var(--hp-border); border-radius: 4px 12px 12px 12px;
@@ -436,7 +436,7 @@
         <div class="token-sec" th:if="${problem.evaluationType.name() == 'BUDGET'}">
             <div class="token-head">
                 <span class="token-lbl">🪙 토큰 사용량</span>
-                <span class="token-val" id="tokenCount">0 / 1500</span>
+                <span class="token-val" id="tokenCount">0 / <span th:text="${problem.tokenLimit}">0</span></span>
             </div>
             <div class="token-bg">
                 <div class="token-fill" id="tokenFill" style="width:0%"></div>
@@ -527,7 +527,7 @@
                 <div class="bav ai">AI</div>
                 <div>
                     <div class="bubble ai">안녕하세요! 문제를 함께 풀어볼게요.<br>어떤 부분부터 시작할까요?</div>
-                    <div class="btime">오후 4:28</div>
+                    <div class="btime" id="initBtime"></div>
                 </div>
             </div>
         </div>
@@ -557,10 +557,12 @@
     <div class="loading-txt">채점 중입니다...</div>
 </div>
  
-<script>
+<script th:inline="javascript">
     /* ── 상수 ── */
     const PROBLEM_ID  = /*[[${problem.id}]]*/ 1;
-    const TOKEN_LIMIT = /*[[${problem.tokenLimit != null ? problem.tokenLimit : 0}]]*/ 0;
+    const EVAL_TYPE   = /*[[${problem.evaluationType.name()}]]*/ 'STANDARD';
+    const TOKEN_LIMIT = /*[[${problem.tokenLimit != null ? problem.tokenLimit : -1}]]*/ -1;
+    /* TOKEN_LIMIT == -1 : BUDGET 모드 아님 (게이지 비활성) */
  
     /* Judge0 공개 API (RapidAPI 키 없이 사용 가능한 엔드포인트) */
     const JUDGE0_URL = 'https://judge0-ce.p.rapidapi.com';
@@ -568,52 +570,22 @@
     const JAVA_ID    = 62;        /* Judge0 language_id: Java (OpenJDK 13) */
  
     /* ── Monaco Editor 초기 코드 ── */
-    const INITIAL_CODE = `import java.util.Arrays;
-import java.util.Scanner;
- 
+    const INITIAL_CODE = `import java.util.Scanner;
+
 public class Main {
- 
-    static int[] bubbleSort(int[] arr) {
-        int n = arr.length;
-        for (int i = 0; i < n; i++) {
-            boolean swapped = false;
-            for (int j = 0; j < n - i - 1; j++) {
-                if (arr[j] > arr[j + 1]) {
-                    int tmp = arr[j];
-                    arr[j] = arr[j + 1];
-                    arr[j + 1] = tmp;
-                    swapped = true;
-                }
-            }
-            if (!swapped) break;
-        }
-        return arr;
-    }
- 
     public static void main(String[] args) {
-        int[] arr;
- 
         Scanner sc = new Scanner(System.in);
-        if (sc.hasNextLine()) {
-            // stdin에 값이 있으면 읽어서 사용
-            String[] tokens = sc.nextLine().trim().split("\\\\s+");
-            arr = new int[tokens.length];
-            for (int i = 0; i < tokens.length; i++) {
-                arr[i] = Integer.parseInt(tokens[i]);
-            }
-        } else {
-            // stdin이 비어있으면 기본값 사용
-            arr = new int[]{5, 3, 8, 1, 9, 2};
-        }
- 
-        System.out.println(Arrays.toString(bubbleSort(arr)));
+
+        // TODO: 여기에 코드를 작성하세요
+
     }
 }`;
  
     /* ── 브라우저 메모리 상태 ── */
-    let conversation    = [];
-    let totalUserTokens = 0;
-    let aiWaiting       = false;
+    let conversation       = [];
+    let totalUserTokens    = 0;  // user 메시지 토큰 누적 (점수 계산 기준)
+    let prevTotalForServer = 0;  // 서버 전송용 누적값 (user + assistant 포함)
+    let aiWaiting          = false;
     let monacoEditor    = null;   /* Monaco 인스턴스 */
     let currentTab      = 'result';
  
@@ -674,44 +646,37 @@ public class Main {
         const startTime = Date.now();
  
         try {
-            /*
-              Judge0 CE 공개 인스턴스: https://ce.judge0.com
-              RapidAPI 키가 없어도 아래 공개 인스턴스로 테스트 가능
-              (속도 제한 있음 — 학습/개발 용도)
-            */
-            const submitRes = await fetch('https://ce.judge0.com/submissions?base64_encoded=false&wait=true', {
+            /* Spring Boot 서버에서 직접 javac + java 실행 */
+            const res = await fetch('/api/code/run', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    source_code:  code,
-                    language_id:  JAVA_ID,
-                    stdin:        stdin   /* 사용자가 입력한 stdin 값 */
-                })
+                body: JSON.stringify({ code, stdin })
             });
- 
-            if (!submitRes.ok) throw new Error('Judge0 연결 실패 (' + submitRes.status + ')');
-            const result = await submitRes.json();
+
+            const result = await res.json();
             const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
- 
             document.getElementById('execTime').textContent = elapsed + 's';
- 
-            /* status.id: 3=Accepted, 4=Wrong, 5=TLE, 6=CE, 11=RE 등 */
-            if (result.stdout) {
+
+            if (!res.ok) {
+                body.innerHTML = `<span class="r-err">${esc(result.error || '서버 오류가 발생했습니다.')}</span>`;
+                switchTabById('error');
+            } else if (result.compileError) {
+                body.innerHTML = `<span class="r-err">${esc(result.compileError)}</span>`;
+                switchTabById('error');
+            } else if (result.runtimeError) {
+                body.innerHTML = `<span class="r-err">${esc(result.runtimeError)}</span>`;
+                switchTabById('error');
+            } else if (result.stdout !== undefined && result.stdout !== '') {
                 body.innerHTML = `<span class="r-ok">${esc(result.stdout)}</span>`;
                 switchTabById('result');
-            }
-            if (result.stderr || result.compile_output) {
-                const errText = result.stderr || result.compile_output;
-                /* 오류 탭에 표시 */
-                body.innerHTML = `<span class="r-err">${esc(errText)}</span>`;
-                switchTabById('error');
-            }
-            if (!result.stdout && !result.stderr && !result.compile_output) {
+            } else {
                 body.innerHTML = '<span style="color:var(--hp-text-muted)">(출력 없음)</span>';
+                switchTabById('result');
             }
- 
+
         } catch (e) {
-            body.innerHTML = `<span class="r-err">실행 오류: ${esc(e.message)}\n\n※ 네트워크 문제이거나 Judge0 서버가 응답하지 않습니다.\n  로컬 Judge0 설치 또는 서버 사이드 실행으로 전환 필요.</span>`;
+            body.innerHTML = `<span class="r-err">서버 연결 실패: ${esc(e.message)}</span>`;
+            switchTabById('error');
         } finally {
             runBtn.classList.remove('running');
             runBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" style="width:13px;height:13px"><polygon points="5 3 19 12 5 21 5 3"/></svg> 실행`;
@@ -738,9 +703,11 @@ public class Main {
        토큰 게이지
     ════════════════════════════════════ */
     function updateGauge(val) {
+        if (TOKEN_LIMIT <= 0) return;   /* BUDGET 모드가 아니면 게이지 없음 */
         const fill = document.getElementById('tokenFill');
         const cnt  = document.getElementById('tokenCount');
         const warn = document.getElementById('tokenWarn');
+        if (!fill || !cnt || !warn) return;
         const pct  = Math.min((val / TOKEN_LIMIT) * 100, 100);
         fill.style.width      = pct.toFixed(1) + '%';
         cnt.textContent       = val + ' / ' + TOKEN_LIMIT;
@@ -762,7 +729,9 @@ public class Main {
  
         addBubble('user', text);
         conversation.push({ role: 'user', content: text });
-        totalUserTokens += Math.ceil(text.length / 4);
+        /* 서버 전송용 누적값 저장 (user + assistant 토큰 합산) */
+        const prevForServer = prevTotalForServer;
+        totalUserTokens += Math.ceil(text.length / 4);  // 추정치로 게이지 즉시 업데이트
         updateGauge(totalUserTokens);
         inp.value = ''; inp.style.height = '';
         aiWaiting = true;
@@ -772,13 +741,27 @@ public class Main {
             const res = await fetch('/api/chat/message', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ problemId: PROBLEM_ID, messages: conversation })
+                body:    JSON.stringify({
+                    problemId:       PROBLEM_ID,
+                    messages:        conversation,
+                    prevTotalTokens: prevForServer  /* user+assistant 누적값 전송 */
+                })
             });
             if (!res.ok) throw new Error('HTTP ' + res.status);
-            const { content } = await res.json();
+            const data = await res.json();
+            /* 서버 확정값으로 totalUserTokens 교체 */
+            if (typeof data.promptTokens === 'number' && data.promptTokens > 0) {
+                const lastUserMsg = conversation[conversation.length - 1];
+                const estimated = Math.ceil((lastUserMsg ? lastUserMsg.content.length : 0) / 4);
+                totalUserTokens = totalUserTokens - estimated + data.promptTokens;
+                updateGauge(totalUserTokens);
+                /* prevTotalForServer에 이번 턴 user + assistant 토큰 누적 */
+                const assistantTok = typeof data.assistantTokens === 'number' ? data.assistantTokens : 0;
+                prevTotalForServer = prevForServer + data.promptTokens + assistantTok;
+            }
             removeTyping();
-            addBubble('assistant', content, true);
-            conversation.push({ role: 'assistant', content });
+            addBubble('assistant', data.content, true);
+            conversation.push({ role: 'assistant', content: data.content });
         } catch (e) {
             removeTyping();
             addBubble('assistant', '⚠ 응답을 받지 못했습니다. 다시 시도해주세요.');
@@ -788,41 +771,64 @@ public class Main {
     function addBubble(role, text, showApply) {
         const msgs = document.getElementById('chatMsgs');
         const now  = new Date();
-        const time = `오후 ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
-        const cm   = text.match(/```[\w]*\n?([\s\S]*?)```/);
-        const code = cm ? esc(cm[1].trim()) : '';
-        const body = esc(cm ? text.replace(/```[\w]*\n?[\s\S]*?```/, '').trim() : text);
+        const h    = now.getHours();
+        const m    = String(now.getMinutes()).padStart(2, '0');
+        const time = (h >= 12 ? '오후 ' : '오전 ') + (h > 12 ? h - 12 : h || 12) + ':' + m;
+        const cm   = text.match(/```(?:[\w]*)\n?([\s\S]*?)```/);
+        const rawCode = cm ? cm[1].trim() : '';
+        const code = rawCode ? esc(rawCode) : '';
+        const body = esc(cm ? text.replace(/```(?:[\w]*)\n?[\s\S]*?```/, '').trim() : text);
         const isAI = role === 'assistant';
         const wrap = document.createElement('div');
         wrap.className = 'bw' + (isAI ? '' : ' u');
+
+        /* 코드 블록 요소 */
+        const codeEl = code
+            ? `<div class="bcode">${code}</div>`
+            : '';
+
+        /* 에디터 적용 버튼 — data-code 속성으로 코드 전달 (onclick 이스케이프 문제 방지) */
+        const applyEl = (code && isAI && showApply)
+            ? `<button class="apply-btn" data-apply-code="1">
+                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
+                   에디터에 적용
+               </button>`
+            : '';
+
         wrap.innerHTML = `
             <div class="bav ${isAI ? 'ai' : 'user'}">${isAI ? 'AI' : 'U'}</div>
-            <div>
+            <div style="min-width:0;flex:1">
                 <div class="bubble ${isAI ? 'ai' : 'user'}">
                     ${body}
-                    ${code ? `<div class="bcode">${code}</div>` : ''}
-                    ${code && isAI && showApply
-                        ? `<button class="apply-btn" onclick="applyCode(this,${JSON.stringify(cm[1].trim())})">
-                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
-                               에디터에 적용
-                           </button>`
-                        : ''}
+                    ${codeEl}
+                    ${applyEl}
                 </div>
                 <div class="btime">${time}</div>
             </div>`;
+
+        /* 버튼에 rawCode를 JS 프로퍼티로 직접 저장 (이스케이프 문제 없음) */
+        if (rawCode && isAI && showApply) {
+            const btn = wrap.querySelector('[data-apply-code]');
+            if (btn) btn._code = rawCode;
+        }
+
         msgs.appendChild(wrap);
         msgs.scrollTop = msgs.scrollHeight;
     }
  
-    /* AI가 준 코드를 Monaco 에디터에 적용 */
-    function applyCode(btn, code) {
+    /* AI가 준 코드를 Monaco 에디터에 적용 — 이벤트 위임 방식 */
+    document.getElementById('chatMsgs').addEventListener('click', function(e) {
+        const btn = e.target.closest('[data-apply-code]');
+        if (!btn) return;
+        const code = btn._code;
+        if (!code) return;
         if (monacoEditor) {
             monacoEditor.setValue(code);
             monacoEditor.focus();
         }
         btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px;height:11px"><polyline points="20 6 9 17 4 12"/></svg> 에디터에 적용됨`;
         btn.className = 'apply-btn done';
-    }
+    });
  
     function showTyping() {
         const msgs = document.getElementById('chatMsgs');
@@ -849,18 +855,20 @@ public class Main {
         if (!confirm('대화를 종료하고 제출하시겠습니까?\n제출 후 채점이 시작됩니다.')) return;
         document.getElementById('loadingOv').classList.add('show');
         try {
+            const editorCode = monacoEditor ? monacoEditor.getValue() : '';
             const res = await fetch('/api/submissions', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body:    JSON.stringify({
                     problemId:       PROBLEM_ID,
                     conversation:    conversation,
-                    totalUserTokens: totalUserTokens
+                    totalUserTokens: totalUserTokens,
+                    finalCode:       editorCode   /* 에디터 코드 직접 전송 */
                 })
             });
             if (!res.ok) throw new Error(res.status);
             const { submissionId } = await res.json();
-            window.location.href = '/result/' + submissionId;
+            window.location.href = '/submission/' + submissionId + '/review';
         } catch (e) {
             document.getElementById('loadingOv').classList.remove('show');
             alert('제출 실패: ' + e.message);
@@ -873,6 +881,16 @@ public class Main {
     function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
  
     updateGauge(0);
+
+    /* 초기 AI 인사말 시각 동적 설정 */
+    (function() {
+        const el = document.getElementById('initBtime');
+        if (el) {
+            const now = new Date();
+            const h = now.getHours(), m = String(now.getMinutes()).padStart(2, '0');
+            el.textContent = (h >= 12 ? '오후 ' : '오전 ') + (h > 12 ? h - 12 : h || 12) + ':' + m;
+        }
+    })();
 </script>
 
 <!-- 프로필 수정 모달 스크립트 -->
