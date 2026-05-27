@@ -3,7 +3,7 @@ package com.howprom.admin.service;
 import com.howprom.common.entity.EvaluationType;
 import com.howprom.common.entity.Problem;
 import com.howprom.common.entity.Requirement;
-import com.howprom.common.entity.User; // 🔗 [추가] User 엔티티 임포트
+import com.howprom.common.entity.User;
 import com.howprom.admin.dto.ProblemAdminDTO;
 import com.howprom.admin.dto.ProblemStatsDTO;
 import com.howprom.repository.ProblemRepository;
@@ -31,13 +31,32 @@ public class AdminProblemService {
     }
 
     /**
+     * 🛠️ [7번 피드백 반영] 안전한 DTO 단건 조회
+     * 트랜잭션 범위 안에서 엔티티를 DTO로 변환하므로 LazyInitializationException을 원천 차단합니다.
+     */
+    public ProblemAdminDTO getProblemDetailAsDTO(Long id) {
+        Problem problem = problemRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당 문제가 존재하지 않습니다. id=" + id));
+        return ProblemAdminDTO.from(problem);
+    }
+
+    /**
+     * 🛠️ [7번 피드백 반영 - 컨트롤러 예외 방어용 추가]
+     * 트랜잭션 안에서 엔티티 리스트를 DTO 리스트로 가공하여 반환하므로 컨트롤러단에서의 Lazy 지연 로딩 에러를 완벽하게 방어합니다.
+     */
+    public List<ProblemAdminDTO> getProblemsAsDTO(String keyword) {
+        List<Problem> problems = this.getProblems(keyword);
+        return problems.stream()
+                .map(ProblemAdminDTO::from)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * 새 문제 등록
-     * 🔗 [변경] 테이블 제약조건(NOT NULL)을 충족하기 위해 로그인한 출제자(User)를 인자로 받아 저장합니다.
      */
     @Transactional
     public void createProblem(ProblemAdminDTO dto, List<String> reqDescs, List<Integer> reqWeights, User creator) {
         
-        // 🔗 [추가] 1&2번 피드백: 요구사항 데이터 유효성 및 배점 총합(100점) 검증
         if (reqDescs != null && reqWeights != null) {
             if (reqDescs.size() != reqWeights.size()) {
                 throw new IllegalArgumentException("요구사항 설명과 배점의 개수가 일치하지 않습니다.");
@@ -47,14 +66,11 @@ public class AdminProblemService {
                 throw new IllegalArgumentException("요구사항 배점의 총합은 100점이어야 합니다. (현재: " + totalWeight + "점)");
             }
         } else if (reqDescs != null || reqWeights != null) {
-            // 둘 중 하나만 null로 들어오는 비정상적인 요청 방어
             throw new IllegalArgumentException("요구사항 명세와 배점은 동시에 존재해야 합니다.");
         }
         
-        // String -> Enum 변환
         EvaluationType evalType = EvaluationType.valueOf(dto.getEvaluationType());
         
-        // 평가 유형에 따라 정확성/효율성 배점 비율 자동 설정
         float correctness = 1.0f;
         float efficiency = 0.0f;
         
@@ -63,14 +79,13 @@ public class AdminProblemService {
             efficiency = 0.3f;
         }
 
-        // 1. 마스터 엔티티 생성
         Problem problem = Problem.builder()
                 .title(dto.getTitle())
                 .description(dto.getDescription())
                 .evaluationType(evalType)
                 .exampleInput(dto.getExampleInput())
                 .exampleOutput(dto.getExampleOutput())
-                .isPublic(dto.getIsPublic())
+                .isPublic(dto.getIsPublic()) 
                 .tokenLimit(dto.getTokenLimit()) 
                 .correctnessWeight(correctness)
                 .efficiencyWeight(efficiency)
@@ -78,10 +93,8 @@ public class AdminProblemService {
                 .createdBy(creator)  
                 .build();
 
-        // Lombok 빌더 직후 연관관계 컬렉션 초기화
         problem.setRequirements(new ArrayList<>());
 
-        // 2. 자식 요구사항 생성 및 양방향 연관관계 매핑
         if (reqDescs != null && reqWeights != null) {
             for (int i = 0; i < reqDescs.size(); i++) {
                 Requirement requirement = Requirement.builder()
@@ -124,7 +137,9 @@ public class AdminProblemService {
         problem.setEvaluationType(evalType);
         problem.setExampleInput(dto.getExampleInput());
         problem.setExampleOutput(dto.getExampleOutput());
-        problem.setIsPublic(dto.getIsPublic());
+        
+        // 🛠️ [Lombok 기본타입 boolean Setter 규칙 반영] setIsPublic -> setPublic 으로 변경 완료
+        problem.setPublic(dto.getIsPublic());
         problem.setTokenLimit(dto.getTokenLimit());
 
         if (EvaluationType.EFFICIENCY.equals(evalType)) {
@@ -157,7 +172,8 @@ public class AdminProblemService {
     public void deleteProblem(Long id) {
         Problem problem = problemRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 문제가 존재하지 않습니다. id=" + id));
-        if (problem.getIsPublic()) {
+        
+        if (problem.isPublic()) {
             throw new IllegalStateException("공개 상태인 문항은 삭제할 수 없습니다. 먼저 비공개로 변경해 주세요.");
         }
         problemRepository.deleteById(id);
@@ -170,7 +186,9 @@ public class AdminProblemService {
     public void updatePublicStatus(Long id, boolean isPublic) {
         Problem problem = problemRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 문제가 존재하지 않습니다. id=" + id));
-        problem.setIsPublic(isPublic); 
+        
+        // 🛠️ [Lombok 기본타입 boolean Setter 규칙 반영] setIsPublic -> setPublic 으로 변경 완료
+        problem.setPublic(isPublic); 
     }
     
     /**
@@ -198,7 +216,8 @@ public class AdminProblemService {
     }
     
     /**
-     * 문제 통계 데이터 맵 반환
+     * 🔍 [6번 확인 완료] 문제 통계 데이터 맵 반환
+     * ProblemStatsDTO가 이곳에서 명확하게 사용되고 있으므로 데드코드가 아닙니다. 삭제하지 않고 유지합니다.
      */
     public Map<Long, ProblemStatsDTO> getStatsMap() {
         return problemRepository.getProblemStatistics().stream()
