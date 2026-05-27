@@ -19,6 +19,7 @@ public class MyPageDetailResponseDto {
     private Integer totalUserTokens;
 
     // DB 명세서 및 기능설계서의 JSON 타입 컬럼 매핑용 내부 DTO 구조체
+    private Integer turnCount;
     private List<ChatMessageDto> conversation;
     private List<RequirementResultDto> requirementsResult;
 }

@@ -212,7 +212,7 @@
                 <div class="stat-box">
                     <div class="stat-lbl">대화 횟수</div>
                     <div class="stat-val"
-                         th:text="${detail.conversation != null ? detail.conversation.size() + '턴' : '0턴'}">4턴</div>
+                         th:text="${detail.turnCount != null ? detail.turnCount + '턴' : '0턴'}">4턴</div>
                 </div>
             </div>
         </div>
