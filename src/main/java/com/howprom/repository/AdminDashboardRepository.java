@@ -4,7 +4,9 @@ import com.howprom.common.entity.Submission;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -12,6 +14,18 @@ public interface AdminDashboardRepository extends JpaRepository<Submission, Long
 
     @Query("SELECT COUNT(s) FROM Submission s")
     Long countTotalSubmissions();
+
+    @Query("SELECT COUNT(s) FROM Submission s WHERE s.submittedAt >= :startOfToday")
+    Long countTodaySubmissions(@Param("startOfToday") LocalDateTime startOfToday);
+
+    @Query("SELECT COUNT(u) FROM User u WHERE u.createdAt >= :startOfToday")
+    Long countTodayJoinCount(@Param("startOfToday") LocalDateTime startOfToday);
+
+    @Query("SELECT COUNT(s) FROM Submission s WHERE s.status = 'GRADING'")
+    Long countGradingCount();
+
+    @Query("SELECT COUNT(u) FROM User u")
+    Long countTotalUserCount();
 
     @Query("SELECT COALESCE((SUM(CASE WHEN s.status = 'PASSED' THEN 1.0 ELSE 0.0 END) / COUNT(s)) * 100, 0.0) FROM Submission s")
     Double calculateTotalPassRate();
@@ -25,7 +39,16 @@ public interface AdminDashboardRepository extends JpaRepository<Submission, Long
     @Query("SELECT COUNT(p) FROM Problem p")
     Long countTotalProblems();
 
-    // 2번: evaluationType 포함
+    @Query(value = "SELECT COALESCE(AVG(TIMESTAMPDIFF(SECOND, s.submitted_at, s.graded_at)), 0.0) " +
+                   "FROM submissions s " +
+                   "WHERE s.graded_at IS NOT NULL AND s.status NOT IN ('GRADING', 'ERROR')",
+           nativeQuery = true)
+    Double calculateAvgGradingTime();
+
+    @Query("SELECT COALESCE(SUM(s.totalUserTokens), 0L) FROM Submission s " +
+           "WHERE s.submittedAt >= :oneMonthAgo AND s.totalUserTokens IS NOT NULL")
+    Long calculateMonthTokenUsage(@Param("oneMonthAgo") LocalDateTime oneMonthAgo);
+
     @Query("SELECT p.id, p.title, p.evaluationType, COUNT(s), COALESCE(AVG(s.score), 0.0), "
             + "SUM(CASE WHEN s.status = 'PASSED' THEN 1L ELSE 0L END), "
             + "SUM(CASE WHEN s.status = 'FAILED' THEN 1L ELSE 0L END), "
@@ -34,51 +57,53 @@ public interface AdminDashboardRepository extends JpaRepository<Submission, Long
             + "GROUP BY p.id, p.title, p.evaluationType")
     List<Object[]> findProblemTableStatsRaw();
 
-    // 5번 수정: EFFICIENCY 타입만 필터링
-    @Query("SELECT p.id, p.title, AVG(s.totalUserTokens) "
-            + "FROM Problem p JOIN Submission s ON s.problem = p "
-            + "WHERE p.evaluationType = 'EFFICIENCY' "
-            + "AND s.totalUserTokens IS NOT NULL "
-            + "GROUP BY p.id, p.title")
-    List<Object[]> findEfficiencyTokenStats();
-
-    @Query("SELECT p.id, p.title, AVG(s.totalUserTokens), p.evaluationType "
+    // 2번 수정: efficiencyList는 별도 쿼리로 분리 유지 (6, 7번 데드코드 제거)
+    @Query("SELECT p.id, p.title, p.evaluationType, AVG(s.totalUserTokens) "
             + "FROM Problem p JOIN Submission s ON s.problem = p "
             + "WHERE s.totalUserTokens IS NOT NULL "
+            + "AND s.totalUserTokens > 0 "
             + "GROUP BY p.id, p.title, p.evaluationType")
-    List<Object[]> findTokenStatsRaw();
-    
+    List<Object[]> findAllTokenStatsRaw();
+
     String REQUIREMENT_STATS_QUERY =
             "SELECT r.problem_id, p.title, r.description, r.weight, " +
-            "AVG(jt.score) as avg_achieve, " +
-            "(COUNT(CASE WHEN jt.score < 50 THEN 1 END) * 100.0 / COUNT(*)) as fail_rate " +
+            "AVG(jt_all.score) as avg_achieve, " +
+            "(SUM(CASE WHEN sub_fail.fail_count > 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT sub.id)) as fail_rate " +
             "FROM requirements r " +
             "JOIN problems p ON p.id = r.problem_id " +
             "JOIN submissions sub ON sub.problem_id = r.problem_id " +
-            "JOIN JSON_TABLE(sub.requirements_result, '$[*]' COLUMNS( " +
-            "    req_id BIGINT PATH '$.id', " +
-            "    score INT PATH '$.score' " +
-            ")) AS jt ON jt.req_id = r.id " +
+            // 전체 점수 평균을 위한 조인
+            "JOIN JSON_TABLE(sub.requirements_result, '$[*]' COLUMNS(score INT PATH '$.score')) AS jt_all ON true " +
+            // 제출별 실패 여부 판단을 위한 서브쿼리 조인
+            "LEFT JOIN ( " +
+            "    SELECT sub_id, COUNT(*) as fail_count " +
+            "    FROM ( " +
+            "        SELECT sub.id as sub_id, jt.score " +
+            "        FROM submissions sub " +
+            "        JOIN JSON_TABLE(sub.requirements_result, '$[*]' COLUMNS(score INT PATH '$.score')) AS jt " +
+            "    ) as temp " +
+            "    WHERE score < 50 " +
+            "    GROUP BY sub_id " +
+            ") as sub_fail ON sub_fail.sub_id = sub.id " +
             "GROUP BY r.problem_id, p.title, r.description, r.weight";
 
     @Query(value = REQUIREMENT_STATS_QUERY, nativeQuery = true)
     List<Object[]> findRequirementStatsRaw();
 
-    // 1번 수정: Pageable로 DB 레벨에서 10건 제한
-    @Query("SELECT s.user.nickname, p.title, s.score, s.status, s.submittedAt "
+    @Query("SELECT p.id, s.user.nickname, p.title, s.score, s.status, s.submittedAt "
             + "FROM Submission s "
             + "JOIN s.problem p "
             + "WHERE s.status != 'GRADING' "
             + "ORDER BY s.submittedAt DESC")
     List<Object[]> findRecentSubmissions(Pageable pageable);
 
-    @Query(value = 
+    @Query(value =
             "SELECT TOP_SUB.problem_id, TOP_SUB.title, TOP_SUB.nickname, TOP_SUB.score, TOP_SUB.total_user_tokens, TOP_SUB.submitted_at " +
             "FROM (" +
             "    SELECT p.id AS problem_id, p.title, u.nickname, s.score, s.total_user_tokens, s.submitted_at, " +
             "           ROW_NUMBER() OVER (" +
-            "               PARTITION BY s.problem_id " + // 💡 문제별로 그룹을 묶어서
-            "               ORDER BY s.score DESC, s.total_user_tokens ASC, s.submitted_at ASC" + // 💡 1등 기준 정의
+            "               PARTITION BY s.problem_id " +
+            "               ORDER BY s.score DESC, s.total_user_tokens ASC, s.submitted_at ASC" +
             "           ) as rn " +
             "    FROM submissions s " +
             "    JOIN problems p ON p.id = s.problem_id " +
@@ -86,7 +111,7 @@ public interface AdminDashboardRepository extends JpaRepository<Submission, Long
             "    WHERE s.status = 'PASSED'" +
             ") TOP_SUB " +
             "WHERE TOP_SUB.rn = 1 " +
-            "ORDER BY TOP_SUB.score DESC, TOP_SUB.total_user_tokens ASC", 
+            "ORDER BY TOP_SUB.score DESC, TOP_SUB.total_user_tokens ASC",
             nativeQuery = true)
     List<Object[]> findTopScorePerProblem();
 }
