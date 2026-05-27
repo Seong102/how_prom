@@ -33,14 +33,14 @@ public class ProblemStatsDTO {
     }
 
     /**
-     * 🔥 [핵심] JPQL Repository의 'SELECT new' 쿼리가 요구하는 3개짜리 전용 생성자!
-     * (s.problem.id, COUNT(s.id), AVG(s.score)) 순서와 타입을 그대로 일치시킵니다.
+     * 🔥 [핵심] JPQL Repository의 'SELECT new' 쿼리가 요구하는 4개짜리 전용 생성자!
+     * (s.problem.id, COUNT(s.id), AVG(s.score), SUM(...)) 순서와 타입을 그대로 일치시킵니다.
      */
     public ProblemStatsDTO(Long problemId, Long totalCount, Double avgScore, Long passedCount) {
         this.problemId = problemId;
         this.totalCount = totalCount;
         this.avgScore = avgScore;
-        this.passedCount = passedCount != null ? passedCount : 0L; // null 방어
+        this.passedCount = passedCount != null ? passedCount : 0L;
     }
 
     /**
