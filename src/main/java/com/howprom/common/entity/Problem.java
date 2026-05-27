@@ -25,45 +25,45 @@ public class Problem {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
-    // 1, 2, 3번 수정: name 속성 전부 제거 → Hibernate 자동 변환에 맡김
     @Column(columnDefinition = "TEXT")
-    private String exampleInput;        // → example_input
+    private String exampleInput;
 
     @Column(columnDefinition = "TEXT")
-    private String exampleOutput;       // → example_output
+    private String exampleOutput;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private EvaluationType evaluationType;  // → evaluation_type
+    private EvaluationType evaluationType;
 
-    private Integer tokenLimit;             // → token_limit
-
-    @Column(nullable = false)
-    @Builder.Default
-    private Float correctnessWeight = 0.7f; // → correctness_weight
+    private Integer tokenLimit;
 
     @Column(nullable = false)
     @Builder.Default
-    private Float efficiencyWeight = 0.3f;  // → efficiency_weight
+    private Float correctnessWeight = 0.7f;
 
     @Column(nullable = false)
     @Builder.Default
-    private Float avgUserTokens = 0.0f;     // → avg_user_tokens
+    private Float efficiencyWeight = 0.3f;
 
-    // 4번 수정: Boolean → boolean (Lombok이 isPublic() getter 생성)
     @Column(nullable = false)
     @Builder.Default
-    private boolean isPublic = false;       // → is_public
+    private Float avgUserTokens = 0.0f;
+
+    // 12번 수정: Boolean (wrapper)으로 변경 → Lombok이 getIsPublic() 생성
+    // boolean(primitive)이면 빌더에서 public(boolean) 메서드명 충돌 발생 가능
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isPublic = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;        // → created_at
+    private LocalDateTime createdAt;
 
     @Column(nullable = false)
-    private LocalDateTime updatedAt;        // → updated_at
+    private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

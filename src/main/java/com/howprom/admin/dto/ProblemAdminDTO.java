@@ -38,7 +38,7 @@ public class ProblemAdminDTO {
     public static ProblemAdminDTO from(Problem problem) {
         if (problem == null) return null;
 
-        // 5번 수정: boolean 타입이므로 isPublic() 으로 호출
+        // 에러 해결: Problem 엔티티의 Boolean 타입 롬복 규칙에 따라 getIsPublic()으로 수정
         return ProblemAdminDTO.builder()
                 .id(problem.getId())
                 .title(problem.getTitle())
@@ -51,7 +51,7 @@ public class ProblemAdminDTO {
                 .correctnessWeight(problem.getCorrectnessWeight())
                 .efficiencyWeight(problem.getEfficiencyWeight())
                 .avgUserTokens(problem.getAvgUserTokens())
-                .isPublic(problem.isPublic())   // 5번 수정: getIsPublic() → isPublic()
+                .isPublic(problem.getIsPublic())   // <- 이 부분을 getIsPublic()으로 원복하여 에러 해결!
                 .createdAt(problem.getCreatedAt())
                 .updatedAt(problem.getUpdatedAt())
                 .requirements(problem.getRequirements() != null ?

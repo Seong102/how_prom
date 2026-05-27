@@ -3,43 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <title>HowProm - 문제 목록 관리</title>
-<meta name="_csrf" th:content="${_csrf?.token}"/>
-<meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
+<meta name="_csrf" th:content="${_csrf?.token}" />
+<meta name="_csrf_header" th:content="${_csrf?.headerName}" />
 
 <th:block th:replace="~{common/header :: styles}"></th:block>
 <th:block th:replace="~{common/header :: profile-modal-script}"></th:block>
 <link rel="stylesheet" th:href="@{/css/admin.css}">
 
 <style>
-.text-right { text-align: right !important; }
-.text-center { text-align: center !important; }
-.hp-action-group { display: inline-flex; gap: 8px; justify-content: center; width: 100%; }
-.hp-search-box { display: flex; gap: 6px; margin-bottom: 20px; align-items: center; }
+.text-right {
+	text-align: right !important;
+}
+
+.text-center {
+	text-align: center !important;
+}
+
+.hp-action-group {
+	display: inline-flex;
+	gap: 8px;
+	justify-content: center;
+	width: 100%;
+}
+
+.hp-search-box {
+	display: flex;
+	gap: 6px;
+	margin-bottom: 20px;
+	align-items: center;
+}
 
 /* 크기 제각각인 것 방지: 검색 컴포넌트 크기 슬림화 및 완전 통일 */
-.hp-search-box select, 
-.hp-search-box input {
-    height: 38px !important;
-    box-sizing: border-box !important;
+.hp-search-box select, .hp-search-box input {
+	height: 38px !important;
+	box-sizing: border-box !important;
 }
+
 .hp-manage-filter-input {
-    width: 180px !important; /* 최대 크기를 콤팩트하게 줄이고 일괄 고정 */
-    max-width: 180px !important;
+	width: 180px !important; /* 최대 크기를 콤팩트하게 줄이고 일괄 고정 */
+	max-width: 180px !important;
 }
 
 /* 테이블 내부 스크롤 스펙 정의 */
 .hp-manage-table-scroll {
-    max-height: 520px; /* 대량 데이터 대응용 최대 높이 제한 */
-    overflow-y: auto;
-    overflow-x: auto;
+	max-height: 520px; /* 대량 데이터 대응용 최대 높이 제한 */
+	overflow-y: auto;
+	overflow-x: auto;
 }
 /* 스크롤 시 헤더 고정 */
 .hp-manage-table-scroll thead th {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background-color: var(--hp-card-bg, #fff);
-    box-shadow: inset 0 -1px 0 var(--hp-border);
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	background-color: var(--hp-card-bg, #fff);
+	box-shadow: inset 0 -1px 0 var(--hp-border);
 }
 </style>
 </head>
@@ -55,120 +72,156 @@
 					문제 관리 <span class="hp-admin-badge">Admin</span>
 				</h1>
 			</div>
-			<a th:href="@{/admin/problems/register}" class="hp-btn hp-btn--primary">+ 새 문제 등록</a>
+			<a th:href="@{/admin/problems/register}"
+				class="hp-btn hp-btn--primary">+ 새 문제 등록</a>
 		</div>
-
 		<div th:replace="~{admin/adminSubNav :: subNav('manage')}"></div>
 
-        <div class="hp-search-box">
-            <select id="filterManage" class="hp-sort-btn" onchange="toggleSearchInput()" style="color: var(--hp-text); border-color: var(--hp-border); padding: 8px 12px; width: 110px;">
-                <option value="title">제목</option>
-                <option value="id">번호</option>
-                <option value="type">유형</option>
-                <option value="status">공개 상태</option>
-            </select>
-            
-            <input type="text" id="searchManageText" class="hp-search-input hp-manage-filter-input" 
-                   placeholder="검색어 입력..." 
-                   onkeyup="searchManageAdvanced()"
-                   style="padding: 0 12px; border: 1px solid var(--hp-border); border-radius: 4px;">
+		<div class="hp-search-box">
+			<select id="filterManage" class="hp-sort-btn"
+				onchange="toggleSearchInput()"
+				style="color: var(--hp-text); border-color: var(--hp-border); padding: 8px 12px; width: 110px;">
+				<option value="title">제목</option>
+				<option value="id">번호</option>
+				<option value="type">유형</option>
+				<option value="status">공개 상태</option>
+			</select> <input type="text" id="searchManageText"
+				class="hp-search-input hp-manage-filter-input"
+				placeholder="검색어 입력..." onkeyup="searchManageAdvanced()"
+				style="padding: 0 12px; border: 1px solid var(--hp-border); border-radius: 4px;">
 
-            <select id="searchManageType" class="hp-sort-btn hp-manage-filter-input" onchange="searchManageAdvanced()" 
-                    style="display: none; color: var(--hp-text); border-color: var(--hp-border); padding: 8px 12px;">
-                <option value="">유형 전체</option>
-                <option value="standard">Standard</option>
-                <option value="efficiency">Efficiency</option>
-                <option value="budget">Budget</option>
-            </select>
+			<select id="searchManageType"
+				class="hp-sort-btn hp-manage-filter-input"
+				onchange="searchManageAdvanced()"
+				style="display: none; color: var(--hp-text); border-color: var(--hp-border); padding: 8px 12px;">
+				<option value="">유형 전체</option>
+				<option value="standard">Standard</option>
+				<option value="efficiency">Efficiency</option>
+				<option value="budget">Budget</option>
+			</select> <select id="searchManageStatus"
+				class="hp-sort-btn hp-manage-filter-input"
+				onchange="searchManageAdvanced()"
+				style="display: none; color: var(--hp-text); border-color: var(--hp-border); padding: 8px 12px;">
+				<option value="">상태 전체</option>
+				<option value="공개">공개</option>
+				<option value="비공개">비공개</option>
+			</select>
 
-            <select id="searchManageStatus" class="hp-sort-btn hp-manage-filter-input" onchange="searchManageAdvanced()" 
-                    style="display: none; color: var(--hp-text); border-color: var(--hp-border); padding: 8px 12px;">
-                <option value="">상태 전체</option>
-                <option value="공개">공개</option>
-                <option value="비공개">비공개</option>
-            </select>
-
-            <button type="button" class="hp-btn hp-btn--outline" onclick="resetManageFilter()" style="height: 38px; white-space: nowrap;">필터/정렬 초기화</button>
-        </div>
+			<button type="button" class="hp-btn hp-btn--outline"
+				onclick="resetManageFilter()"
+				style="height: 38px; white-space: nowrap;">필터/정렬 초기화</button>
+		</div>
 
 		<div class="hp-card">
 			<div class="hp-card__header">전체 출제 문항 마스터 레코드</div>
 			<div class="hp-card__body" style="padding: 0;">
-                <div class="hp-manage-table-scroll">
-                    <table class="hp-table" id="problemManageTable">
-                        <thead>
-                            <tr>
-                                <th style="width: 10%; padding-left: 24px; cursor: pointer;" onclick="sortTable('problemManageTable', 0)" title="클릭하여 정렬">번호 ↕</th>
-                                <th style="width: 32%; cursor: pointer;" onclick="sortTable('problemManageTable', 1)" title="클릭하여 정렬">제목 ↕</th>
-                                <th style="width: 13%; text-align: center; cursor: pointer;" onclick="sortTable('problemManageTable', 2)" title="클릭하여 정렬">유형 ↕</th>
-                                <th style="width: 13%; text-align: center; cursor: pointer;" onclick="sortTable('problemManageTable', 3)" title="클릭하여 정렬">공개 여부 ↕</th>
-                                <th class="text-center" style="width: 10%; cursor: pointer;" onclick="sortTable('problemManageTable', 4)" title="클릭하여 정렬">제출 수 ↕</th>
-                                <th class="text-center" style="width: 11%; cursor: pointer;" onclick="sortTable('problemManageTable', 5)" title="클릭하여 정렬">평균 점수 ↕</th>
-                                <th class="text-center" style="width: 11%;">관리</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="prob : ${problemList}" class="hp-prob-row">
-                                <td style="padding-left: 24px;" th:text="'#' + ${#numbers.formatInteger(prob.id, 3)}" th:data-sort-value="${prob.id}">#001</td>
-                                <td th:data-sort-value="${prob.title}"><strong th:text="${prob.title}">문제 제목 명세</strong></td>
-                                
-                                <td class="text-center" style="vertical-align: middle;" 
-                                    th:data-sort-value="${prob.evaluationType}"
-                                    th:data-sort-req="${prob.requirementsCount}">
-                                    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                                        <span class="hp-badge hp-badge--standard" th:if="${prob.evaluationType == 'STANDARD'}">Standard</span>
-                                        <span class="hp-badge hp-badge--efficiency" th:if="${prob.evaluationType == 'EFFICIENCY'}">Efficiency</span>
-                                        <span class="hp-badge hp-badge--budget" th:if="${prob.evaluationType == 'BUDGET'}">Budget</span>
-                                        <span class="hp-text-muted" style="font-size: 11px; font-weight: 500;" 
-                                              th:text="'조건 ' + ${prob.requirementsCount} + '개'">조건 0개</span>
-                                    </div>
-                                </td>
-                                
-                                <td class="text-center" th:data-sort-value="${prob.isPublic ? 1 : 0}">
-                                    <label class="hp-switch" style="justify-content: center;"> 
-                                        <input type="checkbox" class="hp-switch__input" th:checked="${prob.isPublic}" th:attr="data-id=${prob.id}"> 
-                                        <span class="hp-switch__slider"></span> 
-                                        <span class="hp-switch__label hp-status-text" th:text="${prob.isPublic} ? '공개' : '비공개'">비공개</span>
-                                    </label>
-                                </td>
-                                
-                                <td class="text-center" th:data-sort-value="${statsMap != null && statsMap.containsKey(prob.id) ? statsMap[prob.id].totalCount : 0}">
-                                    <span th:text="${statsMap != null && statsMap.containsKey(prob.id) ? statsMap[prob.id].totalCount + '건' : '0건'}">0건</span>
-                                </td>
-                                
-                                <td class="text-center hp-text-muted" style="font-weight: 600; vertical-align: middle;" 
-                                    th:data-sort-value="${statsMap != null && statsMap.containsKey(prob.id) && statsMap[prob.id].avgScore != null ? statsMap[prob.id].avgScore : -1}">
-                                    
-                                    <span th:text="${statsMap != null && statsMap.containsKey(prob.id) && statsMap[prob.id].avgScore != null ? #numbers.formatDecimal(statsMap[prob.id].avgScore, 1, 1) + '점' : '-'}">-</span>
-                                    
-                                    <div th:if="${statsMap != null && statsMap.containsKey(prob.id) && statsMap[prob.id].passRate != null}" 
-                                         style="font-size: 11px; font-weight: 500; color: #2b8a3e; margin-top: 3px;">
-                                        (🎯 통과 <span th:text="${#numbers.formatDecimal(statsMap[prob.id].passRate, 1, 0)}">0</span>%)
-                                    </div>
-                                </td>
-                                
-                                <td class="text-center">
-                                    <div class="hp-action-group">
-                                        <a th:href="@{/admin/problems/edit/{id}(id=${prob.id})}" class="hp-btn hp-btn--outline" style="white-space: nowrap;">수정</a>
-                                        <button type="button" class="hp-btn hp-btn--danger-outline" th:onclick="|deleteProblem('${prob.id}')|" style="white-space: nowrap;">삭제</button>
-                                    </div>
-                                </td>
-                            </tr>
+				<div class="hp-manage-table-scroll">
+					<table class="hp-table" id="problemManageTable">
+						<thead>
+							<tr>
+								<th style="width: 10%; padding-left: 24px; cursor: pointer;"
+									onclick="sortTable('problemManageTable', 0)" title="클릭하여 정렬">번호
+									↕</th>
+								<th style="width: 32%; cursor: pointer;"
+									onclick="sortTable('problemManageTable', 1)" title="클릭하여 정렬">제목
+									↕</th>
+								<th style="width: 13%; text-align: center; cursor: pointer;"
+									onclick="sortTable('problemManageTable', 2)" title="클릭하여 정렬">유형
+									↕</th>
+								<th style="width: 13%; text-align: center; cursor: pointer;"
+									onclick="sortTable('problemManageTable', 3)" title="클릭하여 정렬">공개
+									여부 ↕</th>
+								<th class="text-center" style="width: 10%; cursor: pointer;"
+									onclick="sortTable('problemManageTable', 4)" title="클릭하여 정렬">제출
+									수 ↕</th>
+								<th class="text-center" style="width: 11%; cursor: pointer;"
+									onclick="sortTable('problemManageTable', 5)" title="클릭하여 정렬">평균
+									점수 ↕</th>
+								<th class="text-center" style="width: 11%;">관리</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="prob : ${problemList}" class="hp-prob-row">
+								<td style="padding-left: 24px;"
+									th:text="'#' + ${#numbers.formatInteger(prob.id, 3)}"
+									th:data-sort-value="${prob.id}">#001</td>
+								<td th:data-sort-value="${prob.title}"><strong
+									th:text="${prob.title}">문제 제목 명세</strong></td>
 
-                            <tr id="noDataRow" style="display: none;">
-                                <td colspan="7" class="hp-text-muted" style="text-align: center; padding: 40px 0; font-size: 14px;">
-                                    검색 조건과 일치하는 관리 문항이 존재하지 않습니다.
-                                </td>
-                            </tr>
+								<td class="text-center" style="vertical-align: middle;"
+									th:data-sort-value="${prob.evaluationType}"
+									th:data-sort-req="${prob.requirementsCount}">
+									<div
+										style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+										<span class="hp-badge hp-badge--standard"
+											th:if="${prob.evaluationType == 'STANDARD'}">Standard</span>
+										<span class="hp-badge hp-badge--efficiency"
+											th:if="${prob.evaluationType == 'EFFICIENCY'}">Efficiency</span>
+										<span class="hp-badge hp-badge--budget"
+											th:if="${prob.evaluationType == 'BUDGET'}">Budget</span> <span
+											class="hp-text-muted"
+											style="font-size: 11px; font-weight: 500;"
+											th:text="'조건 ' + ${prob.requirementsCount} + '개'">조건
+											0개</span>
+									</div>
+								</td>
 
-                            <tr id="emptyDataRow" th:if="${#lists.isEmpty(problemList)}">
-                                <td colspan="7" class="hp-text-muted" style="text-align: center; padding: 40px 0; font-size: 14px;">
-                                    출제 등록된 프롬프트 문제가 존재하지 않습니다.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+								<td class="text-center"
+									th:data-sort-value="${prob.isPublic ? 1 : 0}"><label
+									class="hp-switch" style="justify-content: center;"> <input
+										type="checkbox" class="hp-switch__input"
+										th:checked="${prob.isPublic}" th:attr="data-id=${prob.id}">
+										<span class="hp-switch__slider"></span> <span
+										class="hp-switch__label hp-status-text"
+										th:text="${prob.isPublic} ? '공개' : '비공개'">비공개</span>
+								</label></td>
+
+								<td class="text-center"
+									th:data-sort-value="${statsMap != null && statsMap.containsKey(prob.id) ? statsMap[prob.id].totalCount : 0}">
+									<span
+									th:text="${statsMap != null && statsMap.containsKey(prob.id) ? statsMap[prob.id].totalCount + '건' : '0건'}">0건</span>
+								</td>
+
+								<td class="text-center hp-text-muted"
+									style="font-weight: 600; vertical-align: middle;"
+									th:data-sort-value="${statsMap != null && statsMap.containsKey(prob.id) && statsMap[prob.id].avgScore != null ? statsMap[prob.id].avgScore : -1}">
+
+									<span
+									th:text="${statsMap != null && statsMap.containsKey(prob.id) && statsMap[prob.id].avgScore != null ? #numbers.formatDecimal(statsMap[prob.id].avgScore, 1, 1) + '점' : '-'}">-</span>
+
+									<div
+										th:if="${statsMap != null && statsMap.containsKey(prob.id) && statsMap[prob.id].passRate != null}"
+										style="font-size: 11px; font-weight: 500; color: #2b8a3e; margin-top: 3px;">
+										(🎯 통과 <span
+											th:text="${#numbers.formatDecimal(statsMap[prob.id].passRate, 1, 0)}">0</span>%)
+									</div>
+								</td>
+
+								<td class="text-center">
+									<div class="hp-action-group">
+										<a th:href="@{/admin/problems/edit/{id}(id=${prob.id})}"
+											class="hp-btn hp-btn--outline" style="white-space: nowrap;">수정</a>
+										<button type="button" class="hp-btn hp-btn--danger-outline"
+											th:onclick="|deleteProblem('${prob.id}')|"
+											style="white-space: nowrap;">삭제</button>
+									</div>
+								</td>
+							</tr>
+
+							<tr id="noDataRow" style="display: none;">
+								<td colspan="7" class="hp-text-muted"
+									style="text-align: center; padding: 40px 0; font-size: 14px;">
+									검색 조건과 일치하는 관리 문항이 존재하지 않습니다.</td>
+							</tr>
+
+							<tr id="emptyDataRow" th:if="${#lists.isEmpty(problemList)}">
+								<td colspan="7" class="hp-text-muted"
+									style="text-align: center; padding: 40px 0; font-size: 14px;">
+									출제 등록된 프롬프트 문제가 존재하지 않습니다.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
 			</div>
 		</div>
 	</main>
@@ -409,8 +462,8 @@
     }
     </script>
 
-<!-- 프로필 수정 모달 스크립트 (로그인 사용자만 활성화) -->
-<th:block th:replace="~{common/header :: profile-modal-script}"></th:block>
+	<!-- 프로필 수정 모달 스크립트 (로그인 사용자만 활성화) -->
+	<th:block th:replace="~{common/header :: profile-modal-script}"></th:block>
 
 </body>
 </html>

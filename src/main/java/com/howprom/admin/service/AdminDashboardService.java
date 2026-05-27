@@ -8,11 +8,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,59 +23,128 @@ public class AdminDashboardService {
     private static final DateTimeFormatter FORMATTER =
             DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm");
 
-    // 💡 대시보드 UI에 어울리는 풍부한 고품격 테마 색상 배열 확장 (12색)
     private static final String[] EXTENDED_COLORS = {
-            "#4A90E2", "#76A1EF", "#79C3C4", "#2ECC71", 
-            "#E28743", "#E74C3C", "#9B59B6", "#1ABC9C", 
+            "#4A90E2", "#76A1EF", "#79C3C4", "#2ECC71",
+            "#E28743", "#E74C3C", "#9B59B6", "#1ABC9C",
             "#F1C40F", "#34495E", "#E67E22", "#3498DB"
     };
 
     public AdminDashboardDTO getDashboardStats() {
+        LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
+        LocalDateTime oneMonthAgo = LocalDateTime.now().minusMonths(1);
 
         Long totalSubmissions = adminDashboardRepository.countTotalSubmissions();
+        Long todaySubmissions = adminDashboardRepository.countTodaySubmissions(startOfToday);
+        Long todayJoinCount = adminDashboardRepository.countTodayJoinCount(startOfToday);
+        Long gradingCount = adminDashboardRepository.countGradingCount();
+        Long totalUserCount = adminDashboardRepository.countTotalUserCount();
         Double passRate = adminDashboardRepository.calculateTotalPassRate();
         Long activeUsers = adminDashboardRepository.countActiveUsers();
         Long publicProblems = adminDashboardRepository.countPublicProblems();
         Long totalProblems = adminDashboardRepository.countTotalProblems();
+        Double avgGradingTime = adminDashboardRepository.calculateAvgGradingTime();
+        Long monthTokenUsage = adminDashboardRepository.calculateMonthTokenUsage(oneMonthAgo);
 
         String formattedPassRate = passRate != null ? String.format("%.1f%%", passRate) : "0.0%";
 
+        // 문제별 통계
         List<Object[]> rawProblems = adminDashboardRepository.findProblemTableStatsRaw();
         List<AdminDashboardDTO.ProblemTableDTO> problemList = new ArrayList<>();
 
         for (Object[] row : rawProblems) {
-            long totalCount = row[3] != null ? (Long) row[3] : 0L;
+            long totalCount = row[3] != null ? ((Number) row[3]).longValue() : 0L;
             double avgScore = row[4] != null ? ((Number) row[4]).doubleValue() : 0.0;
-            long passed = row[5] != null ? (Long) row[5] : 0L;
-            long failed = row[6] != null ? (Long) row[6] : 0L;
-            long error = row[7] != null ? (Long) row[7] : 0L;
+            long passed = row[5] != null ? ((Number) row[5]).longValue() : 0L;
+            long failed = row[6] != null ? ((Number) row[6]).longValue() : 0L;
+            long error = row[7] != null ? ((Number) row[7]).longValue() : 0L;
             boolean hasSub = totalCount > 0;
 
             problemList.add(AdminDashboardDTO.ProblemTableDTO.builder()
-                    .id((Long) row[0])
-                    .title((String) row[1])
+                    .id(row[0] != null ? ((Number) row[0]).longValue() : null)
+                    .title(row[1] != null ? (String) row[1] : "-")
                     .evaluationType(row[2] != null ? row[2].toString() : "")
                     .totalCount(totalCount + "건")
                     .avgScore(hasSub ? String.format("%.1f점", avgScore) : "-")
                     .passedCount(hasSub ? passed + "건" : "-")
                     .failedCount(hasSub ? failed + "건" : "-")
-                    .errorCount(hasSub ? error > 0 ? error + "건" : "-" : "-")
+                    .errorCount(hasSub ? (error > 0 ? error + "건" : "-") : "-")
                     .hasSubmissions(hasSub)
                     .hasErrors(error > 0)
                     .build());
         }
 
+        // 2번 수정: 토큰 차트는 별도 쿼리로 분리
         List<AdminDashboardDTO.EfficiencyChartDTO> efficiencyList = getEfficiencyTokensList();
-        List<AdminDashboardDTO.RequirementAnalysisDTO> requirementList = getRequirementAnalysisList();
+
+        // 요구사항 분석
+     // 요구사항 분석 로직 수정
+        List<AdminDashboardDTO.RequirementAnalysisDTO> requirementList = new ArrayList<>();
+        List<Object[]> rawReqs = adminDashboardRepository.findRequirementStatsRaw();
+
+        String hardestProblemTitle = "-";
+        String hardestProblemPassRate = "0.0";
+        String easiestProblemTitle = "-";
+        String easiestProblemPassRate = "0.0";
+
+        if (rawReqs != null && !rawReqs.isEmpty()) {
+            // 1. 통계 데이터를 정렬 (실패율 낮은 순 -> 높은 순)
+            rawReqs.sort((a, b) -> {
+                double failA = a[5] != null ? ((Number) a[5]).doubleValue() : 0.0;
+                double failB = b[5] != null ? ((Number) b[5]).doubleValue() : 0.0;
+                return Double.compare(failA, failB);
+            });
+
+            // 2. 가장 쉬운 문제 (정렬된 데이터 중 첫 번째)
+            Object[] easiest = rawReqs.get(0);
+            double minFail = easiest[5] != null ? ((Number) easiest[5]).doubleValue() : 0.0;
+            easiestProblemTitle = easiest[1] != null ? (String) easiest[1] : "-";
+            easiestProblemPassRate = String.format("%.1f", Math.max(0, 100.0 - minFail));
+
+            // 3. 가장 어려운 문제 (정렬된 데이터 중 마지막)
+            Object[] hardest = rawReqs.get(rawReqs.size() - 1);
+            double maxFail = hardest[5] != null ? ((Number) hardest[5]).doubleValue() : 0.0;
+            hardestProblemTitle = hardest[1] != null ? (String) hardest[1] : "-";
+            hardestProblemPassRate = String.format("%.1f", Math.max(0, 100.0 - maxFail));
+
+            // 4. 리스트 생성
+            int colorIdx = 0;
+            for (Object[] row : rawReqs) {
+                String probId = row[0] != null ? "#" + row[0].toString() : "#0";
+                String title = row[1] != null ? (String) row[1] : "알 수 없는 문제";
+                String description = row[2] != null ? (String) row[2] : "요구사항 명세가 없습니다.";
+                Integer weight = row[3] != null ? ((Number) row[3]).intValue() : 0;
+                double avgAchieve = row[4] != null ? ((Number) row[4]).doubleValue() : 0.0;
+                double failRate = row[5] != null ? ((Number) row[5]).doubleValue() : 0.0;
+
+                requirementList.add(AdminDashboardDTO.RequirementAnalysisDTO.builder()
+                        .probId(probId).title(title).description(description)
+                        .weight(weight)
+                        .avgAchieve(String.format("%.1f%%", avgAchieve))
+                        .failRate(String.format("%.1f%%", failRate))
+                        .color(EXTENDED_COLORS[colorIdx++ % EXTENDED_COLORS.length])
+                        .build());
+            }
+        }
+
         List<AdminDashboardDTO.RecentSubmissionDTO> recentSubmissionList = getRecentSubmissions();
         List<AdminDashboardDTO.TopScoreDTO> topScoreList = getTopScores();
 
         return AdminDashboardDTO.builder()
                 .totalSubmissions(totalSubmissions != null ? totalSubmissions : 0L)
+                .todaySubmissions(todaySubmissions != null ? todaySubmissions : 0L)
+                .todayJoinCount(todayJoinCount != null ? todayJoinCount : 0L)
+                .gradingCount(gradingCount != null ? gradingCount : 0L)
+                .totalUserCount(totalUserCount != null ? totalUserCount : 0L)
                 .totalPassRate(formattedPassRate)
                 .activeUserCount(activeUsers != null ? activeUsers : 0L)
                 .publicProblemCount(publicProblems != null ? publicProblems : 0L)
                 .totalProblemCount(totalProblems != null ? totalProblems : 0L)
+                .avgGradingTime(avgGradingTime != null ? avgGradingTime : 0.0)
+                .monthTokenUsage(monthTokenUsage != null ? monthTokenUsage : 0L)
+                .hardestProblemTitle(hardestProblemTitle)
+                .hardestProblemPassRate(hardestProblemPassRate)
+                .easiestProblemTitle(easiestProblemTitle)
+                .easiestProblemPassRate(easiestProblemPassRate)
                 .problemList(problemList)
                 .efficiencyList(efficiencyList)
                 .requirementList(requirementList)
@@ -84,36 +153,24 @@ public class AdminDashboardService {
                 .build();
     }
 
+    // 2번 수정: rawProblems 재활용 제거, 전용 쿼리 사용
     private List<AdminDashboardDTO.EfficiencyChartDTO> getEfficiencyTokensList() {
-        List<Object[]> rawStats = adminDashboardRepository.findProblemTableStatsRaw();
+        List<Object[]> rawStats = adminDashboardRepository.findAllTokenStatsRaw();
         List<AdminDashboardDTO.EfficiencyChartDTO> result = new ArrayList<>();
-        if (rawStats.isEmpty()) return result;
+        if (rawStats == null || rawStats.isEmpty()) return result;
 
-        // 1. 먼저 0 token 이하인 항목을 제외한 데이터만 필터링
-        List<Object[]> filteredStats = rawStats.stream()
-                .filter(row -> {
-                    Double avgTokens = row[4] != null ? ((Number) row[4]).doubleValue() : 0.0;
-                    return avgTokens > 0;   // 제출 이력이 있어 평균 토큰이 1 이상인 것만 포함
-                })
-                .collect(Collectors.toList());
-
-        if (filteredStats.isEmpty()) return result;
-
-        // 2. 필터링된 데이터 기준으로 maxTokens 계산
-        double maxTokens = filteredStats.stream()
-                .mapToDouble(row -> row[4] != null ? ((Number) row[4]).doubleValue() : 0.0)
+        // row[0]:id, row[1]:title, row[2]:evaluationType, row[3]:avgTokens
+        double maxTokens = rawStats.stream()
+                .mapToDouble(row -> row[3] != null ? ((Number) row[3]).doubleValue() : 0.0)
                 .max().orElse(0.0);
 
         int colorIdx = 0;
-
-        for (Object[] row : filteredStats) {
-            Long id = (Long) row[0];
-            String title = (String) row[1];
-            Double avgUserTokens = row[4] != null ? ((Number) row[4]).doubleValue() : 0.0;
+        for (Object[] row : rawStats) {
+            Long id = row[0] != null ? ((Number) row[0]).longValue() : null;
+            String title = row[1] != null ? (String) row[1] : "-";
             String evalType = row[2] != null ? row[2].toString() : "STANDARD";
-
+            Double avgUserTokens = row[3] != null ? ((Number) row[3]).doubleValue() : 0.0;
             String barWidth = maxTokens > 0 ? (int)((avgUserTokens / maxTokens) * 100) + "%" : "0%";
-            
             String color = EXTENDED_COLORS[colorIdx % EXTENDED_COLORS.length];
             colorIdx++;
 
@@ -129,50 +186,21 @@ public class AdminDashboardService {
         return result;
     }
 
-    private List<AdminDashboardDTO.RequirementAnalysisDTO> getRequirementAnalysisList() {
-        List<AdminDashboardDTO.RequirementAnalysisDTO> result = new ArrayList<>();
-        List<Object[]> rawReqs = adminDashboardRepository.findRequirementStatsRaw();
-        if (rawReqs == null || rawReqs.isEmpty()) return result;
-
-        int colorIdx = 0;
-
-        for (Object[] row : rawReqs) {
-            String probId = row[0] != null ? "#" + row[0].toString() : "#0";
-            String title = row[1] != null ? (String) row[1] : "알 수 없는 문제";
-            String description = row[2] != null ? (String) row[2] : "요구사항 명세가 없습니다.";
-            Integer weight = row[3] != null ? ((Number) row[3]).intValue() : 0;
-            double avgAchieve = row[4] != null ? ((Number) row[4]).doubleValue() : 0.0;
-            double failRate = row[5] != null ? ((Number) row[5]).doubleValue() : 0.0;
-            
-            // 💡 확장된 컬러 팔레트 적용
-            String color = EXTENDED_COLORS[colorIdx % EXTENDED_COLORS.length];
-            colorIdx++;
-
-            result.add(AdminDashboardDTO.RequirementAnalysisDTO.builder()
-                    .probId(probId)
-                    .title(title)
-                    .description(description)
-                    .weight(weight)
-                    .avgAchieve(String.format("%.1f%%", avgAchieve))
-                    .failRate(String.format("%.1f%%", failRate))
-                    .color(color)
-                    .build());
-        }
-        return result;
-    }
-
     private List<AdminDashboardDTO.RecentSubmissionDTO> getRecentSubmissions() {
+        // row[0]:problemId, row[1]:nickname, row[2]:title, row[3]:score, row[4]:status, row[5]:submittedAt
         List<Object[]> raw = adminDashboardRepository.findRecentSubmissions(PageRequest.of(0, 10));
         List<AdminDashboardDTO.RecentSubmissionDTO> result = new ArrayList<>();
 
         for (Object[] row : raw) {
-            String nickname = row[0] != null ? (String) row[0] : "-";
-            String problemTitle = row[1] != null ? (String) row[1] : "-";
-            Integer score = row[2] != null ? ((Number) row[2]).intValue() : 0;
-            String status = row[3] != null ? row[3].toString() : "-";
-            String submittedAt = toFormattedString(row[4]);
+            Long problemId = row[0] != null ? ((Number) row[0]).longValue() : null;
+            String nickname = row[1] != null ? (String) row[1] : "-";
+            String problemTitle = row[2] != null ? (String) row[2] : "-";
+            Integer score = row[3] != null ? ((Number) row[3]).intValue() : 0;
+            String status = row[4] != null ? row[4].toString() : "-";
+            String submittedAt = toFormattedString(row[5]);
 
             result.add(AdminDashboardDTO.RecentSubmissionDTO.builder()
+                    .problemId(problemId)
                     .nickname(nickname)
                     .problemTitle(problemTitle)
                     .score(score)
@@ -183,12 +211,8 @@ public class AdminDashboardService {
         return result;
     }
 
-    /**
-     * 💡 리팩토링 완료: ROW_NUMBER() 기반 랭킹 최적화 반영
-     * DB Native Query 레벨에서 이미 완벽한 순위 정렬 및 문제당 단 1건 필터링이 완료되어 넘어옵니다.
-     * 따라서 자바단에서 복잡하게 연산하던 LinkedHashMap 중복 제어 루프를 전부 제거했습니다.
-     */
     private List<AdminDashboardDTO.TopScoreDTO> getTopScores() {
+        // row[0]:problemId, row[1]:title, row[2]:nickname, row[3]:score, row[4]:totalUserTokens, row[5]:submittedAt
         List<Object[]> raw = adminDashboardRepository.findTopScorePerProblem();
         List<AdminDashboardDTO.TopScoreDTO> result = new ArrayList<>();
 
@@ -209,7 +233,6 @@ public class AdminDashboardService {
                     .submittedAt(submittedAt)
                     .build());
         }
-
         return result;
     }
 
