@@ -582,9 +582,10 @@ public class Main {
 }`;
  
     /* ── 브라우저 메모리 상태 ── */
-    let conversation    = [];
-    let totalUserTokens = 0;
-    let aiWaiting       = false;
+    let conversation       = [];
+    let totalUserTokens    = 0;  // user 메시지 토큰 누적 (점수 계산 기준)
+    let prevTotalForServer = 0;  // 서버 전송용 누적값 (user + assistant 포함)
+    let aiWaiting          = false;
     let monacoEditor    = null;   /* Monaco 인스턴스 */
     let currentTab      = 'result';
  
@@ -728,7 +729,9 @@ public class Main {
  
         addBubble('user', text);
         conversation.push({ role: 'user', content: text });
-        totalUserTokens += Math.ceil(text.length / 4);
+        /* 서버 전송용 누적값 저장 (user + assistant 토큰 합산) */
+        const prevForServer = prevTotalForServer;
+        totalUserTokens += Math.ceil(text.length / 4);  // 추정치로 게이지 즉시 업데이트
         updateGauge(totalUserTokens);
         inp.value = ''; inp.style.height = '';
         aiWaiting = true;
@@ -738,15 +741,23 @@ public class Main {
             const res = await fetch('/api/chat/message', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ problemId: PROBLEM_ID, messages: conversation })
+                body:    JSON.stringify({
+                    problemId:       PROBLEM_ID,
+                    messages:        conversation,
+                    prevTotalTokens: prevForServer  /* user+assistant 누적값 전송 */
+                })
             });
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const data = await res.json();
-            /* 서버가 확정 토큰 수(promptTokens)를 반환하면 추정치를 보정 */
+            /* 서버 확정값으로 totalUserTokens 교체 */
             if (typeof data.promptTokens === 'number' && data.promptTokens > 0) {
-                const estimated = Math.ceil(conversation[conversation.length - 1].content.length / 4);
+                const lastUserMsg = conversation[conversation.length - 1];
+                const estimated = Math.ceil((lastUserMsg ? lastUserMsg.content.length : 0) / 4);
                 totalUserTokens = totalUserTokens - estimated + data.promptTokens;
                 updateGauge(totalUserTokens);
+                /* prevTotalForServer에 이번 턴 user + assistant 토큰 누적 */
+                const assistantTok = typeof data.assistantTokens === 'number' ? data.assistantTokens : 0;
+                prevTotalForServer = prevForServer + data.promptTokens + assistantTok;
             }
             removeTyping();
             addBubble('assistant', data.content, true);

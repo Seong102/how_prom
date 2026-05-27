@@ -112,9 +112,11 @@ public class LlmGradingService {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> message = (Map<String, Object>) llmResponse.get("message");
                 String rawJson = (String) message.get("content");
+                log.info("[LlmGrading] LLM 원본 응답: {}", rawJson);
 
                 // JSON만 추출 (```json ... ``` 감싸진 경우 대비)
                 String cleanJson = extractJson(rawJson);
+                log.info("[LlmGrading] 파싱할 JSON: {}", cleanJson);
 
                 return parseGradingResult(cleanJson);
 
@@ -165,6 +167,8 @@ public class LlmGradingService {
                 .mapToInt(RequirementResultDto::getScore)
                 .sum();
         score = Math.max(0, Math.min(100, score)); // 0~100 범위 보정
+        log.info("[LlmGrading] requirements 개수: {}, 합산 점수: {}", reqResults.size(), score);
+        reqResults.forEach(r -> log.info("[LlmGrading] req id={} score={}", r.getId(), r.getScore()));
 
         boolean passed = score >= 60;
 

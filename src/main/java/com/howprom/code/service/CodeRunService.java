@@ -78,6 +78,9 @@ public class CodeRunService {
                 "java",
                 "-cp", tempDir.toString(),
                 "-Xmx128m",           // 메모리 128MB 제한
+                "-Dfile.encoding=UTF-8",           // 한글 출력 인코딩
+                "-Dstdout.encoding=UTF-8",         // stdout 인코딩
+                "-Dstderr.encoding=UTF-8",         // stderr 인코딩
                 "Main"
         );
         pb.directory(tempDir.toFile());

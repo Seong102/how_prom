@@ -63,6 +63,11 @@ public class MyPageService {
         if (!submission.getUser().getId().equals(userId)) {
             throw new SecurityException("해당 제출 기록의 상세 내용을 열람할 권한이 없습니다.");
         }
+        
+        int turnCount = submission.getConversation() == null ? 0 :
+            (int) submission.getConversation().stream()
+                .filter(msg -> "user".equals(msg.getRole()))
+                .count();
 
         // 상세 팝업용 응답 DTO 변환 (Hibernate 6가 컬럼의 JSON 문자열을 객체 List로 변환 완료한 상태)
         return MyPageDetailResponseDto.builder()
@@ -71,6 +76,7 @@ public class MyPageService {
                 .score(submission.getScore())
                 .finalCode(submission.getFinalCode())
                 .totalUserTokens(submission.getTotalUserTokens())
+                .turnCount(turnCount)
                 .conversation(submission.getConversation())
                 .requirementsResult(submission.getRequirementsResult())
                 .build();

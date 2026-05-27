@@ -2,8 +2,6 @@ package com.howprom.chat.service;
 
 import com.howprom.chat.dto.ChatMessageRequest;
 import com.howprom.chat.dto.ChatMessageResponse;
-import com.howprom.common.entity.Problem;
-import com.howprom.repository.ProblemRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,22 +33,13 @@ public class ChatService {
     private int timeoutSeconds;
 
     private final WebClient.Builder webClientBuilder;
-    private final ProblemRepository problemRepository;
 
     public ChatMessageResponse chat(ChatMessageRequest request) {
 
-        // 1. 문제 조회
-        Problem problem = problemRepository.findById(request.getProblemId())
-                .orElseThrow(() -> new IllegalArgumentException("문제를 찾을 수 없습니다."));
-
-        // 2. system prompt에 문제 내용 포함
-        String fullSystemPrompt = systemPrompt
-                + "\n\n현재 문제: " + problem.getTitle()
-                + "\n" + problem.getDescription();
-
-        // 3. messages 배열 구성
+        // 1. messages 배열 구성 — system prompt 고정값만 사용
+        //    문제 설명은 사용자가 직접 입력 (자동 포함 X)
         List<Map<String, String>> messages = new ArrayList<>();
-        messages.add(Map.of("role", "system", "content", fullSystemPrompt));
+        messages.add(Map.of("role", "system", "content", systemPrompt));
         for (ChatMessageRequest.MessageDto msg : request.getMessages()) {
             messages.add(Map.of("role", msg.getRole(), "content", msg.getContent()));
         }
@@ -79,9 +68,18 @@ public class ChatService {
 
         // 6. 응답 파싱
         String content = extractContent(llmResponse);
-        int userPromptTokens = extractUserTokens(llmResponse);
 
-        return new ChatMessageResponse(content, userPromptTokens);
+        // 7. 이번 턴 user 토큰 수 계산
+        //    prompt_eval_count = system + 전체 대화 이력 + 이번 user 메시지 누적값
+        //    이번 턴 user 토큰 = prompt_eval_count - systemPromptTokens - prevTotalTokens
+        int prevTotalTokens  = request.getPrevTotalTokens() != null ? request.getPrevTotalTokens() : 0;
+        int thisUserTokens   = extractThisUserTokens(llmResponse, prevTotalTokens);
+        int assistantTokens  = extractAssistantTokens(llmResponse); // AI 답변 토큰 (프론트 누적용)
+
+        log.info("[ChatService] prompt_eval_count에서 계산한 이번 턴 토큰: {}, assistant 토큰: {}",
+                thisUserTokens, assistantTokens);
+
+        return new ChatMessageResponse(content, thisUserTokens, assistantTokens);
     }
 
     @SuppressWarnings("unchecked")
@@ -90,11 +88,21 @@ public class ChatService {
         return (String) message.get("content");
     }
 
-    private int extractUserTokens(Map<String, Object> response) {
-        // prompt_eval_count = 전체 입력 토큰 수
-        // system prompt 토큰을 빼면 사용자 순수 토큰 수
+    private int extractAssistantTokens(Map<String, Object> response) {
+        // eval_count = AI가 생성한 답변 토큰 수
+        Object count = response.get("eval_count");
+        if (count == null) return 0;
+        return ((Number) count).intValue();
+    }
+
+    private int extractThisUserTokens(Map<String, Object> response, int prevTotalTokens) {
         Object count = response.get("prompt_eval_count");
         if (count == null) return 0;
-        return Math.max(0, ((Number) count).intValue() - systemPromptTokens);
+        int totalInput = ((Number) count).intValue();
+        log.info("[ChatService] prompt_eval_count={}, systemPromptTokens={}, prevTotalTokens={}",
+                totalInput, systemPromptTokens, prevTotalTokens);
+        // 이번 턴 user 토큰 = 전체입력 - system prompt 토큰 - 이전 누적 토큰
+        int thisUserTokens = totalInput - systemPromptTokens - prevTotalTokens;
+        return Math.max(0, thisUserTokens);
     }
 }
