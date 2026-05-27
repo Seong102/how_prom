@@ -1,24 +1,19 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-</head>
 <body>
 
 <nav th:fragment="subNav(current)" class="hp-sub-nav">
-    
-    <a th:href="@{/admin}" 
-       th:classappend="${current == 'dashboard'} ? 'hp-sub-nav__link--active' : ''" 
+    <a th:href="@{/admin}"
+       th:classappend="${current == 'dashboard'} ? 'hp-sub-nav__link--active' : ''"
        class="hp-sub-nav__link">통계 대시보드</a>
-       
-    <a th:href="@{/admin/problems/register}" 
-       th:classappend="${current == 'register'} ? 'hp-sub-nav__link--active' : ''" 
-       class="hp-sub-nav__link">문제 등록</a>
-       
-    <a th:href="@{/admin/problems/manage}" 
-       th:classappend="${current == 'manage'} ? 'hp-sub-nav__link--active' : ''" 
-       class="hp-sub-nav__link">문제 관리</a>
 
+    <a th:href="@{/admin/problems/register}"
+       th:classappend="${current == 'register'} ? 'hp-sub-nav__link--active' : ''"
+       class="hp-sub-nav__link">문제 등록</a>
+
+    <a th:href="@{/admin/problems/manage}"
+       th:classappend="${current == 'manage'} ? 'hp-sub-nav__link--active' : ''"
+       class="hp-sub-nav__link">문제 관리</a>
 </nav>
 
 </body>
