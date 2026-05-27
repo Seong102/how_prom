@@ -32,7 +32,6 @@ public class AdminProblemService {
 
     /**
      * 🛠️ [7번 피드백 반영] 안전한 DTO 단건 조회
-     * 트랜잭션 범위 안에서 엔티티를 DTO로 변환하므로 LazyInitializationException을 원천 차단합니다.
      */
     public ProblemAdminDTO getProblemDetailAsDTO(Long id) {
         Problem problem = problemRepository.findById(id)
@@ -42,7 +41,6 @@ public class AdminProblemService {
 
     /**
      * 🛠️ [7번 피드백 반영 - 컨트롤러 예외 방어용 추가]
-     * 트랜잭션 안에서 엔티티 리스트를 DTO 리스트로 가공하여 반환하므로 컨트롤러단에서의 Lazy 지연 로딩 에러를 완벽하게 방어합니다.
      */
     public List<ProblemAdminDTO> getProblemsAsDTO(String keyword) {
         List<Problem> problems = this.getProblems(keyword);
@@ -85,7 +83,7 @@ public class AdminProblemService {
                 .evaluationType(evalType)
                 .exampleInput(dto.getExampleInput())
                 .exampleOutput(dto.getExampleOutput())
-                .isPublic(dto.getIsPublic()) 
+                .isPublic(dto.getIsPublic()) // 빌더 패턴은 필드명 그대로 사용하므로 유지
                 .tokenLimit(dto.getTokenLimit()) 
                 .correctnessWeight(correctness)
                 .efficiencyWeight(efficiency)
@@ -138,8 +136,8 @@ public class AdminProblemService {
         problem.setExampleInput(dto.getExampleInput());
         problem.setExampleOutput(dto.getExampleOutput());
         
-        // 🛠️ [Lombok 기본타입 boolean Setter 규칙 반영] setIsPublic -> setPublic 으로 변경 완료
-        problem.setPublic(dto.getIsPublic());
+        // 🛠️ 에러 해결: Boolean 타입 규칙에 따라 setIsPublic으로 변경
+        problem.setIsPublic(dto.getIsPublic());
         problem.setTokenLimit(dto.getTokenLimit());
 
         if (EvaluationType.EFFICIENCY.equals(evalType)) {
@@ -173,7 +171,8 @@ public class AdminProblemService {
         Problem problem = problemRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 문제가 존재하지 않습니다. id=" + id));
         
-        if (problem.isPublic()) {
+        // 🛠️ 에러 해결: Boolean 타입 규칙에 따라 getIsPublic()으로 검증 (Null 방어 포함)
+        if (Boolean.TRUE.equals(problem.getIsPublic())) {
             throw new IllegalStateException("공개 상태인 문항은 삭제할 수 없습니다. 먼저 비공개로 변경해 주세요.");
         }
         problemRepository.deleteById(id);
@@ -187,8 +186,8 @@ public class AdminProblemService {
         Problem problem = problemRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 문제가 존재하지 않습니다. id=" + id));
         
-        // 🛠️ [Lombok 기본타입 boolean Setter 규칙 반영] setIsPublic -> setPublic 으로 변경 완료
-        problem.setPublic(isPublic); 
+        // 🛠️ 에러 해결: Boolean 타입 규칙에 따라 setIsPublic으로 변경
+        problem.setIsPublic(isPublic); 
     }
     
     /**
@@ -216,8 +215,7 @@ public class AdminProblemService {
     }
     
     /**
-     * 🔍 [6번 확인 완료] 문제 통계 데이터 맵 반환
-     * ProblemStatsDTO가 이곳에서 명확하게 사용되고 있으므로 데드코드가 아닙니다. 삭제하지 않고 유지합니다.
+     * 문제 통계 데이터 맵 반환
      */
     public Map<Long, ProblemStatsDTO> getStatsMap() {
         return problemRepository.getProblemStatistics().stream()

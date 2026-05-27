@@ -1,405 +1,387 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8">
-<title>HowProm - 관리자 대시보드</title>
-<th:block th:replace="~{common/header :: styles}"></th:block>
-<link rel="stylesheet" th:href="@{/css/admin.css}">
+    <meta charset="UTF-8">
+    <title>HowProm - 관리자 대시보드</title>
+    <th:block th:replace="~{common/header :: styles}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
 </head>
 <body>
 
-	<div th:replace="~{common/header :: header('admin')}"></div>
+    <div th:replace="~{common/header :: header('admin')}"></div>
 
-	<main class="hp-main">
-		<div class="hp-page-header">
-			<h1 class="hp-page-header__title">
-				관리자 대시보드 <span class="hp-admin-badge">Admin</span>
-			</h1>
-			<p class="hp-page-header__subtitle"></p>
-		</div>
+    <main class="hp-main">
 
-		<div th:replace="~{admin/adminSubNav :: subNav('dashboard')}"></div>
+        <div class="hp-page-header">
+            <h1 class="hp-page-header__title">
+                관리자 대시보드 <span class="hp-admin-badge">Admin</span>
+            </h1>
+            <p class="hp-page-header__subtitle">플랫폼의 가동 현황, 콘텐츠 품질 지표 및 유저 행동 분석 데이터를 실시간으로 모니터링합니다.</p>
+        </div>
 
-		<div class="hp-stats-grid"
-			style="grid-template-columns: repeat(4, 1fr);">
-			<div class="hp-stat-card">
-				<div class="hp-stat-card__label">총 제출 건수</div>
-				<div class="hp-stat-card__value hp-stat-card__value--primary"
-					th:text="${stats.totalSubmissions}">0</div>
-				<div class="hp-stat-card__sub">사용자들이 제출한 프롬프트의 누적 총량</div>
-			</div>
-			<div class="hp-stat-card">
-				<div class="hp-stat-card__label">종합 통과율</div>
-				<div class="hp-stat-card__value hp-stat-card__value--success"
-					th:text="${stats.totalPassRate}">0%</div>
-				<div class="hp-stat-card__sub">제출된 프롬프트 중 평가를 통과한 비율</div>
-			</div>
-			<div class="hp-stat-card">
-				<div class="hp-stat-card__label">활성 사용자 수</div>
-				<div class="hp-stat-card__value"
-					th:text="${stats.activeUserCount}">0</div>
-				<div class="hp-stat-card__sub">프롬프트 검증 참여 실사용자 수</div>
-			</div>
-			<div class="hp-stat-card">
-				<div class="hp-stat-card__label">공개 / 총 문제 수</div>
-				<div class="hp-stat-card__value"
-					th:text="${stats.publicProblemCount} + ' / ' + ${stats.totalProblemCount}">0
-					/ 0</div>
-				<div class="hp-stat-card__sub">학습자에게 노출 중인 활성 문항과 전체 문항 수</div>
-			</div>
-		</div>
+        <div th:replace="~{admin/adminSubNav :: subNav('dashboard')}"></div>
 
-		<div class="hp-dashboard-row hp-dashboard-row--stats">
+        <div class="hp-admin-alert-zone">
+            <div class="hp-card hp-card--alert hp-card--alert-warning">
+                <span class="hp-card__alert-label">⚠️ 요주의 문항 (가장 낮은 통과율)</span>
+                <div class="hp-card__alert-title">
+                    <span th:text="${stats.hardestProblemTitle}">-</span>
+                    <span class="hp-text--warning" th:text="'(' + ${stats.hardestProblemPassRate} + '%)'"> (0%)</span>
+                </div>
+                <p class="hp-card__alert-desc">학습자들이 통과에 애를 먹고 있습니다. 요구사항 명세 검토를 권장합니다.</p>
+            </div>
+            <div class="hp-card hp-card--alert hp-card--alert-success">
+                <span class="hp-card__alert-label">✅ 변별력 검토 문항 (가장 높은 통과율)</span>
+                <div class="hp-card__alert-title">
+                    <span th:text="${stats.easiestProblemTitle}">-</span>
+                    <span class="hp-text--success" th:text="'(' + ${stats.easiestProblemPassRate} + '%)'"> (0%)</span>
+                </div>
+                <p class="hp-card__alert-desc">대부분의 사용자가 쉽게 통과했습니다. 추가 조건 부여를 고려해 보세요.</p>
+            </div>
+        </div>
 
-			<div class="hp-card">
-				<div class="hp-card__header">문제별 종합 통계 현황</div>
-				<div class="hp-search-bar">
-					<select id="filterProblem" class="hp-sort-btn"
-						style="color: var(--hp-text); border-color: var(--hp-border); padding: 7px 10px; margin-right: 4px;">
-						<option value="title">문제명</option>
-						<option value="id">문제번호</option>
-						<option value="type">평가 유형</option>
-						<option value="count_gte">총 제출 (이상)</option>
-						<option value="count_lte">총 제출 (이하)</option>
-						<option value="score_gte">평균 점수 (이상)</option>
-						<option value="score_lte">평균 점수 (이하)</option>
-					</select> <input type="text" id="searchProblem" class="hp-search-input"
-						placeholder="검색어를 입력하세요..."
-						onkeyup="searchTableAdvanced('searchProblem', 'filterProblem', 'problemStatsTable')">
-				</div>
-				<div class="hp-card__body">
-					<div class="hp-table-scroll">
-						<table class="hp-table" id="problemStatsTable">
-							<thead>
-								<tr>
-									<th style="width: 24%; text-align: left; white-space: nowrap;"
-										onclick="sortTable('problemStatsTable', 0)" title="클릭하여 정렬">문제명
-										↕</th>
-									<th
-										style="width: 12%; text-align: center; white-space: nowrap;"
-										onclick="sortTable('problemStatsTable', 1)" title="클릭하여 정렬">유형
-										↕</th>
-									<th
-										style="width: 11%; text-align: center; white-space: nowrap;"
-										onclick="sortTable('problemStatsTable', 2)" title="클릭하여 정렬">총
-										제출 ↕</th>
-									<th
-										style="width: 13%; text-align: center; white-space: nowrap;"
-										onclick="sortTable('problemStatsTable', 3)" title="클릭하여 정렬">정상
-										통과 ↕</th>
-									<th
-										style="width: 13%; text-align: center; white-space: nowrap;"
-										onclick="sortTable('problemStatsTable', 4)" title="클릭하여 정렬">제출
-										실패 ↕</th>
-									<th
-										style="width: 12%; text-align: center; white-space: nowrap;"
-										onclick="sortTable('problemStatsTable', 5)" title="클릭하여 정렬">통과율
-										↕</th>
-									<th
-										style="width: 15%; text-align: center; white-space: nowrap;"
-										onclick="sortTable('problemStatsTable', 6)" title="클릭하여 정렬">평균
-										점수 ↕</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr th:each="prob : ${stats.problemList}">
-									<td style="text-align: left;" th:data-sort-value="${prob.id}">
-										<strong th:text="'#' + ${prob.id} + ' ' + ${prob.title}">문제명</strong>
-									</td>
-									<td style="text-align: center;"><span
-										th:if="${prob.evaluationType == 'STANDARD'}"
-										class="hp-badge hp-badge--standard">Standard</span> <span
-										th:if="${prob.evaluationType == 'EFFICIENCY'}"
-										class="hp-badge hp-badge--efficiency">Efficiency</span> <span
-										th:if="${prob.evaluationType == 'BUDGET'}"
-										class="hp-badge hp-badge--budget">Budget</span></td>
-									<td style="text-align: center;"
-										th:data-sort-value="${prob.totalCount}"
-										th:text="${prob.totalCount}">0건</td>
-									<td
-										style="text-align: center; color: var(--hp-success-text); font-weight: 600;"
-										th:text="${prob.passedCount}"
-										th:data-sort-value="${prob.passedCount}"
-										th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0건</td>
-									<td
-										style="text-align: center; color: #E28743; font-weight: 600;"
-										th:text="${prob.failedCount}"
-										th:data-sort-value="${prob.failedCount}"
-										th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0건</td>
-									<td class="hp-pass-rate"
-										style="text-align: center; font-weight: 600; color: #4A90E2;"
-										th:data-has-submissions="${prob.hasSubmissions}"
-										th:data-total="${prob.totalCount}"
-										th:data-passed="${prob.passedCount}"
-										th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">-</td>
-									<td style="text-align: center; font-weight: 600;"
-										th:text="${prob.avgScore}"
-										th:data-sort-value="${prob.avgScore}"
-										th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0점</td>
-								</tr>
-								<tr id="noData-problemStatsTable" style="display: none;">
-									<td colspan="7" class="hp-text-muted"
-										style="text-align: center; padding: 32px 0;">검색 조건에 맞는
-										문제별 통계 내역이 없습니다.</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</div>
+        <div class="hp-stats-grid hp-stats-grid--secondary">
+            <div class="hp-stat-card hp-stat-card--accent-primary hp-stat-card--combined">
+                <div class="hp-stat-card__label">오늘의 플랫폼 현황</div>
+                <div class="hp-stat-combined-body">
+                    <div class="hp-stat-split">
+                        <span class="hp-split-label">제출 건수</span>
+                        <span class="hp-stat-card__value hp-stat-card__value--primary" th:text="${stats.todaySubmissions}">0</span>
+                    </div>
+                    <div class="hp-stat-split">
+                        <span class="hp-split-label">신규 가입</span>
+                        <span class="hp-stat-card__value hp-stat-card__value--success" th:text="${stats.todayJoinCount}">0</span>
+                    </div>
+                </div>
+                <div class="hp-stat-card__sub">오늘 실시간 제출량 및 신규 학습자 가입자 수</div>
+            </div>
+            <div class="hp-stat-card hp-stat-card--accent-warning">
+                <div class="hp-stat-card__label">채점 대기 건수</div>
+                <div class="hp-stat-card__value hp-stat-card__value--warning" th:text="${stats.gradingCount}">0</div>
+                <div class="hp-stat-card__sub">현재 검증 엔진에서 채점 중인 실시간 대기 큐</div>
+            </div>
+            <div class="hp-stat-card hp-stat-card--accent-success">
+                <div class="hp-stat-card__label">평균 채점 대기 시간</div>
+                <div class="hp-stat-card__value hp-stat-card__value--success"
+                    th:text="${stats.avgGradingTime != null ? #numbers.formatDecimal(stats.avgGradingTime, 1, 1) : '0.0'} + '초'">0.0초</div>
+                <div class="hp-stat-card__sub">AI 엔진이 프롬프트를 해석하고 채점하는 데 걸린 시간</div>
+            </div>
+            <div class="hp-stat-card hp-stat-card--accent-primary">
+                <div class="hp-stat-card__label">공개 / 총 문제 수</div>
+                <div class="hp-stat-card__value hp-stat-card__value--primary"
+                    th:text="${stats.publicProblemCount} + ' / ' + ${stats.totalProblemCount}">0 / 0</div>
+                <div class="hp-stat-card__sub">학습자에게 노출 중인 활성 문항과 전체 문항 수</div>
+            </div>
+        </div>
 
-			<div class="hp-card">
-				<div class="hp-card__header" style="display: flex; justify-content: space-between; align-items: center;">
-					<span>유형별 평균 토큰 현황</span>
-					<select id="tokenTypeFilter" onchange="searchProgressAdvanced('searchEfficiency', 'filterEfficiency', 'efficiencyList')" 
-						class="hp-sort-btn" style="width: auto; height: 32px !important; padding: 4px 8px; font-size: 13px; color: var(--hp-text); border-color: var(--hp-border);">
-						<option value="ALL">모든 모드 보기</option>
-						<option value="EFFICIENCY">EFFICIENCY 모드</option>
-						<option value="STANDARD">STANDARD 모드</option>
-						<option value="BUDGET">BUDGET 모드</option>
-					</select>
-				</div>
-				<div class="hp-search-bar">
-					<select id="filterEfficiency" class="hp-sort-btn"
-						style="color: var(--hp-text); border-color: var(--hp-border); padding: 7px 10px; margin-right: 4px;">
-						<option value="title">문제명</option>
-						<option value="id">문제번호</option>
-						<option value="token_gte">평균 토큰 (이상)</option>
-						<option value="token_lte">평균 토큰 (이하)</option>
-					</select> <input type="text" id="searchEfficiency" class="hp-search-input"
-						placeholder="검색어를 입력하세요..."
-						onkeyup="searchProgressAdvanced('searchEfficiency', 'filterEfficiency', 'efficiencyList')">
-					<button class="hp-sort-btn"
-						onclick="sortProgress('efficiencyList', 'avgTokenVal')"
-						style="margin-left: 8px;">토큰 ↕</button>
-				</div>
-				<div class="hp-card__body hp-progress-scroll">
-					<p style="font-size: 12px; color: var(--hp-text-muted); margin-bottom: 24px; margin-top: -4px;"></p>
-					<div class="hp-progress-container" id="efficiencyList" style="margin-top: 0; gap: 22px;">
-						<div class="hp-progress-item"
-							th:each="eff : ${stats.efficiencyList}"
-							th:attr="data-title=${eff.title}, data-token=${eff.avgUserTokens}"
-							th:data-type="${eff.evaluationType}">
-							<div class="hp-progress-info" style="text-align: left;">
-								<span th:text="'#' + ${eff.id} + ' ' + ${eff.title}">문제명</span>
-								<span class="hp-progress-meta">avg <strong
-									class="avgTokenVal" style="color: var(--hp-primary)"
-									th:text="${eff.avgUserTokens}">0</strong> tokens
-								</span>
-							</div>
-							<div class="hp-progress-bar-bg" style="height: 8px;">
-								<div class="hp-progress-bar-fill"
-									th:style="'width: ' + ${eff.barWidth} + '; background-color: ' + ${eff.color} + ';'"></div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
+        <div class="hp-stats-grid">
+            <div class="hp-stat-card hp-stat-card--flat">
+                <div class="hp-stat-card__label">총 제출 건수</div>
+                <div class="hp-stat-card__value hp-stat-card__value--primary" th:text="${stats.totalSubmissions}">0</div>
+                <div class="hp-stat-card__sub">사용자들이 제출한 프롬프트의 누적 총량</div>
+            </div>
+            <div class="hp-stat-card hp-stat-card--flat">
+                <div class="hp-stat-card__label">종합 통과율</div>
+                <div class="hp-stat-card__value hp-stat-card__value--success" th:text="${stats.totalPassRate}">0%</div>
+                <div class="hp-stat-card__sub">제출된 프롬프트 중 평가를 통과한 비율</div>
+            </div>
+            <div class="hp-stat-card hp-stat-card--flat">
+                <div class="hp-stat-card__label">활성 / 총 회원 수</div>
+                <div class="hp-stat-card__value hp-stat-card__value--primary"
+                    th:text="${stats.activeUserCount} + ' / ' + ${stats.totalUserCount}">0 / 0</div>
+                <div class="hp-stat-card__sub">실제 참여 활성 유저 수와 전체 누적 가입자 수</div>
+            </div>
+            <div class="hp-stat-card hp-stat-card--flat">
+                <div class="hp-stat-card__label">최근 1달 토큰 소모량</div>
+                <div class="hp-stat-card__value hp-text--warning"
+                    th:text="${stats.monthTokenUsage != null ? #numbers.formatInteger(stats.monthTokenUsage, 1, 'COMMA') : '0'} + ' tokens'">0 tokens</div>
+                <div class="hp-stat-card__sub">최근 30일간 프롬프트 검증 연산에 소모된 비용 지표</div>
+            </div>
+        </div>
 
-		</div>
+        <div class="hp-dashboard-row hp-dashboard-row--stats">
 
-		<div class="hp-card" style="margin-bottom: 24px;">
-			<div class="hp-card__header">요구사항별 달성률 · 자주 감점되는 취약 조건 분석</div>
-			<div class="hp-search-bar">
-				<select id="filterReq" class="hp-sort-btn"
-					style="color: var(--hp-text); border-color: var(--hp-border); padding: 7px 10px; margin-right: 4px;">
-					<option value="title">문제명</option>
-					<option value="id">문제번호</option>
-					<option value="desc">요구사항 명세</option>
-				</select> <input type="text" id="searchReq" class="hp-search-input"
-					placeholder="선택한 조건으로 검색..."
-					onkeyup="searchReqAdvanced('searchReq', 'filterReq', 'reqTable')">
-			</div>
-			<div class="hp-card__body">
-				<div class="hp-req-scroll"
-					style="max-height: 382px; overflow-y: auto;">
-					<table class="hp-table" id="reqTable">
-						<thead>
-							<tr>
-								<th style="width: 9%; text-align: left;"
-									onclick="sortTable('reqTable', 0)" title="클릭하여 정렬">문제 번호 ↕</th>
-								<th style="width: 18%; text-align: left;"
-									onclick="sortTable('reqTable', 1)" title="클릭하여 정렬">문제명 ↕</th>
-								<th style="width: 26%; text-align: left;">핵심 요구사항 명세</th>
-								<th style="width: 8%; text-align: left;"
-									onclick="sortTable('reqTable', 3)" title="클릭하여 정렬">배점 ↕</th>
-								<th style="width: 14%; text-align: left;"
-									onclick="sortTable('reqTable', 4)" title="클릭하여 정렬">평균 달성도
-									↕</th>
-								<th style="width: 14%; text-align: left;"
-									onclick="sortTable('reqTable', 5)" title="클릭하여 정렬">달성 미달
-									빈도 ↕</th>
-								<th style="width: 11%; text-align: left;">미달 분포</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr th:each="req : ${stats.requirementList}">
-								<td style="text-align: left;" th:data-sort-value="${req.probId}"
-									th:text="${req.probId}">#000</td>
-								<td th:text="${req.title}"
-									style="font-weight: 500; color: var(--hp-text); text-align: left;">문제명</td>
-								<td style="text-align: left;"><strong
-									th:text="${req.description}">요구사항 명세</strong></td>
-								<td
-									style="text-align: left; font-weight: 700; color: var(--hp-primary);"
-									th:data-sort-value="${req.weight}"
-									th:text="${req.weight} + '점'">0점</td>
-								<td
-									th:style="|text-align: left; color: ${req.color}; font-weight: 600;|"
-									th:data-sort-value="${req.avgAchieve}"
-									th:text="${req.avgAchieve}">0%</td>
-								<td style="text-align: left;"
-									th:data-sort-value="${req.failRate}" th:text="${req.failRate}">0%</td>
-								<td>
-									<div class="hp-progress-bar-bg" style="height: 8px;">
-										<div class="hp-progress-bar-fill"
-											th:style="'width: ' + ${req.failRate} + '; background-color: ' + ${req.color} + ';'"></div>
-									</div>
-								</td>
-							</tr>
-							<tr th:if="${#lists.isEmpty(stats.requirementList)}"
-								class="hp-empty-warning">
-								<td colspan="7"
-									style="text-align: left; color: var(--hp-text-muted); padding: 32px 0;">
-									분석된 요구사항 통계 데이터가 존재하지 않습니다.</td>
-							</tr>
-							<tr id="noData-reqTable" style="display: none;">
-								<td colspan="7" class="hp-text-muted"
-									style="text-align: center; padding: 32px 0;">조건 검색 명세 결과가
-									매칭되지 않습니다.</td>
-								</tr>
-						</tbody>
-					</table>
-				</div>
-			</div>
-		</div>
+            <div class="hp-card">
+                <div class="hp-card__header">문제별 종합 통계 현황</div>
+                <div class="hp-search-bar">
+                    <select id="filterProblem" class="hp-sort-btn">
+                        <option value="title">문제명</option>
+                        <option value="id">문제번호</option>
+                        <option value="type">평가 유형</option>
+                        <option value="count_gte">총 제출 (이상)</option>
+                        <option value="count_lte">총 제출 (이하)</option>
+                        <option value="score_gte">평균 점수 (이상)</option>
+                        <option value="score_lte">평균 점수 (이하)</option>
+                    </select>
+                    <input type="text" id="searchProblem" class="hp-search-input" placeholder="검색어를 입력하세요..."
+                        onkeyup="searchTableAdvanced('searchProblem', 'filterProblem', 'problemStatsTable')">
+                </div>
+                <div class="hp-card__body hp-card__body--nopadding">
+                    <div class="hp-table-scroll">
+                        <table class="hp-table" id="problemStatsTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 24%; text-align: left; white-space: nowrap;" onclick="sortTable('problemStatsTable', 0)" title="클릭하여 정렬">문제명 ↕</th>
+                                    <th style="width: 12%; text-align: center; white-space: nowrap;" onclick="sortTable('problemStatsTable', 1)" title="클릭하여 정렬">유형 ↕</th>
+                                    <th style="width: 11%; text-align: center; white-space: nowrap;" onclick="sortTable('problemStatsTable', 2)" title="클릭하여 정렬">총 제출 ↕</th>
+                                    <th style="width: 13%; text-align: center; white-space: nowrap;" onclick="sortTable('problemStatsTable', 3)" title="클릭하여 정렬">정상 통과 ↕</th>
+                                    <th style="width: 13%; text-align: center; white-space: nowrap;" onclick="sortTable('problemStatsTable', 4)" title="클릭하여 정렬">제출 실패 ↕</th>
+                                    <th style="width: 12%; text-align: center; white-space: nowrap;" onclick="sortTable('problemStatsTable', 5)" title="클릭하여 정렬">통과율 ↕</th>
+                                    <th style="width: 15%; text-align: center; white-space: nowrap;" onclick="sortTable('problemStatsTable', 6)" title="클릭하여 정렬">평균 점수 ↕</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="prob : ${stats.problemList}">
+                                    <td style="text-align: left;" th:data-sort-value="${prob.id}">
+                                        <a th:href="@{/admin/problems/edit/{id}(id=${prob.id})}" class="hp-table-link">
+                                            <strong th:text="'#' + ${prob.id} + ' ' + ${prob.title}">문제명</strong>
+                                        </a>
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <span th:if="${prob.evaluationType == 'STANDARD'}" class="hp-badge hp-badge--standard">Standard</span>
+                                        <span th:if="${prob.evaluationType == 'EFFICIENCY'}" class="hp-badge hp-badge--efficiency">Efficiency</span>
+                                        <span th:if="${prob.evaluationType == 'BUDGET'}" class="hp-badge hp-badge--budget">Budget</span>
+                                    </td>
+                                    <td style="text-align: center;" th:data-sort-value="${prob.totalCount}" th:text="${prob.totalCount}">0건</td>
+                                    <td style="text-align: center; font-weight: 600;" th:text="${prob.passedCount}" th:data-sort-value="${prob.passedCount}"
+                                        th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : 'hp-text--success'}">0건</td>
+                                    <td style="text-align: center; font-weight: 600;" th:text="${prob.failedCount}" th:data-sort-value="${prob.failedCount}"
+                                        th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : 'hp-text--warning'}">0건</td>
+                                    <td class="hp-pass-rate" style="text-align: center; font-weight: 600; color: #4A90E2;"
+                                        th:data-has-submissions="${prob.hasSubmissions}"
+                                        th:data-total="${prob.totalCount}"
+                                        th:data-passed="${prob.passedCount}"
+                                        th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">-</td>
+                                    <td style="text-align: center; font-weight: 600;" th:text="${prob.avgScore}" th:data-sort-value="${prob.avgScore}"
+                                        th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0점</td>
+                                </tr>
+                                <tr id="noData-problemStatsTable" style="display: none;">
+                                    <td colspan="7" class="hp-text-muted" style="text-align: center; padding: 32px 0;">검색 조건에 맞는 문제별 통계 내역이 없습니다.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-		<div class="hp-dashboard-row hp-dashboard-row--recent"
-			style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;">
+            <div class="hp-card">
+                <div class="hp-card__header">
+                    <span>유형별 평균 토큰 현황</span>
+                    <select id="tokenTypeFilter" onchange="searchProgressAdvanced('searchEfficiency', 'filterEfficiency', 'efficiencyList')" class="hp-sort-btn hp-sort-btn--filter">
+                        <option value="ALL">모든 모드 보기</option>
+                        <option value="EFFICIENCY">EFFICIENCY 모드</option>
+                        <option value="STANDARD">STANDARD 모드</option>
+                        <option value="BUDGET">BUDGET 모드</option>
+                    </select>
+                </div>
+                <div class="hp-search-bar">
+                    <select id="filterEfficiency" class="hp-sort-btn">
+                        <option value="title">문제명</option>
+                        <option value="id">문제번호</option>
+                        <option value="token_gte">평균 토큰 (이상)</option>
+                        <option value="token_lte">평균 토큰 (이하)</option>
+                    </select>
+                    <input type="text" id="searchEfficiency" class="hp-search-input" placeholder="검색어를 입력하세요..."
+                        onkeyup="searchProgressAdvanced('searchEfficiency', 'filterEfficiency', 'efficiencyList')">
+                    <button class="hp-sort-btn" onclick="sortProgress('efficiencyList', 'avgTokenVal')" style="margin-left: 8px;">토큰 ↕</button>
+                </div>
+                <div class="hp-card__body hp-progress-scroll">
+                    <p class="hp-progress-intro-text"></p>
+                    <div class="hp-progress-container" id="efficiencyList">
+                        <div class="hp-progress-item" th:each="eff : ${stats.efficiencyList}"
+                            th:attr="data-title=${eff.title}, data-token=${eff.avgUserTokens}"
+                            th:data-type="${eff.evaluationType}">
+                            <div class="hp-progress-info" style="text-align: left;">
+                                <a th:href="@{/admin/problems/edit/{id}(id=${eff.id})}" class="hp-progress-link">
+                                    <span th:text="'#' + ${eff.id} + ' ' + ${eff.title}">문제명</span>
+                                </a>
+                                <span class="hp-progress-meta">avg <strong class="avgTokenVal" style="color: var(--hp-primary)" th:text="${eff.avgUserTokens}">0</strong> tokens</span>
+                            </div>
+                            <div class="hp-progress-bar-bg">
+                                <div class="hp-progress-bar-fill"
+                                    th:style="'width: ' + ${eff.barWidth} + '; background-color: ' + ${eff.color} + ';'"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-			<div class="hp-card">
-				<div class="hp-card__header">최근 제출 현황 (최근 10건)</div>
-				<div class="hp-card__body" style="padding: 0;">
-					<div class="hp-table-scroll">
-						<table class="hp-table" id="recentTable">
-							<thead>
-								<tr>
-									<th style="width: 20%; text-align: left;">닉네임</th>
-									<th style="width: 30%; text-align: left;">문제명</th>
-									<th style="width: 12%; text-align: left;">점수</th>
-									<th style="width: 15%; text-align: left;">상태</th>
-									<th style="width: 23%; text-align: left;">제출 시각</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr th:each="sub : ${stats.recentSubmissionList}">
-									<td style="text-align: left;" th:text="${sub.nickname}">닉네임</td>
-									<td style="text-align: left;" th:text="${sub.problemTitle}">문제명</td>
-									<td style="text-align: left; font-weight: 600;"
-										th:text="${sub.score} + '점'">0점</td>
-									<td style="text-align: left;"><span
-										th:if="${sub.status == 'PASSED'}"
-										class="hp-badge hp-badge--efficiency">PASSED</span> <span
-										th:if="${sub.status == 'FAILED'}"
-										class="hp-badge hp-badge--budget">FAILED</span> <span
-										th:if="${sub.status == 'ERROR'}"
-										style="font-size: 11px; font-weight: 700; color: var(--hp-danger-text);">ERROR</span>
-									</td>
-									<td
-										style="text-align: left; color: var(--hp-text-muted); font-size: 12px;"
-										th:text="${sub.submittedAt}">2026.01.01 00:00</td>
-								</tr>
-								<tr th:if="${#lists.isEmpty(stats.recentSubmissionList)}">
-									<td colspan="5"
-										style="text-align: left; color: var(--hp-text-muted); padding: 32px 0;">
-										제출 이력이 없습니다.</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</div>
+        </div>
 
-			<div class="hp-card">
-				<div class="hp-card__header">문제별 최고 점수 랭킹</div>
+        <div class="hp-card hp-card--full-width">
+            <div class="hp-card__header">요구사항별 달성률 · 자주 감점되는 취약 조건 분석</div>
+            <div class="hp-search-bar">
+                <select id="filterReq" class="hp-sort-btn">
+                    <option value="title">문제명</option>
+                    <option value="id">문제번호</option>
+                    <option value="desc">요구사항 명세</option>
+                </select>
+                <input type="text" id="searchReq" class="hp-search-input" placeholder="선택한 조건으로 검색..."
+                    onkeyup="searchReqAdvanced('searchReq', 'filterReq', 'reqTable')">
+            </div>
+            <div class="hp-card__body hp-card__body--nopadding">
+                <div class="hp-req-scroll">
+                    <table class="hp-table" id="reqTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 9%; text-align: left;" onclick="sortTable('reqTable', 0)" title="클릭하여 정렬">문제 번호 ↕</th>
+                                <th style="width: 18%; text-align: left;" onclick="sortTable('reqTable', 1)" title="클릭하여 정렬">문제명 ↕</th>
+                                <th style="width: 26%; text-align: left;">핵심 요구사항 명세</th>
+                                <th style="width: 8%; text-align: left;" onclick="sortTable('reqTable', 3)" title="클릭하여 정렬">배점 ↕</th>
+                                <th style="width: 14%; text-align: left;" onclick="sortTable('reqTable', 4)" title="클릭하여 정렬">평균 달성도 ↕</th>
+                                <th style="width: 14%; text-align: left;" onclick="sortTable('reqTable', 5)" title="클릭하여 정렬">달성 미달 빈도 ↕</th>
+                                <th style="width: 11%; text-align: left;">미달 분포</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="req : ${stats.requirementList}">
+                                <td style="text-align: left;" th:data-sort-value="${req.probId}" th:text="${req.probId}">#000</td>
+                                <!-- 11번 수정: probId에서 # 제거해서 링크 URL 오염 방지 -->
+                                <td style="font-weight: 500; text-align: left;">
+                                    <a th:href="@{/admin/problems/edit/{id}(id=${#strings.replace(req.probId, '#', '')})}"
+                                       class="hp-table-link" th:text="${req.title}">문제명</a>
+                                </td>
+                                <td style="text-align: left;"><strong th:text="${req.description}">요구사항 명세</strong></td>
+                                <td style="text-align: left; font-weight: 700; color: var(--hp-primary);"
+                                    th:data-sort-value="${req.weight}" th:text="${req.weight} + '점'">0점</td>
+                                <td th:style="|text-align: left; color: ${req.color}; font-weight: 600;|"
+                                    th:data-sort-value="${req.avgAchieve}" th:text="${req.avgAchieve}">0%</td>
+                                <!-- 9번 수정: 숫자 변환 후 비교로 오탐 방지 -->
+                                <td style="text-align: left; font-weight: 600;"
+                                    th:data-sort-value="${req.failRate}" th:text="${req.failRate}"
+                                    th:classappend="${#numbers.formatDecimal(#strings.replace(req.failRate,'%',''), 1, 0) != null
+                                        and T(java.lang.Double).parseDouble(#strings.replace(req.failRate,'%','')) >= 50}
+                                        ? 'hp-text--danger-highlight' : ''">0%</td>
+                                <td>
+                                    <div class="hp-progress-bar-bg">
+                                        <!-- 9번 수정: 색상도 동일하게 숫자 비교로 처리 -->
+                                        <div class="hp-progress-bar-fill"
+                                            th:style="'width: ' + ${req.failRate} + '; background-color: '
+                                                + (${T(java.lang.Double).parseDouble(#strings.replace(req.failRate,'%',''))} >= 50
+                                                ? '#e74c3c' : ${req.color}) + ';'"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(stats.requirementList)}" class="hp-empty-warning">
+                                <td colspan="7" style="text-align: left; color: var(--hp-text-muted); padding: 32px 0;">분석된 요구사항 통계 데이터가 존재하지 않습니다.</td>
+                            </tr>
+                            <tr id="noData-reqTable" style="display: none;">
+                                <td colspan="7" class="hp-text-muted" style="text-align: center; padding: 32px 0;">조건 검색 명세 결과가 매칭되지 않습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-				<div class="hp-search-bar">
-					<select id="filterTopScore" class="hp-sort-btn"
-						style="color: var(--hp-text); border-color: var(--hp-border); padding: 7px 10px; margin-right: 4px;">
-						<option value="title">문제명</option>
-						<option value="id">문제번호</option>
-						<option value="nickname">닉네임</option>
-					</select> <input type="text" id="searchTopScore" class="hp-search-input"
-						placeholder="랭킹 내 검색어 입력..." onkeyup="searchTopScoreAdvanced()">
-				</div>
+        <div class="hp-dashboard-row hp-dashboard-row--recent">
 
-				<div class="hp-card__body" style="padding: 0;">
-					<div class="hp-table-scroll"
-						style="max-height: 382px; overflow-y: auto;">
-						<table class="hp-table" id="topScoreTable">
-							<thead>
-								<tr>
-									<th style="width: 16%; text-align: left;"
-										onclick="sortTable('topScoreTable', 0)" title="클릭하여 정렬">문제
-										번호 ↕</th>
-									<th style="width: 24%; text-align: left;">문제명</th>
-									<th style="width: 14%; text-align: left;">닉네임</th>
-									<th style="width: 12%; text-align: left;">점수</th>
-									<th style="width: 16%; text-align: left;">사용 토큰</th>
-									<th style="width: 16%; text-align: left;">제출 시각</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr th:each="top : ${stats.topScoreList}">
-									<td style="text-align: left;"
-										th:data-sort-value="${top.problemId}"
-										th:text="'#' + ${top.problemId}">#000</td>
-									<td th:text="${top.problemTitle}"
-										style="font-weight: 500; text-align: left;">문제명</td>
-									<td style="text-align: left;" th:text="${top.nickname}">닉네임</td>
-									<td
-										style="text-align: left; font-weight: 700; color: var(--hp-primary);"
-										th:data-sort-value="${top.score}" th:text="${top.score} + '점'">0점</td>
-									<td style="text-align: left; color: var(--hp-text-muted);"
-										th:data-sort-value="${top.totalUserTokens}"
-										th:text="${top.totalUserTokens} + ' tokens'">0 tokens</td>
-									<td
-										style="text-align: left; color: var(--hp-text-muted); font-size: 12px;"
-										th:text="${top.submittedAt}">2026.01.01 00:00</td>
-								</tr>
-								<tr th:if="${#lists.isEmpty(stats.topScoreList)}"
-									class="hp-empty-warning">
-									<td colspan="6"
-										style="text-align: left; color: var(--hp-text-muted); padding: 32px 0;">
-										랭킹 데이터가 없습니다.</td>
-								</tr>
-								<tr id="noData-topScoreTable" style="display: none;">
-									<td colspan="6" class="hp-text-muted"
-										style="text-align: center; padding: 32px 0;">랭킹 리스트 내
-										일치하는 검색 레코드가 없습니다.</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</div>
+            <div class="hp-card">
+                <div class="hp-card__header">최근 제출 현황 (최근 10건)</div>
+                <div class="hp-card__body hp-card__body--nopadding">
+                    <div class="hp-table-scroll">
+                        <table class="hp-table" id="recentTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 20%; text-align: left;">닉네임</th>
+                                    <th style="width: 30%; text-align: left;">문제명</th>
+                                    <th style="width: 12%; text-align: left;">점수</th>
+                                    <th style="width: 15%; text-align: left;">상태</th>
+                                    <th style="width: 23%; text-align: left;">제출 시각</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="sub : ${stats.recentSubmissionList}">
+                                    <td style="text-align: left;" th:text="${sub.nickname}">닉네임</td>
+                                    <td style="text-align: left;">
+                                        <a th:href="@{/admin/problems/edit/{id}(id=${sub.problemId})}"
+                                           class="hp-table-link" th:text="${sub.problemTitle}">문제명</a>
+                                    </td>
+                                    <td style="text-align: left; font-weight: 600;" th:text="${sub.score} + '점'">0점</td>
+                                    <td style="text-align: left;">
+                                        <span th:if="${sub.status == 'PASSED'}" class="hp-badge hp-badge--efficiency">PASSED</span>
+                                        <span th:if="${sub.status == 'FAILED'}" class="hp-badge hp-badge--budget">FAILED</span>
+                                        <span th:if="${sub.status == 'ERROR'}" class="hp-text--error-status">ERROR</span>
+                                    </td>
+                                    <td style="text-align: left; color: var(--hp-text-muted); font-size: 12px;" th:text="${sub.submittedAt}">2026.01.01 00:00</td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(stats.recentSubmissionList)}">
+                                    <td colspan="5" style="text-align: left; color: var(--hp-text-muted); padding: 32px 0;">제출 이력이 없습니다.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-		</div>
+            <div class="hp-card">
+                <div class="hp-card__header">문제별 최고 점수 랭킹</div>
+                <div class="hp-search-bar">
+                    <select id="filterTopScore" class="hp-sort-btn">
+                        <option value="title">문제명</option>
+                        <option value="id">문제번호</option>
+                        <option value="nickname">닉네임</option>
+                    </select>
+                    <input type="text" id="searchTopScore" class="hp-search-input" placeholder="랭킹 내 검색어 입력..."
+                        onkeyup="searchTopScoreAdvanced()">
+                </div>
+                <div class="hp-card__body hp-card__body--nopadding">
+                    <div class="hp-table-scroll hp-table-scroll--ranking">
+                        <table class="hp-table" id="topScoreTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 16%; text-align: left;" onclick="sortTable('topScoreTable', 0)" title="클릭하여 정렬">문제 번호 ↕</th>
+                                    <th style="width: 24%; text-align: left;">문제명</th>
+                                    <th style="width: 14%; text-align: left;">닉네임</th>
+                                    <th style="width: 12%; text-align: left;">점수</th>
+                                    <th style="width: 16%; text-align: left;">사용 토큰</th>
+                                    <th style="width: 16%; text-align: left;">제출 시각</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="top : ${stats.topScoreList}">
+                                    <td style="text-align: left;" th:data-sort-value="${top.problemId}" th:text="'#' + ${top.problemId}">#000</td>
+                                    <td style="font-weight: 500; text-align: left;">
+                                        <a th:href="@{/admin/problems/edit/{id}(id=${top.problemId})}"
+                                           class="hp-table-link" th:text="${top.problemTitle}">문제명</a>
+                                    </td>
+                                    <td style="text-align: left;" th:text="${top.nickname}">닉네임</td>
+                                    <td style="text-align: left; font-weight: 700; color: var(--hp-primary);"
+                                        th:data-sort-value="${top.score}" th:text="${top.score} + '점'">0점</td>
+                                    <td style="text-align: left; color: var(--hp-text-muted);"
+                                        th:data-sort-value="${top.totalUserTokens}"
+                                        th:text="${top.totalUserTokens} + ' tokens'">0 tokens</td>
+                                    <td style="text-align: left; color: var(--hp-text-muted); font-size: 12px;"
+                                        th:text="${top.submittedAt}">2026.01.01 00:00</td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(stats.topScoreList)}" class="hp-empty-warning">
+                                    <td colspan="6" style="text-align: left; color: var(--hp-text-muted); padding: 32px 0;">랭킹 데이터가 없습니다.</td>
+                                </tr>
+                                <tr id="noData-topScoreTable" style="display: none;">
+                                    <td colspan="6" class="hp-text-muted" style="text-align: center; padding: 32px 0;">랭킹 리스트 내 일치하는 검색 레코드가 없습니다.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-	</main>
+        </div>
 
-	<script>
+    </main>
+
+    <script>
     const sortState = {};
 
     document.addEventListener("DOMContentLoaded", function () {
-        // 1. 실시간 통과율 연산 및 UI 바인딩
+        // 1번 수정: 따옴표 불일치 오류 수정
         document.querySelectorAll('.hp-pass-rate').forEach(function (td) {
             const hasSub = td.getAttribute('data-has-submissions') === 'true';
             if (!hasSub) { td.textContent = '-'; return; }
-            
+
             const totalNum = parseInt((td.getAttribute('data-total') || '').replace(/[^0-9]/g, ''), 10);
             const passedNum = parseInt((td.getAttribute('data-passed') || '').replace(/[^0-9]/g, ''), 10);
-            
+
             if (!isNaN(totalNum) && totalNum > 0 && !isNaN(passedNum)) {
                 td.textContent = ((passedNum / totalNum) * 100).toFixed(1) + '%';
             } else {
@@ -407,17 +389,13 @@
             }
         });
 
-        // 2. 최고 점수 랭킹 초기 정렬 실행
         sortTable('topScoreTable', 0);
-        
-        // 3. 토큰 현황 초기 모드 설정 (전체보기 연산 자동 동기화)
         searchProgressAdvanced('searchEfficiency', 'filterEfficiency', 'efficiencyList');
     });
 
     function sortTable(tableId, colIndex) {
         const table = document.getElementById(tableId);
         const tbody = table.querySelector('tbody');
-        
         const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => {
             return row.id !== 'noData-' + tableId && !row.classList.contains('hp-empty-warning');
         });
@@ -435,13 +413,12 @@
 
             const aNum = parseFloat(aVal.replace(/[^0-9.\-]/g, ''));
             const bNum = parseFloat(bVal.replace(/[^0-9.\-]/g, ''));
-            
+
             if (!isNaN(aNum) && !isNaN(bNum)) return asc ? aNum - bNum : bNum - aNum;
             return asc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
         });
 
         rows.forEach(row => tbody.appendChild(row));
-
         const noDataRow = document.getElementById('noData-' + tableId);
         if (noDataRow) tbody.appendChild(noDataRow);
 
@@ -469,7 +446,6 @@
 
             const titleText = row.cells[0]?.innerText.toLowerCase() ?? '';
             const typeText  = row.cells[1]?.innerText.toLowerCase() ?? '';
-            
             const idMatch = titleText.match(/#(\d+)/);
             const probId = idMatch ? idMatch[1] : '';
             const totalCount = parseFloat(row.cells[2]?.innerText.replace(/[^0-9]/g, '')) || 0;
@@ -477,23 +453,21 @@
             const inputNum = parseFloat(keyword);
 
             let isMatch = false;
-            if (filterType === 'title')     isMatch = titleText.includes(keyword);
-            else if (filterType === 'id')   isMatch = probId.includes(keyword);
-            else if (filterType === 'type') isMatch = typeText.includes(keyword);
+            if (filterType === 'title')          isMatch = titleText.includes(keyword);
+            else if (filterType === 'id')        isMatch = probId.includes(keyword);
+            else if (filterType === 'type')      isMatch = typeText.includes(keyword);
             else if (filterType === 'count_gte') isMatch = !isNaN(inputNum) && totalCount >= inputNum;
             else if (filterType === 'count_lte') isMatch = !isNaN(inputNum) && totalCount <= inputNum;
             else if (filterType === 'score_gte') isMatch = !isNaN(inputNum) && avgScore >= inputNum;
             else if (filterType === 'score_lte') isMatch = !isNaN(inputNum) && avgScore <= inputNum;
 
-            if (isMatch) { row.style.display = ''; visibleCount++; } 
+            if (isMatch) { row.style.display = ''; visibleCount++; }
             else { row.style.display = 'none'; }
         });
 
         const msgRow = document.getElementById('noData-' + tableId);
         const hasEmptyWarning = tbody.querySelector('.hp-empty-warning') !== null;
-        if (msgRow) {
-            msgRow.style.display = (visibleCount === 0 && !hasEmptyWarning) ? '' : 'none';
-        }
+        if (msgRow) msgRow.style.display = (visibleCount === 0 && !hasEmptyWarning) ? '' : 'none';
     }
 
     function searchReqAdvanced(inputId, filterId, tableId) {
@@ -513,19 +487,17 @@
             const descText  = row.cells[2]?.innerText.toLowerCase() ?? '';
 
             let isMatch = false;
-            if (filterType === 'title')    isMatch = titleText.includes(keyword);
-            else if (filterType === 'id')  isMatch = cleanProbId.includes(keyword) || rawProbId.includes(keyword);
+            if (filterType === 'title')     isMatch = titleText.includes(keyword);
+            else if (filterType === 'id')   isMatch = cleanProbId.includes(keyword) || rawProbId.includes(keyword);
             else if (filterType === 'desc') isMatch = descText.includes(keyword);
 
-            if (isMatch) { row.style.display = ''; visibleCount++; } 
+            if (isMatch) { row.style.display = ''; visibleCount++; }
             else { row.style.display = 'none'; }
         });
 
         const msgRow = document.getElementById('noData-' + tableId);
         const hasEmptyWarning = tbody.querySelector('.hp-empty-warning') !== null;
-        if (msgRow) {
-            msgRow.style.display = (visibleCount === 0 && !hasEmptyWarning) ? '' : 'none';
-        }
+        if (msgRow) msgRow.style.display = (visibleCount === 0 && !hasEmptyWarning) ? '' : 'none';
     }
 
     function searchTopScoreAdvanced() {
@@ -540,51 +512,41 @@
             if (row.cells.length < 6) return;
             if (!keyword) { row.style.display = ''; visibleCount++; return; }
 
-            const rawProbId = row.cells[0]?.innerText.toLowerCase() ?? ''; 
-            const cleanProbId = rawProbId.replace('#', '');                
-            const titleText = row.cells[1]?.innerText.toLowerCase() ?? '';  
-            const nicknameText = row.cells[2]?.innerText.toLowerCase() ?? ''; 
+            const rawProbId = row.cells[0]?.innerText.toLowerCase() ?? '';
+            const cleanProbId = rawProbId.replace('#', '');
+            const titleText = row.cells[1]?.innerText.toLowerCase() ?? '';
+            const nicknameText = row.cells[2]?.innerText.toLowerCase() ?? '';
 
             let isMatch = false;
-            if (filterType === 'title')       isMatch = titleText.includes(keyword);
-            else if (filterType === 'id')     isMatch = cleanProbId.includes(keyword) || rawProbId.includes(keyword);
+            if (filterType === 'title')         isMatch = titleText.includes(keyword);
+            else if (filterType === 'id')       isMatch = cleanProbId.includes(keyword) || rawProbId.includes(keyword);
             else if (filterType === 'nickname') isMatch = nicknameText.includes(keyword);
 
-            if (isMatch) { row.style.display = ''; visibleCount++; } 
+            if (isMatch) { row.style.display = ''; visibleCount++; }
             else { row.style.display = 'none'; }
         });
 
         const msgRow = document.getElementById('noData-' + tableId);
         const hasEmptyWarning = tbody.querySelector('.hp-empty-warning') !== null;
-        if (msgRow) {
-            msgRow.style.display = (visibleCount === 0 && !hasEmptyWarning) ? '' : 'none';
-        }
+        if (msgRow) msgRow.style.display = (visibleCount === 0 && !hasEmptyWarning) ? '' : 'none';
     }
 
-    /**
-     * 💡 고도화 수정 완료: 드롭다운 모드 필터링과 검색 입력란 연동 처리
-     */
     function searchProgressAdvanced(inputId, filterId, containerId) {
         const keyword = document.getElementById(inputId).value.toLowerCase().trim();
         const filterType = document.getElementById(filterId).value;
-        const selectedType = document.getElementById('tokenTypeFilter').value; // 유형 드롭다운 값
+        const selectedType = document.getElementById('tokenTypeFilter').value;
         const inputNum = parseFloat(keyword);
 
         document.getElementById(containerId).querySelectorAll('.hp-progress-item').forEach(item => {
-            // 1차 필터: 상단 평가 유형 검사
             const rowType = item.getAttribute('data-type');
             const typeMatch = (selectedType === 'ALL' || rowType === selectedType);
 
-            if (!typeMatch) {
-                item.style.display = 'none';
-                return;
-            }
-
-            // 2차 필터: 키워드 검색 검사 (검색어가 없을 땐 타입 매칭된 항목 무조건 노출)
+            if (!typeMatch) { item.style.display = 'none'; return; }
             if (!keyword) { item.style.display = ''; return; }
 
             const title = (item.dataset.title || '').toLowerCase();
-            const idMatch = item.querySelector('.hp-progress-info span')?.innerText.match(/#(\d+)/);
+            const idMatch = item.querySelector('.hp-progress-info a span')?.innerText.match(/#(\d+)/)
+                         || item.querySelector('.hp-progress-info span')?.innerText.match(/#(\d+)/);
             const probId = idMatch ? idMatch[1] : '';
             const tokenVal = parseFloat((item.dataset.token || '0').replace(/[^0-9.]/g, ''));
 
@@ -612,14 +574,12 @@
         });
 
         items.forEach(item => container.appendChild(item));
-
         const btn = document.querySelector(`button[onclick="sortProgress('${containerId}', '${valClass}')"]`);
         if (btn) btn.innerText = '토큰 ' + (asc ? '↑' : '↓');
     }
-</script>
+    </script>
 
-<!-- 프로필 수정 모달 스크립트 (로그인 사용자만 활성화) -->
-<th:block th:replace="~{common/header :: profile-modal-script}"></th:block>
+    <th:block th:replace="~{common/header :: profile-modal-script}"></th:block>
 
 </body>
 </html>
