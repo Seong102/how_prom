@@ -1,7 +1,7 @@
 @charset "UTF-8";
 
 /* ==========================================================================
-   01. 레이아웃 및 메인 구조 (Layout & Base)
+   01. 레이아웃 및 메인 구조
    ========================================================================== */
 html { overflow-y: scroll; }
 .hp-main { max-width: 1400px; margin: 0 auto; padding: 40px 32px 80px; }
@@ -10,7 +10,7 @@ html { overflow-y: scroll; }
 .hp-dashboard-row--recent { grid-template-columns: 1.1fr 0.9fr; }
 
 /* ==========================================================================
-   02. 페이지 헤더 및 서브 네비게이션 (Header & Navigation)
+   02. 페이지 헤더 및 서브 네비게이션
    ========================================================================== */
 .hp-page-header { margin-bottom: 24px; }
 .hp-page-header__title { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
@@ -28,7 +28,7 @@ html { overflow-y: scroll; }
 @keyframes hpFadeInLine { from { opacity: 0; transform: scaleX(0.85); } to { opacity: 1; transform: scaleX(1); } }
 
 /* ==========================================================================
-   03. 카드 및 알림 컴포넌트 (Cards & Alerts)
+   03. 카드 및 알림 컴포넌트
    ========================================================================== */
 .hp-card, .hp-stat-card { background-color: #ffffff !important; border: 1px solid #EAECEF !important; border-radius: 16px !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02) !important; overflow: hidden; transition: all 0.2s ease-in-out; }
 .hp-card:hover, .hp-stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04) !important; }
@@ -45,7 +45,7 @@ html { overflow-y: scroll; }
 .hp-card__alert-desc { font-size: 12px; color: var(--hp-text-muted); margin-top: 4px; line-height: 1.4; }
 
 /* ==========================================================================
-   04. 통계 카드 및 지표 테마 (Stats & Metrics)
+   04. 통계 카드 및 지표 테마
    ========================================================================== */
 .hp-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 16px; }
 .hp-stats-grid--secondary { margin-top: 16px; margin-bottom: 24px; }
@@ -72,8 +72,9 @@ html { overflow-y: scroll; }
 .hp-stat-split { flex: 1; display: flex; flex-direction: column; }
 .hp-split-label { font-size: 11px; color: #999999; font-weight: 600; margin-bottom: 2px; }
 .hp-stat-card--combined .hp-stat-card__value { font-size: 28px; margin-bottom: 0; }
+
 /* ==========================================================================
-   05. 데이터 테이블 및 스크롤 제어 (Tables & Custom Scroll)
+   05. 데이터 테이블 및 스크롤 제어
    ========================================================================== */
 .hp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .hp-table thead th { text-align: left; padding: 14px 16px; font-size: 12px; font-weight: 600; color: var(--hp-text-muted); background-color: #FAFBFC; border-bottom: 1px solid var(--hp-border-soft); }
@@ -90,8 +91,12 @@ html { overflow-y: scroll; }
 .hp-table thead th[onclick] { cursor: pointer; user-select: none; }
 .hp-table thead th[onclick]:hover { background-color: var(--hp-border-soft); }
 
+/* [신규 추가] 문제 목록 관리 테이블 전용 고정 헤더 스크롤 */
+.hp-manage-table-scroll { max-height: 520px; overflow-y: auto; overflow-x: auto; }
+.hp-manage-table-scroll thead th { position: sticky; top: 0; z-index: 10; background-color: var(--hp-card-bg, #fff); box-shadow: inset 0 -1px 0 var(--hp-border); }
+
 /* ==========================================================================
-   06. 프로그레스 바 컴포넌트 (Progress Bars)
+   06. 프로그레스 바 컴포넌트
    ========================================================================== */
 .hp-progress-container { display: flex; flex-direction: column; gap: 22px; }
 .hp-progress-item { font-size: 13px; }
@@ -104,7 +109,7 @@ html { overflow-y: scroll; }
 .hp-progress-intro-text { font-size: 12px; color: var(--hp-text-muted); margin-bottom: 24px; margin-top: -4px; }
 
 /* ==========================================================================
-   07. 입력 필드 및 스위치 토글 (Forms, Inputs & Switches)
+   07. 입력 필드 및 스위치 토글
    ========================================================================== */
 .hp-input, .hp-textarea { width: 100%; box-sizing: border-box; padding: 12px; border: 1px solid var(--hp-border); border-radius: 8px; font-size: 14px; transition: all 0.2s ease; }
 .hp-input:focus, .hp-textarea:focus { border-color: #222222; outline: none; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05); }
@@ -122,7 +127,7 @@ html { overflow-y: scroll; }
 .hp-switch__input:checked ~ .hp-switch__label { color: var(--hp-text); font-weight: 600; }
 
 /* ==========================================================================
-   08. 문제 등록 및 수정 동적 행 (Dynamic Requirement Rows)
+   08. 문제 등록 및 수정 동적 행
    ========================================================================== */
 .hp-req-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; height: 42px; }
 .hp-req-row .hp-input:first-child { flex: 1; }
@@ -140,17 +145,28 @@ html { overflow-y: scroll; }
 .hp-btn--danger-outline:hover { background-color: rgba(220, 53, 69, 0.06); border-color: var(--hp-danger-text); }
 .hp-btn--del { width: 42px; height: 42px; padding: 0; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 18px; }
 .hp-btn--del:disabled { opacity: 0.55; cursor: not-allowed; border-color: #d1d5db; color: #a1a1aa; }
-.hp-search-bar { display: flex; align-items: center; gap: 8px; padding: 12px 24px; border-bottom: 1px solid var(--hp-border-soft); background: #ffffff; }
-.hp-search-input { flex: 1; padding: 7px 12px; font-size: 13px; border: 1px solid var(--hp-border); border-radius: 8px; outline: none; color: var(--hp-text); transition: all 0.2s ease; }
+.hp-search-bar { display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--hp-border-soft); background: #ffffff; }
+.hp-search-input { max-width: 240px; padding: 7px 12px; font-size: 13px; border: 1px solid var(--hp-border); border-radius: 8px; outline: none; color: var(--hp-text); transition: all 0.2s ease; }
 .hp-search-input:focus { border-color: #222222; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05); }
 .hp-sort-btn { padding: 7px 14px; font-size: 12px; font-weight: 600; border: 1px solid var(--hp-border); border-radius: 8px; background: #ffffff; color: var(--hp-text-muted); cursor: pointer; white-space: nowrap; height: 32px; transition: all 0.15s ease; }
 .hp-sort-btn:hover, .hp-sort-btn:focus { border-color: #222222; color: #222222; outline: none; }
 .hp-sort-btn--filter { width: auto; padding: 4px 8px; font-size: 13px; }
+.hp-search-bar .hp-sort-btn:last-child { margin-left: auto; }
+
+/* 퀵 필터 칩 스타일 (보라색 단일 테마) */
+.hp-chip-divider { width: 1px; height: 20px; background-color: var(--hp-border-soft, #EAECEF); margin: 0 4px; }
+.hp-chip-btn { height: 32px; padding: 0 14px; font-size: 12px; font-weight: 600; border-radius: 16px; border: 1px solid var(--hp-border, #EAECEF); background-color: #FAFBFC; color: #666666; cursor: pointer; white-space: nowrap; transition: all 0.15s ease-in-out; }
+.hp-chip-btn:hover, .hp-chip-btn.is-active { background-color: var(--hp-primary, #6342E7) !important; border-color: var(--hp-primary, #6342E7) !important; color: #ffffff !important; }
+
+/* [신규 통합] 문제 관리 상단 검색 필터 박스 (배경색 버그 완전 제거) */
+.hp-search-box { display: flex; gap: 12px; margin-bottom: 20px; align-items: center; }
+.hp-search-box select, .hp-search-box input { height: 38px !important; box-sizing: border-box !important; }
+.hp-manage-filter-input { width: 180px !important; max-width: 180px !important; }
 
 /* ==========================================================================
-   10. 공통 유틸리티 및 인라인 배지 (Utilities & Badges)
+   10. 공통 유틸리티 및 인라인 배지
    ========================================================================== */
-.text-right { text-align: right; }
+.text-right { text-align: right !important; }
 .text-center { text-align: center !important; }
 .th-right { text-align: right !important; }
 .hp-text-muted { color: var(--hp-text-muted, #999999) !important; }
@@ -167,7 +183,7 @@ html { overflow-y: scroll; }
 .hp-score-badge--primary { background-color: var(--hp-primary); color: #fff; }
 
 /* ==========================================================================
-   11. 반응형 브레이크포인트 제어 (Responsive Media Queries)
+   11. 반응형 브레이크포인트 제어
    ========================================================================== */
 @media (max-width: 1024px) { .hp-stats-grid { grid-template-columns: repeat(2, 1fr); } .hp-dashboard-row { grid-template-columns: 1fr; } .hp-admin-alert-zone { flex-direction: column; } }
 @media (max-width: 640px) { .hp-stats-grid { grid-template-columns: 1fr; } }

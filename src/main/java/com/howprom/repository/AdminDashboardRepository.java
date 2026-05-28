@@ -42,7 +42,7 @@ public interface AdminDashboardRepository extends JpaRepository<Submission, Long
     @Query(value = "SELECT COALESCE(AVG(TIMESTAMPDIFF(SECOND, s.submitted_at, s.graded_at)), 0.0) " +
                    "FROM submissions s " +
                    "WHERE s.graded_at IS NOT NULL AND s.status NOT IN ('GRADING', 'ERROR')",
-           nativeQuery = true)
+            nativeQuery = true)
     Double calculateAvgGradingTime();
 
     @Query("SELECT COALESCE(SUM(s.totalUserTokens), 0L) FROM Submission s " +
@@ -64,15 +64,14 @@ public interface AdminDashboardRepository extends JpaRepository<Submission, Long
             + "GROUP BY p.id, p.title, p.evaluationType")
     List<Object[]> findAllTokenStatsRaw();
 
-    // 2번 수정: JOIN ... ON 절로 변경하여 카테시안 곱 방지
     String REQUIREMENT_STATS_QUERY =
             "SELECT r.id, r.problem_id, p.title, r.description, r.weight, " +
             "       COALESCE(AVG(jt.score), 0.0) as avg_achieve, " +
-            "       COALESCE((SUM(CASE WHEN jt.score < 50 THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(jt.score), 0)), 0.0) as fail_rate " +
+            "       COALESCE(AVG(100.0 - jt.score), 0.0) as fail_rate " +
             "FROM requirements r " +
             "JOIN problems p ON p.id = r.problem_id " +
-            "JOIN submissions sub ON sub.problem_id = r.problem_id " +
-            "JOIN JSON_TABLE(sub.requirements_result, '$[*]' COLUMNS( " +
+            "LEFT JOIN submissions sub ON sub.problem_id = r.problem_id " + // INNER -> LEFT JOIN 변경
+            "LEFT JOIN JSON_TABLE(sub.requirements_result, '$[*]' COLUMNS( " + // INNER -> LEFT JOIN 변경
             "    req_id BIGINT PATH '$.id', " +
             "    score INT PATH '$.score' " +
             ")) AS jt ON jt.req_id = r.id " +
