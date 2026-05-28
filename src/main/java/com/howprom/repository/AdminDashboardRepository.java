@@ -57,7 +57,6 @@ public interface AdminDashboardRepository extends JpaRepository<Submission, Long
             + "GROUP BY p.id, p.title, p.evaluationType")
     List<Object[]> findProblemTableStatsRaw();
 
-    // 2번 수정: efficiencyList는 별도 쿼리로 분리 유지 (6, 7번 데드코드 제거)
     @Query("SELECT p.id, p.title, p.evaluationType, AVG(s.totalUserTokens) "
             + "FROM Problem p JOIN Submission s ON s.problem = p "
             + "WHERE s.totalUserTokens IS NOT NULL "
@@ -65,18 +64,18 @@ public interface AdminDashboardRepository extends JpaRepository<Submission, Long
             + "GROUP BY p.id, p.title, p.evaluationType")
     List<Object[]> findAllTokenStatsRaw();
 
+    // 2번 수정: JOIN ... ON 절로 변경하여 카테시안 곱 방지
     String REQUIREMENT_STATS_QUERY =
-            "SELECT r.problem_id, p.title, r.description, r.weight, " +
+            "SELECT r.id, r.problem_id, p.title, r.description, r.weight, " +
             "       COALESCE(AVG(jt.score), 0.0) as avg_achieve, " +
-            "       COALESCE((SUM(CASE WHEN jt.score < 50 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT sub.id)), 0.0) as fail_rate " +
+            "       COALESCE((SUM(CASE WHEN jt.score < 50 THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(jt.score), 0)), 0.0) as fail_rate " +
             "FROM requirements r " +
             "JOIN problems p ON p.id = r.problem_id " +
             "JOIN submissions sub ON sub.problem_id = r.problem_id " +
             "JOIN JSON_TABLE(sub.requirements_result, '$[*]' COLUMNS( " +
             "    req_id BIGINT PATH '$.id', " +
             "    score INT PATH '$.score' " +
-            ")) AS jt " +
-            "WHERE jt.req_id = r.id " + // <--- 요구사항 고유 ID 매핑 조건 추가로 카테시안 곱 완벽 차단!
+            ")) AS jt ON jt.req_id = r.id " +
             "GROUP BY r.id, r.problem_id, p.title, r.description, r.weight";
 
     @Query(value = REQUIREMENT_STATS_QUERY, nativeQuery = true)

@@ -47,15 +47,14 @@ public class AdminDashboardService {
 
         String formattedPassRate = passRate != null ? String.format("%.1f%%", passRate) : "0.0%";
 
-        // 1. 문제별 종합 통계 현황 조회
         List<Object[]> rawProblems = adminDashboardRepository.findProblemTableStatsRaw();
         List<AdminDashboardDTO.ProblemTableDTO> problemList = new ArrayList<>();
 
-        // 상단 위젯용 변수 초기화
+        // 9번 수정: 초기값 "-" 로 변경
         String hardestProblemTitle = "-";
-        String hardestProblemPassRate = "0.0";
+        String hardestProblemPassRate = "-";
         String easiestProblemTitle = "-";
-        String easiestProblemPassRate = "0.0";
+        String easiestProblemPassRate = "-";
 
         double maxPassRate = -1.0;
         double minPassRate = 101.0;
@@ -81,19 +80,15 @@ public class AdminDashboardService {
                     .hasErrors(error > 0)
                     .build());
 
-            // 💡 [핵심 수정] 제출 이력이 있고 '최소 1건 이상의 정상 통과자(passed > 0)'가 존재하는 문제만 상단 위젯 후보로 선정
             if (hasSub && passed > 0) {
                 String title = row[1] != null ? (String) row[1] : "-";
                 double currentPassRate = (passed * 100.0) / totalCount;
 
-                // 가장 높은 통과율 계산 (변별력 검토 문항)
                 if (currentPassRate > maxPassRate) {
                     maxPassRate = currentPassRate;
                     easiestProblemTitle = title;
                     easiestProblemPassRate = String.format("%.1f", currentPassRate);
                 }
-
-                // 가장 낮은 통과율 계산 (요주의 문항)
                 if (currentPassRate < minPassRate) {
                     minPassRate = currentPassRate;
                     hardestProblemTitle = title;
@@ -102,25 +97,28 @@ public class AdminDashboardService {
             }
         }
 
-        // 2. 토큰 차트 데이터 분리 조회
         List<AdminDashboardDTO.EfficiencyChartDTO> efficiencyList = getEfficiencyTokensList();
 
-        // 3. 요구사항 분석 (순수하게 하단 목록 UI 출력용으로만 격리 사용)
         List<AdminDashboardDTO.RequirementAnalysisDTO> requirementList = new ArrayList<>();
         List<Object[]> rawReqs = adminDashboardRepository.findRequirementStatsRaw();
 
         if (rawReqs != null && !rawReqs.isEmpty()) {
             int colorIdx = 0;
             for (Object[] row : rawReqs) {
-                String probId = row[0] != null ? "#" + row[0].toString() : "#0";
-                String title = row[1] != null ? (String) row[1] : "알 수 없는 문제";
-                String description = row[2] != null ? (String) row[2] : "요구사항 명세가 없습니다.";
-                Integer weight = row[3] != null ? ((Number) row[3]).intValue() : 0;
-                double avgAchieve = row[4] != null ? ((Number) row[4]).doubleValue() : 0.0;
-                double failRate = row[5] != null ? ((Number) row[5]).doubleValue() : 0.0;
+                // 2번 수정: SELECT에 r.id 추가됐으므로 인덱스 한 칸씩 밀림
+                // row[0]:r.id, row[1]:problem_id, row[2]:title, row[3]:description
+                // row[4]:weight, row[5]:avg_achieve, row[6]:fail_rate
+                String probId = row[1] != null ? "#" + row[1].toString() : "#0";
+                String title = row[2] != null ? (String) row[2] : "알 수 없는 문제";
+                String description = row[3] != null ? (String) row[3] : "요구사항 명세가 없습니다.";
+                Integer weight = row[4] != null ? ((Number) row[4]).intValue() : 0;
+                double avgAchieve = row[5] != null ? ((Number) row[5]).doubleValue() : 0.0;
+                double failRate = row[6] != null ? ((Number) row[6]).doubleValue() : 0.0;
 
                 requirementList.add(AdminDashboardDTO.RequirementAnalysisDTO.builder()
-                        .probId(probId).title(title).description(description)
+                        .probId(probId)
+                        .title(title)
+                        .description(description)
                         .weight(weight)
                         .avgAchieve(String.format("%.1f%%", avgAchieve))
                         .failRate(String.format("%.1f%%", failRate))
@@ -161,6 +159,7 @@ public class AdminDashboardService {
         List<AdminDashboardDTO.EfficiencyChartDTO> result = new ArrayList<>();
         if (rawStats == null || rawStats.isEmpty()) return result;
 
+        // 3번 수정: null 방어 추가
         double maxTokens = rawStats.stream()
                 .mapToDouble(row -> row[3] != null ? ((Number) row[3]).doubleValue() : 0.0)
                 .max().orElse(0.0);
@@ -170,7 +169,10 @@ public class AdminDashboardService {
             Long id = row[0] != null ? ((Number) row[0]).longValue() : null;
             String title = row[1] != null ? (String) row[1] : "-";
             String evalType = row[2] != null ? row[2].toString() : "STANDARD";
+            // 3번 수정: null 안전 처리
             Double avgUserTokens = row[3] != null ? ((Number) row[3]).doubleValue() : 0.0;
+            if (avgUserTokens <= 0) continue; // 0이하 항목 제외
+
             String barWidth = maxTokens > 0 ? (int)((avgUserTokens / maxTokens) * 100) + "%" : "0%";
             String color = EXTENDED_COLORS[colorIdx % EXTENDED_COLORS.length];
             colorIdx++;
