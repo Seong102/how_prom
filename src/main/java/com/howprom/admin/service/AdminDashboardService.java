@@ -47,9 +47,18 @@ public class AdminDashboardService {
 
         String formattedPassRate = passRate != null ? String.format("%.1f%%", passRate) : "0.0%";
 
-        // 문제별 통계
+        // 1. 문제별 종합 통계 현황 조회
         List<Object[]> rawProblems = adminDashboardRepository.findProblemTableStatsRaw();
         List<AdminDashboardDTO.ProblemTableDTO> problemList = new ArrayList<>();
+
+        // 상단 위젯용 변수 초기화
+        String hardestProblemTitle = "-";
+        String hardestProblemPassRate = "0.0";
+        String easiestProblemTitle = "-";
+        String easiestProblemPassRate = "0.0";
+
+        double maxPassRate = -1.0;
+        double minPassRate = 101.0;
 
         for (Object[] row : rawProblems) {
             long totalCount = row[3] != null ? ((Number) row[3]).longValue() : 0L;
@@ -71,42 +80,36 @@ public class AdminDashboardService {
                     .hasSubmissions(hasSub)
                     .hasErrors(error > 0)
                     .build());
+
+            // 💡 [핵심 수정] 제출 이력이 있고 '최소 1건 이상의 정상 통과자(passed > 0)'가 존재하는 문제만 상단 위젯 후보로 선정
+            if (hasSub && passed > 0) {
+                String title = row[1] != null ? (String) row[1] : "-";
+                double currentPassRate = (passed * 100.0) / totalCount;
+
+                // 가장 높은 통과율 계산 (변별력 검토 문항)
+                if (currentPassRate > maxPassRate) {
+                    maxPassRate = currentPassRate;
+                    easiestProblemTitle = title;
+                    easiestProblemPassRate = String.format("%.1f", currentPassRate);
+                }
+
+                // 가장 낮은 통과율 계산 (요주의 문항)
+                if (currentPassRate < minPassRate) {
+                    minPassRate = currentPassRate;
+                    hardestProblemTitle = title;
+                    hardestProblemPassRate = String.format("%.1f", currentPassRate);
+                }
+            }
         }
 
-        // 2번 수정: 토큰 차트는 별도 쿼리로 분리
+        // 2. 토큰 차트 데이터 분리 조회
         List<AdminDashboardDTO.EfficiencyChartDTO> efficiencyList = getEfficiencyTokensList();
 
-        // 요구사항 분석
-     // 요구사항 분석 로직 수정
+        // 3. 요구사항 분석 (순수하게 하단 목록 UI 출력용으로만 격리 사용)
         List<AdminDashboardDTO.RequirementAnalysisDTO> requirementList = new ArrayList<>();
         List<Object[]> rawReqs = adminDashboardRepository.findRequirementStatsRaw();
 
-        String hardestProblemTitle = "-";
-        String hardestProblemPassRate = "0.0";
-        String easiestProblemTitle = "-";
-        String easiestProblemPassRate = "0.0";
-
         if (rawReqs != null && !rawReqs.isEmpty()) {
-            // 1. 통계 데이터를 정렬 (실패율 낮은 순 -> 높은 순)
-            rawReqs.sort((a, b) -> {
-                double failA = a[5] != null ? ((Number) a[5]).doubleValue() : 0.0;
-                double failB = b[5] != null ? ((Number) b[5]).doubleValue() : 0.0;
-                return Double.compare(failA, failB);
-            });
-
-            // 2. 가장 쉬운 문제 (정렬된 데이터 중 첫 번째)
-            Object[] easiest = rawReqs.get(0);
-            double minFail = easiest[5] != null ? ((Number) easiest[5]).doubleValue() : 0.0;
-            easiestProblemTitle = easiest[1] != null ? (String) easiest[1] : "-";
-            easiestProblemPassRate = String.format("%.1f", Math.max(0, 100.0 - minFail));
-
-            // 3. 가장 어려운 문제 (정렬된 데이터 중 마지막)
-            Object[] hardest = rawReqs.get(rawReqs.size() - 1);
-            double maxFail = hardest[5] != null ? ((Number) hardest[5]).doubleValue() : 0.0;
-            hardestProblemTitle = hardest[1] != null ? (String) hardest[1] : "-";
-            hardestProblemPassRate = String.format("%.1f", Math.max(0, 100.0 - maxFail));
-
-            // 4. 리스트 생성
             int colorIdx = 0;
             for (Object[] row : rawReqs) {
                 String probId = row[0] != null ? "#" + row[0].toString() : "#0";
@@ -153,13 +156,11 @@ public class AdminDashboardService {
                 .build();
     }
 
-    // 2번 수정: rawProblems 재활용 제거, 전용 쿼리 사용
     private List<AdminDashboardDTO.EfficiencyChartDTO> getEfficiencyTokensList() {
         List<Object[]> rawStats = adminDashboardRepository.findAllTokenStatsRaw();
         List<AdminDashboardDTO.EfficiencyChartDTO> result = new ArrayList<>();
         if (rawStats == null || rawStats.isEmpty()) return result;
 
-        // row[0]:id, row[1]:title, row[2]:evaluationType, row[3]:avgTokens
         double maxTokens = rawStats.stream()
                 .mapToDouble(row -> row[3] != null ? ((Number) row[3]).doubleValue() : 0.0)
                 .max().orElse(0.0);
@@ -187,7 +188,6 @@ public class AdminDashboardService {
     }
 
     private List<AdminDashboardDTO.RecentSubmissionDTO> getRecentSubmissions() {
-        // row[0]:problemId, row[1]:nickname, row[2]:title, row[3]:score, row[4]:status, row[5]:submittedAt
         List<Object[]> raw = adminDashboardRepository.findRecentSubmissions(PageRequest.of(0, 10));
         List<AdminDashboardDTO.RecentSubmissionDTO> result = new ArrayList<>();
 
@@ -212,7 +212,6 @@ public class AdminDashboardService {
     }
 
     private List<AdminDashboardDTO.TopScoreDTO> getTopScores() {
-        // row[0]:problemId, row[1]:title, row[2]:nickname, row[3]:score, row[4]:totalUserTokens, row[5]:submittedAt
         List<Object[]> raw = adminDashboardRepository.findTopScorePerProblem();
         List<AdminDashboardDTO.TopScoreDTO> result = new ArrayList<>();
 

@@ -67,25 +67,17 @@ public interface AdminDashboardRepository extends JpaRepository<Submission, Long
 
     String REQUIREMENT_STATS_QUERY =
             "SELECT r.problem_id, p.title, r.description, r.weight, " +
-            "AVG(jt_all.score) as avg_achieve, " +
-            "(SUM(CASE WHEN sub_fail.fail_count > 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT sub.id)) as fail_rate " +
+            "       COALESCE(AVG(jt.score), 0.0) as avg_achieve, " +
+            "       COALESCE((SUM(CASE WHEN jt.score < 50 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT sub.id)), 0.0) as fail_rate " +
             "FROM requirements r " +
             "JOIN problems p ON p.id = r.problem_id " +
             "JOIN submissions sub ON sub.problem_id = r.problem_id " +
-            // 전체 점수 평균을 위한 조인
-            "JOIN JSON_TABLE(sub.requirements_result, '$[*]' COLUMNS(score INT PATH '$.score')) AS jt_all ON true " +
-            // 제출별 실패 여부 판단을 위한 서브쿼리 조인
-            "LEFT JOIN ( " +
-            "    SELECT sub_id, COUNT(*) as fail_count " +
-            "    FROM ( " +
-            "        SELECT sub.id as sub_id, jt.score " +
-            "        FROM submissions sub " +
-            "        JOIN JSON_TABLE(sub.requirements_result, '$[*]' COLUMNS(score INT PATH '$.score')) AS jt " +
-            "    ) as temp " +
-            "    WHERE score < 50 " +
-            "    GROUP BY sub_id " +
-            ") as sub_fail ON sub_fail.sub_id = sub.id " +
-            "GROUP BY r.problem_id, p.title, r.description, r.weight";
+            "JOIN JSON_TABLE(sub.requirements_result, '$[*]' COLUMNS( " +
+            "    req_id BIGINT PATH '$.id', " +
+            "    score INT PATH '$.score' " +
+            ")) AS jt " +
+            "WHERE jt.req_id = r.id " + // <--- 요구사항 고유 ID 매핑 조건 추가로 카테시안 곱 완벽 차단!
+            "GROUP BY r.id, r.problem_id, p.title, r.description, r.weight";
 
     @Query(value = REQUIREMENT_STATS_QUERY, nativeQuery = true)
     List<Object[]> findRequirementStatsRaw();
