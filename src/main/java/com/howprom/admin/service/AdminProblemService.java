@@ -7,6 +7,7 @@ import com.howprom.common.entity.User;
 import com.howprom.admin.dto.ProblemAdminDTO;
 import com.howprom.admin.dto.ProblemStatsDTO;
 import com.howprom.repository.ProblemRepository;
+import com.howprom.repository.SubmissionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 public class AdminProblemService {
 
     private final ProblemRepository problemRepository;
+    private final SubmissionRepository submissionRepository;
 
     /**
      * 전체 문제 목록 조회
@@ -171,10 +173,18 @@ public class AdminProblemService {
         Problem problem = problemRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 문제가 존재하지 않습니다. id=" + id));
         
-        // 🛠️ 에러 해결: Boolean 타입 규칙에 따라 getIsPublic()으로 검증 (Null 방어 포함)
-        if (Boolean.TRUE.equals(problem.getIsPublic())) {
+        // 공개 상태인 문제는 삭제 거부
+        if (problem.getIsPublic()) {
             throw new IllegalStateException("공개 상태인 문항은 삭제할 수 없습니다. 먼저 비공개로 변경해 주세요.");
         }
+        
+        // 제출 이력이 있는 문제는 삭제 거부 (학습 데이터 보존)
+        long submissionCount = submissionRepository.countByProblemId(id);
+        if (submissionCount > 0) {
+            throw new IllegalStateException(
+                    "제출 이력이 있는 문제는 삭제할 수 없습니다. (현재 " + submissionCount + "건)");
+        }
+        
         problemRepository.deleteById(id);
     }
 
