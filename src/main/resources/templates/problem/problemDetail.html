@@ -1,83 +1,19 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${problem.title} + ' - HowProm'">문제 - HowProm</title>
+    <th:block th:replace="~{common/header :: styles}"></th:block>
     <style>
-        /* ===== header.html 의 styles fragment 직접 인라인 ===== */
-        :root {
-            --hp-primary: #5B47D6;
-            --hp-primary-hover: #4a38c4;
-            --hp-primary-soft: #F0EEFB;
-            --hp-bg: #F5F6FA;
-            --hp-surface: #FFFFFF;
-            --hp-text: #1A1A1A;
-            --hp-text-muted: #6B7280;
-            --hp-border: #E5E7EB;
-            --hp-border-soft: #EEF0F3;
-            --hp-success-bg: #E6F7EC;
-            --hp-success-text: #1F9D55;
-            --hp-danger-bg: #FDECEC;
-            --hp-danger-text: #D14343;
-            --hp-radius: 12px;
-            --hp-radius-sm: 6px;
-            --hp-shadow: 0 1px 2px rgba(0,0,0,0.03);
-        }
- 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
- 
+        /* ===== 이 페이지 전용 스타일 ===== */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo",
-                         "Malgun Gothic", "맑은 고딕", Roboto, sans-serif;
-            background-color: var(--hp-bg);
-            color: var(--hp-text);
-            -webkit-font-smoothing: antialiased;
             height: 100vh;
             overflow: hidden;
             display: flex;
             flex-direction: column;
         }
- 
-        a { text-decoration: none; color: inherit; }
- 
-        /* ===== 헤더 (header.html 그대로) ===== */
-        .hp-header {
-            background-color: var(--hp-surface);
-            border-bottom: 1px solid var(--hp-border);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            flex-shrink: 0;
-        }
-        .hp-header__inner {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 32px;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .hp-header__left { display: flex; align-items: center; gap: 48px; }
-        .hp-logo { font-size: 22px; font-weight: 700; color: var(--hp-primary); letter-spacing: -0.5px; }
-        .hp-nav  { display: flex; align-items: center; gap: 8px; }
-        .hp-nav__link {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 8px 12px; font-size: 14px; color: var(--hp-text-muted);
-            border-bottom: 2px solid transparent; transition: color 0.15s ease;
-        }
-        .hp-nav__link:hover { color: var(--hp-text); }
-        .hp-nav__link--active { color: var(--hp-primary); border-bottom-color: var(--hp-primary); }
-        .hp-nav__icon { flex-shrink: 0; }
-        .hp-header__user {
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 36px; height: 36px; border-radius: 50%; color: var(--hp-text-muted);
-            transition: background-color 0.15s ease, color 0.15s ease;
-        }
-        .hp-header__user:hover { background-color: var(--hp-border-soft); color: var(--hp-text); }
- 
-        /* ===== 페이지 레이아웃 ===== */
         .prob-layout {
             display: flex;
             flex: 1;
@@ -336,55 +272,7 @@
 <body>
  
 <!-- 헤더 -->
-<header class="hp-header">
-    <div class="hp-header__inner">
-        <div class="hp-header__left">
-            <a href="/" class="hp-logo">HowProm</a>
-            <nav class="hp-nav">
-                <a href="/" class="hp-nav__link">
-                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                        <polyline points="9 22 9 12 15 12 15 22"/>
-                    </svg>
-                    <span>대시보드</span>
-                </a>
-                <a href="/problems" class="hp-nav__link hp-nav__link--active">
-                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
-                        <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
-                        <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-                    </svg>
-                    <span>문제</span>
-                </a>
-                <a href="/community" class="hp-nav__link">
-                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
-                        <path d="M4 22h16"/>
-                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
-                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
-                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
-                    </svg>
-                    <span>커뮤니티</span>
-                </a>
-                <a href="/admin" class="hp-nav__link">
-                    <svg class="hp-nav__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                    <span>관리자</span>
-                </a>
-            </nav>
-        </div>
-        <div class="hp-header__right">
-            <a href="/profile" class="hp-header__user" aria-label="내 정보">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                </svg>
-            </a>
-        </div>
-    </div>
-</header>
+<th:block th:replace="~{common/header :: header('problems')}"></th:block>
  
 <!-- 새로고침 경고 배너 -->
 <div class="warn-banner">
@@ -462,20 +350,8 @@
                 <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                 실행
             </button>
-            <button class="tb-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
-                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-                조기 확인
-            </button>
-            <button class="tb-btn" onclick="switchTab(this)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                </svg>
-                결과
-            </button>
-            <span class="tb-lang">Java 17 · UTF-8 · Ln 1, Col 1</span>
+            <span class="tb-lang" style="margin-left:0">⚠ 실행할 클래스 이름은 반드시 <strong>Main</strong> 이어야 합니다</span>
+            <span class="tb-lang" style="margin-left:auto">Java 17 · UTF-8</span>
         </div>
  
         <div class="editor-area">
@@ -486,7 +362,6 @@
             <div class="result-tabs">
                 <div class="rtab active" onclick="switchTab(this,'result')">실행 결과</div>
                 <div class="rtab" onclick="switchTab(this,'error')">오류</div>
-                <div class="rtab" onclick="switchTab(this,'test')">테스트</div>
             </div>
             <div class="result-body" id="resultBody">
                 <span style="color:var(--hp-text-muted)">▶ 실행 버튼을 눌러 코드를 실행하세요</span>
@@ -693,7 +568,7 @@ public class Main {
     }
     function switchTabById(tabName) {
         const tabs = document.querySelectorAll('.rtab');
-        const map  = { result: 0, error: 1, test: 2 };
+        const map  = { result: 0, error: 1 };
         tabs.forEach(t => t.classList.remove('active'));
         if (tabs[map[tabName]]) tabs[map[tabName]].classList.add('active');
         currentTab = tabName;
