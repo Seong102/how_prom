@@ -47,9 +47,6 @@ html { overflow-y: scroll; }
 /* ==========================================================================
    04. 통계 카드 및 지표 테마 (Stats & Metrics)
    ========================================================================== */
-/* ==========================================================================
-   04. 통계 카드 및 지표 테마 (Stats & Metrics)
-   ========================================================================== */
 .hp-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 16px; }
 .hp-stats-grid--secondary { margin-top: 16px; margin-bottom: 24px; }
 .hp-stat-card { padding: 24px 28px; display: flex; flex-direction: column; justify-content: space-between; }
