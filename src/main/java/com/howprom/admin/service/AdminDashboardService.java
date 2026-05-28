@@ -47,9 +47,17 @@ public class AdminDashboardService {
 
         String formattedPassRate = passRate != null ? String.format("%.1f%%", passRate) : "0.0%";
 
-        // 문제별 통계
         List<Object[]> rawProblems = adminDashboardRepository.findProblemTableStatsRaw();
         List<AdminDashboardDTO.ProblemTableDTO> problemList = new ArrayList<>();
+
+        // 9번 수정: 초기값 "-" 로 변경
+        String hardestProblemTitle = "-";
+        String hardestProblemPassRate = "-";
+        String easiestProblemTitle = "-";
+        String easiestProblemPassRate = "-";
+
+        double maxPassRate = -1.0;
+        double minPassRate = 101.0;
 
         for (Object[] row : rawProblems) {
             long totalCount = row[3] != null ? ((Number) row[3]).longValue() : 0L;
@@ -71,53 +79,46 @@ public class AdminDashboardService {
                     .hasSubmissions(hasSub)
                     .hasErrors(error > 0)
                     .build());
+
+            if (hasSub && passed > 0) {
+                String title = row[1] != null ? (String) row[1] : "-";
+                double currentPassRate = (passed * 100.0) / totalCount;
+
+                if (currentPassRate > maxPassRate) {
+                    maxPassRate = currentPassRate;
+                    easiestProblemTitle = title;
+                    easiestProblemPassRate = String.format("%.1f", currentPassRate);
+                }
+                if (currentPassRate < minPassRate) {
+                    minPassRate = currentPassRate;
+                    hardestProblemTitle = title;
+                    hardestProblemPassRate = String.format("%.1f", currentPassRate);
+                }
+            }
         }
 
-        // 2번 수정: 토큰 차트는 별도 쿼리로 분리
         List<AdminDashboardDTO.EfficiencyChartDTO> efficiencyList = getEfficiencyTokensList();
 
-        // 요구사항 분석
-     // 요구사항 분석 로직 수정
         List<AdminDashboardDTO.RequirementAnalysisDTO> requirementList = new ArrayList<>();
         List<Object[]> rawReqs = adminDashboardRepository.findRequirementStatsRaw();
 
-        String hardestProblemTitle = "-";
-        String hardestProblemPassRate = "0.0";
-        String easiestProblemTitle = "-";
-        String easiestProblemPassRate = "0.0";
-
         if (rawReqs != null && !rawReqs.isEmpty()) {
-            // 1. 통계 데이터를 정렬 (실패율 낮은 순 -> 높은 순)
-            rawReqs.sort((a, b) -> {
-                double failA = a[5] != null ? ((Number) a[5]).doubleValue() : 0.0;
-                double failB = b[5] != null ? ((Number) b[5]).doubleValue() : 0.0;
-                return Double.compare(failA, failB);
-            });
-
-            // 2. 가장 쉬운 문제 (정렬된 데이터 중 첫 번째)
-            Object[] easiest = rawReqs.get(0);
-            double minFail = easiest[5] != null ? ((Number) easiest[5]).doubleValue() : 0.0;
-            easiestProblemTitle = easiest[1] != null ? (String) easiest[1] : "-";
-            easiestProblemPassRate = String.format("%.1f", Math.max(0, 100.0 - minFail));
-
-            // 3. 가장 어려운 문제 (정렬된 데이터 중 마지막)
-            Object[] hardest = rawReqs.get(rawReqs.size() - 1);
-            double maxFail = hardest[5] != null ? ((Number) hardest[5]).doubleValue() : 0.0;
-            hardestProblemTitle = hardest[1] != null ? (String) hardest[1] : "-";
-            hardestProblemPassRate = String.format("%.1f", Math.max(0, 100.0 - maxFail));
-
-            // 4. 리스트 생성
             int colorIdx = 0;
             for (Object[] row : rawReqs) {
-                String probId = row[0] != null ? "#" + row[0].toString() : "#0";
-                String title = row[1] != null ? (String) row[1] : "알 수 없는 문제";
-                String description = row[2] != null ? (String) row[2] : "요구사항 명세가 없습니다.";
-                Integer weight = row[3] != null ? ((Number) row[3]).intValue() : 0;
-                double avgAchieve = row[4] != null ? ((Number) row[4]).doubleValue() : 0.0;
-                double failRate = row[5] != null ? ((Number) row[5]).doubleValue() : 0.0;
+                // 2번 수정: SELECT에 r.id 추가됐으므로 인덱스 한 칸씩 밀림
+                // row[0]:r.id, row[1]:problem_id, row[2]:title, row[3]:description
+                // row[4]:weight, row[5]:avg_achieve, row[6]:fail_rate
+                String probId = row[1] != null ? "#" + row[1].toString() : "#0";
+                String title = row[2] != null ? (String) row[2] : "알 수 없는 문제";
+                String description = row[3] != null ? (String) row[3] : "요구사항 명세가 없습니다.";
+                Integer weight = row[4] != null ? ((Number) row[4]).intValue() : 0;
+                double avgAchieve = row[5] != null ? ((Number) row[5]).doubleValue() : 0.0;
+                double failRate = row[6] != null ? ((Number) row[6]).doubleValue() : 0.0;
 
                 requirementList.add(AdminDashboardDTO.RequirementAnalysisDTO.builder()
-                        .probId(probId).title(title).description(description)
+                        .probId(probId)
+                        .title(title)
+                        .description(description)
                         .weight(weight)
                         .avgAchieve(String.format("%.1f%%", avgAchieve))
                         .failRate(String.format("%.1f%%", failRate))
@@ -153,13 +154,12 @@ public class AdminDashboardService {
                 .build();
     }
 
-    // 2번 수정: rawProblems 재활용 제거, 전용 쿼리 사용
     private List<AdminDashboardDTO.EfficiencyChartDTO> getEfficiencyTokensList() {
         List<Object[]> rawStats = adminDashboardRepository.findAllTokenStatsRaw();
         List<AdminDashboardDTO.EfficiencyChartDTO> result = new ArrayList<>();
         if (rawStats == null || rawStats.isEmpty()) return result;
 
-        // row[0]:id, row[1]:title, row[2]:evaluationType, row[3]:avgTokens
+        // 3번 수정: null 방어 추가
         double maxTokens = rawStats.stream()
                 .mapToDouble(row -> row[3] != null ? ((Number) row[3]).doubleValue() : 0.0)
                 .max().orElse(0.0);
@@ -169,7 +169,10 @@ public class AdminDashboardService {
             Long id = row[0] != null ? ((Number) row[0]).longValue() : null;
             String title = row[1] != null ? (String) row[1] : "-";
             String evalType = row[2] != null ? row[2].toString() : "STANDARD";
+            // 3번 수정: null 안전 처리
             Double avgUserTokens = row[3] != null ? ((Number) row[3]).doubleValue() : 0.0;
+            if (avgUserTokens <= 0) continue; // 0이하 항목 제외
+
             String barWidth = maxTokens > 0 ? (int)((avgUserTokens / maxTokens) * 100) + "%" : "0%";
             String color = EXTENDED_COLORS[colorIdx % EXTENDED_COLORS.length];
             colorIdx++;
@@ -187,7 +190,6 @@ public class AdminDashboardService {
     }
 
     private List<AdminDashboardDTO.RecentSubmissionDTO> getRecentSubmissions() {
-        // row[0]:problemId, row[1]:nickname, row[2]:title, row[3]:score, row[4]:status, row[5]:submittedAt
         List<Object[]> raw = adminDashboardRepository.findRecentSubmissions(PageRequest.of(0, 10));
         List<AdminDashboardDTO.RecentSubmissionDTO> result = new ArrayList<>();
 
@@ -212,7 +214,6 @@ public class AdminDashboardService {
     }
 
     private List<AdminDashboardDTO.TopScoreDTO> getTopScores() {
-        // row[0]:problemId, row[1]:title, row[2]:nickname, row[3]:score, row[4]:totalUserTokens, row[5]:submittedAt
         List<Object[]> raw = adminDashboardRepository.findTopScorePerProblem();
         List<AdminDashboardDTO.TopScoreDTO> result = new ArrayList<>();
 

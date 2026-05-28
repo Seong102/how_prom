@@ -5,21 +5,7 @@
     <title>문제 등록 및 수정 - HowProm Admin</title>
     <th:block th:replace="~{common/header :: styles}"></th:block>
     <link rel="stylesheet" th:href="@{/css/admin.css}">
-    <style>
-        .hp-dashboard-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
-        .hp-form-group { margin-bottom: 20px; width: 100%; }
-        .hp-input, .hp-textarea { width: 100%; box-sizing: border-box; }
-        
-        .hp-form-group label::after { content: " *"; color: #E74C3C; font-weight: bold; }
-        .hp-example-group label::after, .hp-optional-group label::after { content: ""; }
-
-        .hp-req-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; height: 42px; }
-        .hp-req-row .hp-input:first-child { flex: 1; }
-        .hp-req-row .hp-weight { width: 80px !important; flex-shrink: 0; }
-        .hp-btn--del { width: 42px; height: 42px; padding: 0; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-        .hp-req-row:has(.hp-input):not(:has(.hp-btn--del))::after { content: ""; width: 42px; flex-shrink: 0; }
-    </style>
-</head>
+    </head>
 <body>
 
 <div th:replace="~{common/header :: header('admin')}"></div>
@@ -99,11 +85,14 @@
                         <div class="hp-req-row" th:if="${problem.requirements == null or #lists.isEmpty(problem.requirements)}">
                             <input type="text" name="reqDesc" class="hp-input" placeholder="요구사항 명세" required>
                             <input type="number" name="reqWeight" class="hp-input hp-weight" value="0" min="0" oninput="calc()">
+                            <button type="button" class="hp-btn hp-btn--danger-outline hp-btn--del" disabled>×</button>
                         </div>
 
                         <div class="hp-req-row" th:if="${problem.requirements != null}" th:each="req, iterStat : ${problem.requirements}">
                             <input type="text" name="reqDesc" class="hp-input" th:value="${req.description}" placeholder="요구사항 명세" required>
                             <input type="number" name="reqWeight" class="hp-input hp-weight" th:value="${req.weight}" min="0" oninput="calc()">
+                            
+                            <button th:if="${iterStat.index == 0}" type="button" class="hp-btn hp-btn--danger-outline hp-btn--del" disabled>×</button>
                             <button th:if="${iterStat.index > 0}" type="button" class="hp-btn hp-btn--danger-outline hp-btn--del" onclick="this.parentElement.remove(); calc();">×</button>
                         </div>
                     </div>
@@ -132,7 +121,6 @@
         if (form) {
             form.addEventListener('submit', function(e) {
                 let total = 0;
-                // 🛠️ 부동 소수점 합산 예외 처리 적용하여 검사 안정성 보장
                 document.querySelectorAll('.hp-weight').forEach(i => total += Math.round(Number(i.value) || 0));
                 
                 if (total !== 100) {
@@ -147,7 +135,6 @@
     function addReq() {
         const div = document.createElement('div');
         div.className = 'hp-req-row';
-        // 🛠️ 템플릿 리터럴 내부의 oninput 역시 calc() 기본형으로 변경
         div.innerHTML = `
             <input type="text" name="reqDesc" class="hp-input" placeholder="요구사항 명세" required>
             <input type="number" name="reqWeight" class="hp-input hp-weight" value="0" min="0" oninput="calc()">
@@ -161,8 +148,6 @@
         let total = 0;
         const inputs = document.querySelectorAll('.hp-weight');
         
-        // 🛠️ 자바스크립트 부동 소수점 에러(ex. 33.3+33.3+33.4 = 99.9999...)로 인해 
-        // 100점 분기 검증이 영원히 실패하는 프론트 락앤트랩 방어 (반올림 및 결측치 우회)
         inputs.forEach(i => total += Math.round(Number(i.value) || 0));
         
         const display = document.getElementById('scoreDisplay');
@@ -176,7 +161,6 @@
     }
 </script>
 
-<!-- 프로필 수정 모달 스크립트 (로그인 사용자만 활성화) -->
 <th:block th:replace="~{common/header :: profile-modal-script}"></th:block>
 
 </body>
