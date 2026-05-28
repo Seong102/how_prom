@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.Duration;
 import java.util.*;
@@ -18,6 +19,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class LlmGradingService {
 
+    /* ── ollama 설정 (LLM #1 코드 생성용 — 그대로 유지) ── */
     @Value("${llm.base-url}")
     private String baseUrl;
 
@@ -27,11 +29,18 @@ public class LlmGradingService {
     @Value("${llm.timeout-seconds:120}")
     private int timeoutSeconds;
 
+    /* ── Gemini 설정 (LLM #2 채점용) ── */
+    @Value("${gemini.api-key}")
+    private String geminiApiKey;
+
+    @Value("${gemini.model:gemini-2.5-flash}")
+    private String geminiModel;
+
     private final WebClient.Builder webClientBuilder;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
-     * LLM #2 채점 호출
+     * LLM #2 채점 호출 (Gemini API)
      * 반환: { score, passed, feedback, requirements: [{id, score, comment}] }
      */
     public GradingResult grade(String problemTitle, String problemDescription,
@@ -44,7 +53,8 @@ public class LlmGradingService {
                    .append("점) ").append(r.getDescription()).append("\n");
         }
 
-        // 2. 채점 전용 system prompt
+        // 2. 채점 전용 system prompt + user prompt 통합
+        //    Gemini OpenAI 호환 엔드포인트는 system role을 messages 안에 포함
         String systemPrompt = """
                 당신은 Java 코딩 문제 채점 전문가입니다.
                 반드시 아래 규칙을 따르세요:
@@ -73,26 +83,20 @@ public class LlmGradingService {
                 이전 문제나 다른 기준은 무시하세요.
                 """, problemTitle, problemDescription, reqText.toString(), finalCode);
 
-        // 4. Ollama 호출 — 채점 전용 메시지만 전달 (이전 대화 이력 제외)
-        //    이전 대화 이력을 포함하면 LLM이 이전 문제 문맥으로 채점하는 오류 발생
-        List<Map<String, String>> messages = new ArrayList<>();
+        // 4. Gemini OpenAI 호환 엔드포인트 호출
+        //    POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
+        List<Map<String, Object>> messages = new ArrayList<>();
         messages.add(Map.of("role", "system", "content", systemPrompt));
         messages.add(Map.of("role", "user",   "content", userPrompt));
 
-        /* Ollama options — 채점은 결정적으로 (temperature=0) */
-        Map<String, Object> options = new HashMap<>();
-        options.put("temperature", 0.0);   /* 편차 최소화 — 같은 코드는 항상 같은 점수 */
-        options.put("seed", 42);           /* 시드 고정으로 재현성 확보 */
-
         Map<String, Object> body = new HashMap<>();
-        body.put("model", model);
+        body.put("model", geminiModel);
+        body.put("max_completion_tokens", 2048);
         body.put("messages", messages);
-        body.put("stream", false);
-        body.put("options", options);
-        body.put("keep_alive", 0);         /* 요청 후 모델 세션 즉시 해제 — 컨텍스트 오염 방지 */
+        body.put("temperature", 0.0);   /* 채점은 결정적으로 */
 
         WebClient client = webClientBuilder
-                .baseUrl(baseUrl)
+                .baseUrl("https://generativelanguage.googleapis.com")
                 .codecs(c -> c.defaultCodecs().maxInMemorySize(2 * 1024 * 1024))
                 .build();
 
@@ -100,30 +104,39 @@ public class LlmGradingService {
         for (int attempt = 1; attempt <= 2; attempt++) {
             try {
                 Map<String, Object> llmResponse = client.post()
-                        .uri("/api/chat")
+                        .uri("/v1beta/openai/chat/completions")
                         .header("Content-Type", "application/json")
+                        .header("Authorization", "Bearer " + geminiApiKey)
                         .bodyValue(body)
                         .retrieve()
                         .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                         .timeout(Duration.ofSeconds(timeoutSeconds))
                         .block();
 
-                // 6. 응답 파싱
+                // 6. 응답 파싱 — OpenAI 호환 형식: choices[0].message.content
                 @SuppressWarnings("unchecked")
-                Map<String, Object> message = (Map<String, Object>) llmResponse.get("message");
+                List<Map<String, Object>> choices =
+                        (List<Map<String, Object>>) llmResponse.get("choices");
+                @SuppressWarnings("unchecked")
+                Map<String, Object> message =
+                        (Map<String, Object>) choices.get(0).get("message");
                 String rawJson = (String) message.get("content");
-                log.info("[LlmGrading] LLM 원본 응답: {}", rawJson);
+                log.info("[LlmGrading] Gemini 원본 응답: {}", rawJson);
 
-                // JSON만 추출 (```json ... ``` 감싸진 경우 대비)
                 String cleanJson = extractJson(rawJson);
                 log.info("[LlmGrading] 파싱할 JSON: {}", cleanJson);
 
                 return parseGradingResult(cleanJson);
 
+            } catch (WebClientResponseException e) {
+                log.error("LLM 채점 호출 실패 (attempt {}) status={} body={}",
+                        attempt, e.getStatusCode(), e.getResponseBodyAsString());
+                if (attempt == 2) {
+                    return GradingResult.error();
+                }
             } catch (Exception e) {
                 log.error("LLM 채점 호출 실패 (attempt {}): {}", attempt, e.getMessage());
                 if (attempt == 2) {
-                    // 2회 실패 → ERROR 처리용 기본값 반환
                     return GradingResult.error();
                 }
             }
@@ -192,11 +205,11 @@ public class LlmGradingService {
             this.isError = isError;
         }
 
-        public int score()                              { return score; }
-        public boolean passed()                         { return passed; }
-        public String feedback()                        { return feedback; }
+        public int score()                                     { return score; }
+        public boolean passed()                                { return passed; }
+        public String feedback()                               { return feedback; }
         public List<RequirementResultDto> requirementsResult() { return requirementsResult; }
-        public boolean isError()                        { return isError; }
+        public boolean isError()                               { return isError; }
 
         public static GradingResult error() {
             return new GradingResult(0, false, "", List.of(), true);
