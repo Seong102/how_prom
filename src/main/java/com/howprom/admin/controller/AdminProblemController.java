@@ -2,10 +2,10 @@ package com.howprom.admin.controller;
 
 import java.util.List;
 import java.util.Map;
-import jakarta.servlet.http.HttpSession; 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +16,8 @@ import com.howprom.common.entity.User;
 import com.howprom.admin.dto.ProblemAdminDTO;
 import com.howprom.admin.dto.ProblemStatsDTO;
 import com.howprom.admin.service.AdminProblemService;
+import com.howprom.user.CustomUserPrincipal;
+import com.howprom.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 @Controller
@@ -25,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class AdminProblemController {
 
     private final AdminProblemService adminProblemService;
+    private final UserRepository userRepository;
     
     /**
      * 문제 관리 페이지: 목록 및 통계 데이터 조회
@@ -59,16 +62,16 @@ public class AdminProblemController {
      * 문제 등록 처리
      */
     @PostMapping("/problems/register")
-    public String registerProcess(@ModelAttribute ProblemAdminDTO dto,
-                                  @RequestParam(value = "reqDesc", required = false) List<String> reqDescs,
-                                  @RequestParam(value = "reqWeight", required = false) List<Integer> reqWeights,
-                                  HttpSession session,
-                                  RedirectAttributes redirectAttributes) {
+    public String registerProcess(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @ModelAttribute ProblemAdminDTO dto,
+            @RequestParam(value = "reqDesc", required = false) List<String> reqDescs,
+            @RequestParam(value = "reqWeight", required = false) List<Integer> reqWeights,
+            RedirectAttributes redirectAttributes) {
         try {
-            User loginUser = (User) session.getAttribute("loginUser");
-            if (loginUser == null) {
-                loginUser = User.builder().id(1L).email("admin@howprom.com").nickname("최고관리자").build();
-            }
+            User loginUser = userRepository.findById(principal.getId())
+                    .orElseThrow(() -> new IllegalStateException("로그인 정보를 확인할 수 없습니다."));
+
             adminProblemService.createProblem(dto, reqDescs, reqWeights, loginUser);
             redirectAttributes.addFlashAttribute("message", "새 문제가 성공적으로 등록되었습니다!");
         } catch (Exception e) {
