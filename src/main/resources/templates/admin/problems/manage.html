@@ -9,56 +9,6 @@
 <th:block th:replace="~{common/header :: styles}"></th:block>
 <th:block th:replace="~{common/header :: profile-modal-script}"></th:block>
 <link rel="stylesheet" th:href="@{/css/admin.css}">
-
-<style>
-.text-right {
-	text-align: right !important;
-}
-
-.text-center {
-	text-align: center !important;
-}
-
-.hp-action-group {
-	display: inline-flex;
-	gap: 8px;
-	justify-content: center;
-	width: 100%;
-}
-
-.hp-search-box {
-	display: flex;
-	gap: 6px;
-	margin-bottom: 20px;
-	align-items: center;
-}
-
-/* 크기 제각각인 것 방지: 검색 컴포넌트 크기 슬림화 및 완전 통일 */
-.hp-search-box select, .hp-search-box input {
-	height: 38px !important;
-	box-sizing: border-box !important;
-}
-
-.hp-manage-filter-input {
-	width: 180px !important; /* 최대 크기를 콤팩트하게 줄이고 일괄 고정 */
-	max-width: 180px !important;
-}
-
-/* 테이블 내부 스크롤 스펙 정의 */
-.hp-manage-table-scroll {
-	max-height: 520px; /* 대량 데이터 대응용 최대 높이 제한 */
-	overflow-y: auto;
-	overflow-x: auto;
-}
-/* 스크롤 시 헤더 고정 */
-.hp-manage-table-scroll thead th {
-	position: sticky;
-	top: 0;
-	z-index: 10;
-	background-color: var(--hp-card-bg, #fff);
-	box-shadow: inset 0 -1px 0 var(--hp-border);
-}
-</style>
 </head>
 <body>
 
@@ -72,151 +22,101 @@
 					문제 관리 <span class="hp-admin-badge">Admin</span>
 				</h1>
 			</div>
-			<a th:href="@{/admin/problems/register}"
-				class="hp-btn hp-btn--primary">+ 새 문제 등록</a>
+			<a th:href="@{/admin/problems/register}" class="hp-btn hp-btn--primary">+ 새 문제 등록</a>
 		</div>
+		
 		<div th:replace="~{admin/adminSubNav :: subNav('manage')}"></div>
 
 		<div class="hp-search-box">
-			<select id="filterManage" class="hp-sort-btn"
-				onchange="toggleSearchInput()"
-				style="color: var(--hp-text); border-color: var(--hp-border); padding: 8px 12px; width: 110px;">
+			<select id="filterManage" class="hp-sort-btn" onchange="toggleSearchInput()" style="width: 110px;">
 				<option value="title">제목</option>
 				<option value="id">번호</option>
 				<option value="type">유형</option>
-				<option value="status">공개 상태</option>
-			</select> <input type="text" id="searchManageText"
+			</select> 
+			
+			<input type="text" id="searchManageText"
 				class="hp-search-input hp-manage-filter-input"
-				placeholder="검색어 입력..." onkeyup="searchManageAdvanced()"
-				style="padding: 0 12px; border: 1px solid var(--hp-border); border-radius: 4px;">
+				placeholder="검색어 입력..." onkeyup="searchManageAdvanced()">
 
-			<select id="searchManageType"
-				class="hp-sort-btn hp-manage-filter-input"
-				onchange="searchManageAdvanced()"
-				style="display: none; color: var(--hp-text); border-color: var(--hp-border); padding: 8px 12px;">
+			<select id="searchManageType" class="hp-sort-btn hp-manage-filter-input" onchange="searchManageAdvanced()" style="display: none;">
 				<option value="">유형 전체</option>
 				<option value="standard">Standard</option>
 				<option value="efficiency">Efficiency</option>
 				<option value="budget">Budget</option>
-			</select> <select id="searchManageStatus"
-				class="hp-sort-btn hp-manage-filter-input"
-				onchange="searchManageAdvanced()"
-				style="display: none; color: var(--hp-text); border-color: var(--hp-border); padding: 8px 12px;">
-				<option value="">상태 전체</option>
-				<option value="공개">공개</option>
-				<option value="비공개">비공개</option>
-			</select>
+			</select> 
 
-			<button type="button" class="hp-btn hp-btn--outline"
-				onclick="resetManageFilter()"
-				style="height: 38px; white-space: nowrap;">필터/정렬 초기화</button>
+			<div class="hp-chip-divider"></div>
+			
+			<button type="button" class="hp-chip-btn is-active" data-chip-type="all" onclick="quickFilterProblems('all', this)">전체 문항</button>
+			<button type="button" class="hp-chip-btn" data-chip-type="hidden" onclick="quickFilterProblems('hidden', this)">비공개</button>
+			<button type="button" class="hp-chip-btn" data-chip-type="complex" onclick="quickFilterProblems('complex', this)">고난도 (조건 3개+)</button>
+
+			<button type="button" class="hp-btn hp-btn--outline" onclick="resetManageFilter()" style="margin-left: auto;">필터/정렬 초기화</button>
 		</div>
 
 		<div class="hp-card">
 			<div class="hp-card__header">전체 출제 문항 마스터 레코드</div>
-			<div class="hp-card__body" style="padding: 0;">
+			<div class="hp-card__body hp-card__body--nopadding">
 				<div class="hp-manage-table-scroll">
 					<table class="hp-table" id="problemManageTable">
 						<thead>
 							<tr>
-								<th style="width: 10%; padding-left: 24px; cursor: pointer;"
-									onclick="sortTable('problemManageTable', 0)" title="클릭하여 정렬">번호
-									↕</th>
-								<th style="width: 32%; cursor: pointer;"
-									onclick="sortTable('problemManageTable', 1)" title="클릭하여 정렬">제목
-									↕</th>
-								<th style="width: 13%; text-align: center; cursor: pointer;"
-									onclick="sortTable('problemManageTable', 2)" title="클릭하여 정렬">유형
-									↕</th>
-								<th style="width: 13%; text-align: center; cursor: pointer;"
-									onclick="sortTable('problemManageTable', 3)" title="클릭하여 정렬">공개
-									여부 ↕</th>
-								<th class="text-center" style="width: 10%; cursor: pointer;"
-									onclick="sortTable('problemManageTable', 4)" title="클릭하여 정렬">제출
-									수 ↕</th>
-								<th class="text-center" style="width: 11%; cursor: pointer;"
-									onclick="sortTable('problemManageTable', 5)" title="클릭하여 정렬">평균
-									점수 ↕</th>
-								<th class="text-center" style="width: 11%;">관리</th>
+								<th style="width: 10%; padding-left: 24px; cursor: pointer;" onclick="sortTable('problemManageTable', 0)" title="클릭하여 정렬">번호 ↕</th>
+								<th style="width: 30%; cursor: pointer;" onclick="sortTable('problemManageTable', 1)" title="클릭하여 정렬">제목 ↕</th>
+								<th style="width: 13%; text-align: center; cursor: pointer;" onclick="sortTable('problemManageTable', 2)" title="클릭하여 정렬">유형 ↕</th>
+								<th style="width: 13%; text-align: center;">공개 여부</th>
+								<th class="text-center" style="width: 10%; cursor: pointer;" onclick="sortTable('problemManageTable', 4)" title="클릭하여 정렬">제출 수 ↕</th>
+								<th class="text-center" style="width: 11%; cursor: pointer;" onclick="sortTable('problemManageTable', 5)" title="클릭하여 정렬">평균 점수 ↕</th>
+								<th class="text-center" style="width: 13%; white-space: nowrap;">관리</th>
 							</tr>
 						</thead>
 						<tbody>
 							<tr th:each="prob : ${problemList}" class="hp-prob-row">
-								<td style="padding-left: 24px;"
-									th:text="'#' + ${#numbers.formatInteger(prob.id, 3)}"
-									th:data-sort-value="${prob.id}">#001</td>
-								<td th:data-sort-value="${prob.title}"><strong
-									th:text="${prob.title}">문제 제목 명세</strong></td>
+								<td style="padding-left: 24px;" th:text="'#' + ${#numbers.formatInteger(prob.id, 3)}" th:data-sort-value="${prob.id}">#001</td>
+								<td th:data-sort-value="${prob.title}"><strong th:text="${prob.title}">문제 제목 명세</strong></td>
 
-								<td class="text-center" style="vertical-align: middle;"
-									th:data-sort-value="${prob.evaluationType}"
-									th:data-sort-req="${prob.requirementsCount}">
-									<div
-										style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-										<span class="hp-badge hp-badge--standard"
-											th:if="${prob.evaluationType == 'STANDARD'}">Standard</span>
-										<span class="hp-badge hp-badge--efficiency"
-											th:if="${prob.evaluationType == 'EFFICIENCY'}">Efficiency</span>
-										<span class="hp-badge hp-badge--budget"
-											th:if="${prob.evaluationType == 'BUDGET'}">Budget</span> <span
-											class="hp-text-muted"
-											style="font-size: 11px; font-weight: 500;"
-											th:text="'조건 ' + ${prob.requirementsCount} + '개'">조건
-											0개</span>
+								<td class="text-center" th:data-sort-value="${prob.evaluationType}" th:data-sort-req="${prob.requirementsCount}">
+									<div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+										<span class="hp-badge hp-badge--standard" th:if="${prob.evaluationType == 'STANDARD'}">Standard</span>
+										<span class="hp-badge hp-badge--efficiency" th:if="${prob.evaluationType == 'EFFICIENCY'}">Efficiency</span>
+										<span class="hp-badge hp-badge--budget" th:if="${prob.evaluationType == 'BUDGET'}">Budget</span> 
+										<span class="hp-text-muted" style="font-size: 11px; font-weight: 500;" th:text="'조건 ' + ${prob.requirementsCount} + '개'">조건 0개</span>
 									</div>
 								</td>
 
-								<td class="text-center"
-									th:data-sort-value="${prob.isPublic ? 1 : 0}"><label
-									class="hp-switch" style="justify-content: center;"> <input
-										type="checkbox" class="hp-switch__input"
-										th:checked="${prob.isPublic}" th:attr="data-id=${prob.id}">
-										<span class="hp-switch__slider"></span> <span
-										class="hp-switch__label hp-status-text"
-										th:text="${prob.isPublic} ? '공개' : '비공개'">비공개</span>
-								</label></td>
-
-								<td class="text-center"
-									th:data-sort-value="${statsMap != null && statsMap.containsKey(prob.id) ? statsMap[prob.id].totalCount : 0}">
-									<span
-									th:text="${statsMap != null && statsMap.containsKey(prob.id) ? statsMap[prob.id].totalCount + '건' : '0건'}">0건</span>
+								<td class="text-center" th:data-sort-value="${prob.isPublic ? 1 : 0}">
+									<label class="hp-switch" style="justify-content: center;"> 
+										<input type="checkbox" class="hp-switch__input" th:checked="${prob.isPublic}" th:attr="data-id=${prob.id}">
+										<span class="hp-switch__slider"></span> 
+										<span class="hp-switch__label hp-status-text" th:text="${prob.isPublic} ? '공개' : '비공개'">비공개</span>
+									</label>
 								</td>
 
-								<td class="text-center hp-text-muted"
-									style="font-weight: 600; vertical-align: middle;"
-									th:data-sort-value="${statsMap != null && statsMap.containsKey(prob.id) && statsMap[prob.id].avgScore != null ? statsMap[prob.id].avgScore : -1}">
+								<td class="text-center" th:data-sort-value="${statsMap != null && statsMap.containsKey(prob.id) ? statsMap[prob.id].totalCount : 0}">
+									<span th:text="${statsMap != null && statsMap.containsKey(prob.id) ? statsMap[prob.id].totalCount + '건' : '0건'}">0건</span>
+								</td>
 
-									<span
-									th:text="${statsMap != null && statsMap.containsKey(prob.id) && statsMap[prob.id].avgScore != null ? #numbers.formatDecimal(statsMap[prob.id].avgScore, 1, 1) + '점' : '-'}">-</span>
-
-									<div
-										th:if="${statsMap != null && statsMap.containsKey(prob.id) && statsMap[prob.id].passRate != null}"
-										style="font-size: 11px; font-weight: 500; color: #2b8a3e; margin-top: 3px;">
-										(🎯 통과 <span
-											th:text="${#numbers.formatDecimal(statsMap[prob.id].passRate, 1, 0)}">0</span>%)
+								<td class="text-center hp-text-muted" style="font-weight: 600;" th:data-sort-value="${statsMap != null && statsMap.containsKey(prob.id) && statsMap[prob.id].avgScore != null ? statsMap[prob.id].avgScore : -1}">
+									<span th:text="${statsMap != null && statsMap.containsKey(prob.id) && statsMap[prob.id].avgScore != null ? #numbers.formatDecimal(statsMap[prob.id].avgScore, 1, 1) + '점' : '-'}">-</span>
+									<div th:if="${statsMap != null && statsMap.containsKey(prob.id) && statsMap[prob.id].passRate != null}" style="font-size: 11px; font-weight: 500; color: #2b8a3e; margin-top: 3px;">
+										(🎯 통과 <span th:text="${#numbers.formatDecimal(statsMap[prob.id].passRate, 1, 0)}">0</span>%)
 									</div>
 								</td>
 
-								<td class="text-center">
-									<div class="hp-action-group">
-										<a th:href="@{/admin/problems/edit/{id}(id=${prob.id})}"
-											class="hp-btn hp-btn--outline" style="white-space: nowrap;">수정</a>
-										<button type="button" class="hp-btn hp-btn--danger-outline"
-											th:onclick="|deleteProblem('${prob.id}')|"
-											style="white-space: nowrap;">삭제</button>
+								<td class="text-center" style="white-space: nowrap;">
+									<div class="hp-action-group" style="display: flex; gap: 6px; justify-content: center; align-items: center;">
+										<a th:href="@{/admin/problems/edit/{id}(id=${prob.id})}" class="hp-btn hp-btn--outline">수정</a>
+										<button type="button" class="hp-btn hp-btn--danger-outline" th:onclick="|deleteProblem('${prob.id}')|">삭제</button>
 									</div>
 								</td>
 							</tr>
 
 							<tr id="noDataRow" style="display: none;">
-								<td colspan="7" class="hp-text-muted"
-									style="text-align: center; padding: 40px 0; font-size: 14px;">
+								<td colspan="7" class="hp-text-muted" style="text-align: center; padding: 40px 0; font-size: 14px;">
 									검색 조건과 일치하는 관리 문항이 존재하지 않습니다.</td>
 							</tr>
-
 							<tr id="emptyDataRow" th:if="${#lists.isEmpty(problemList)}">
-								<td colspan="7" class="hp-text-muted"
-									style="text-align: center; padding: 40px 0; font-size: 14px;">
+								<td colspan="7" class="hp-text-muted" style="text-align: center; padding: 40px 0; font-size: 14px;">
 									출제 등록된 프롬프트 문제가 존재하지 않습니다.</td>
 							</tr>
 						</tbody>
@@ -230,7 +130,95 @@
     const sortState = {};
     let originalRows = []; 
 
-    /* 테이블 내 데이터 정렬 로직 (팀장님 버전 최적화 매칭 반영) */
+    /* 통합 필터 처리 함수 */
+    function applyFilters() {
+        const activeChip = document.querySelector('.hp-chip-btn.is-active');
+        const quickFilterType = activeChip ? activeChip.getAttribute('data-chip-type') : 'all';
+
+        const filterType = document.getElementById('filterManage').value;
+        let keyword = '';
+        if (filterType === 'title' || filterType === 'id') {
+            keyword = document.getElementById('searchManageText').value.toLowerCase().trim();
+        } else if (filterType === 'type') {
+            keyword = document.getElementById('searchManageType').value.toLowerCase();
+        }
+
+        const tbody = document.getElementById('problemManageTable').querySelector('tbody');
+        const rows = tbody.querySelectorAll('.hp-prob-row');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const reqCell = row.cells[2];
+            const reqCount = parseInt(reqCell.getAttribute('data-sort-req') || '0', 10);
+            const statusText = row.querySelector('.hp-status-text')?.innerText.trim() || '';
+
+            let isQuickMatch = false;
+            if (quickFilterType === 'all') {
+                isQuickMatch = true;
+            } else if (quickFilterType === 'hidden') {
+                isQuickMatch = (statusText === '비공개');
+            } else if (quickFilterType === 'complex') {
+                isQuickMatch = (reqCount >= 3);
+            }
+
+            let isSearchMatch = false;
+            if (!keyword) {
+                isSearchMatch = true; 
+            } else {
+                const idText = row.cells[0]?.innerText.toLowerCase() ?? '';
+                const titleText = row.cells[1]?.innerText.toLowerCase() ?? '';
+                const typeText = row.cells[2]?.getAttribute('data-sort-value')?.toLowerCase() ?? '';
+
+                if (filterType === 'id') {
+                    isSearchMatch = idText.includes(keyword) || idText.replace('#', '').includes(keyword);
+                } else if (filterType === 'title') {
+                    isSearchMatch = titleText.includes(keyword);
+                } else if (filterType === 'type') {
+                    isSearchMatch = typeText.includes(keyword);
+                }
+            }
+
+            if (isQuickMatch && isSearchMatch) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        const noDataRow = document.getElementById('noDataRow');
+        const hasEmptyWarning = tbody.querySelector('#emptyDataRow') !== null;
+        if (noDataRow) {
+            noDataRow.style.display = (visibleCount === 0 && !hasEmptyWarning) ? '' : 'none';
+        }
+    }
+
+    function quickFilterProblems(type, element) {
+        document.querySelectorAll('.hp-chip-btn').forEach(btn => btn.classList.remove('is-active'));
+        if (element) element.classList.add('is-active');
+        applyFilters(); 
+    }
+
+    /* 검색창 입력 이벤트 */
+    function searchManageAdvanced() {
+        applyFilters(); 
+    }
+
+    function toggleSearchInput() {
+        const filterType = document.getElementById('filterManage').value;
+        const textInput = document.getElementById('searchManageText');
+        const typeSelect = document.getElementById('searchManageType');
+
+        textInput.value = '';
+        typeSelect.value = '';
+
+        textInput.style.display = (filterType === 'title' || filterType === 'id') ? '' : 'none';
+        typeSelect.style.display = (filterType === 'type') ? '' : 'none';
+
+        applyFilters(); 
+    }
+
+    /* 테이블 내 데이터 정렬 로직 (th[onclick] 기반 동적 텍스트 치환 안전성 유지) */
     function sortTable(tableId, colIndex) {
         const table = document.getElementById(tableId);
         const tbody = table.querySelector('tbody');
@@ -272,6 +260,7 @@
         const emptyDataRow = document.getElementById('emptyDataRow');
         if (emptyDataRow) tbody.appendChild(emptyDataRow);
 
+        // onclick 속성을 가진 헤더만 찾아 화살표 기호 안전하게 업데이트
         const headers = table.querySelectorAll('thead th[onclick]');
         headers.forEach(th => {
             const base = th.innerText.replace(/ [↑↓↕]$/, '');
@@ -284,90 +273,27 @@
         });
     }
 
-    /* 필터 조건 선택에 따른 입력창 UI 토글 제어 */
-    function toggleSearchInput() {
-        const filterType = document.getElementById('filterManage').value;
-        const textInput = document.getElementById('searchManageText');
-        const typeSelect = document.getElementById('searchManageType');
-        const statusSelect = document.getElementById('searchManageStatus');
-
-        textInput.value = '';
-        typeSelect.value = '';
-        statusSelect.value = '';
-
-        textInput.style.display = (filterType === 'title' || filterType === 'id') ? '' : 'none';
-        typeSelect.style.display = (filterType === 'type') ? '' : 'none';
-        statusSelect.style.display = (filterType === 'status') ? '' : 'none';
-
-        searchManageAdvanced();
-    }
-
-    /* 고급 검색 스크립트 */
-    function searchManageAdvanced() {
-        const filterType = document.getElementById('filterManage').value;
-        const tbody = document.getElementById('problemManageTable').querySelector('tbody');
-        const rows = tbody.querySelectorAll('.hp-prob-row');
-        let visibleCount = 0;
-
-        let keyword = '';
-        if (filterType === 'title' || filterType === 'id') {
-            keyword = document.getElementById('searchManageText').value.toLowerCase().trim();
-        } else if (filterType === 'type') {
-            keyword = document.getElementById('searchManageType').value.toLowerCase();
-        } else if (filterType === 'status') {
-            keyword = document.getElementById('searchManageStatus').value.toLowerCase();
-        }
-
-        rows.forEach(row => {
-            if (!keyword) { 
-                row.style.display = ''; 
-                visibleCount++;
-                return; 
-            }
-
-            const idText = row.cells[0]?.innerText.toLowerCase() ?? '';
-            const titleText = row.cells[1]?.innerText.toLowerCase() ?? '';
-            const typeText = row.cells[2]?.getAttribute('data-sort-value')?.toLowerCase() ?? '';
-            const statusText = row.querySelector('.hp-status-text')?.innerText.toLowerCase() ?? '';
-
-            let isMatch = false;
-
-            if (filterType === 'id') {
-                isMatch = idText.includes(keyword) || idText.replace('#', '').includes(keyword);
-            } else if (filterType === 'title') {
-                isMatch = titleText.includes(keyword);
-            } else if (filterType === 'type') {
-                isMatch = typeText.includes(keyword);
-            } else if (filterType === 'status') {
-                isMatch = statusText === keyword;
-            }
-
-            if (isMatch) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
-        });
-
-        const noDataRow = document.getElementById('noDataRow');
-        const hasEmptyWarning = tbody.querySelector('#emptyDataRow') !== null;
-        if (noDataRow) {
-            noDataRow.style.display = (visibleCount === 0 && !hasEmptyWarning) ? '' : 'none';
-        }
-    }
-
-    /* 필터 및 정렬 완전 초기화 구현 */
     function resetManageFilter() {
         document.getElementById('filterManage').value = 'title';
-        toggleSearchInput();
+        
+        const textInput = document.getElementById('searchManageText');
+        const typeSelect = document.getElementById('searchManageType');
+        textInput.value = '';
+        typeSelect.value = '';
+        textInput.style.display = '';
+        typeSelect.style.display = 'none';
+
+        document.querySelectorAll('.hp-chip-btn').forEach(btn => btn.classList.remove('is-active'));
+        const allChip = document.querySelector('.hp-chip-btn[data-chip-type="all"]');
+        if (allChip) allChip.classList.add('is-active');
 
         const table = document.getElementById('problemManageTable');
         const tbody = table.querySelector('tbody');
         originalRows.forEach(row => tbody.appendChild(row));
-        
+        originalRows.forEach(row => row.style.display = '');
+
         const noDataRow = document.getElementById('noDataRow');
-        if (noDataRow) tbody.appendChild(noDataRow);
+        if (noDataRow) noDataRow.style.display = 'none';
         const emptyDataRow = document.getElementById('emptyDataRow');
         if (emptyDataRow) tbody.appendChild(emptyDataRow);
 
@@ -380,10 +306,9 @@
             delete sortState[key];
         }
 
-        searchManageAdvanced();
+        applyFilters();
     }
 
-    /* DOM 초기 로드 스냅샷 제어 */
     document.addEventListener("DOMContentLoaded", function() {
         const tbody = document.getElementById('problemManageTable').querySelector('tbody');
         originalRows = Array.from(tbody.querySelectorAll('.hp-prob-row'));
@@ -394,7 +319,6 @@
         }
     });
 
-    // 공개/비공개 토글 처리 이벤트 리스너 (CSRF 적용)
     document.querySelectorAll('.hp-switch__input').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             const isPublic = this.checked;
@@ -414,7 +338,7 @@
                 if (response.ok) {
                     labelEl.textContent = isPublic ? '공개' : '비공개';
                     tdEl.setAttribute('data-sort-value', isPublic ? '1' : '0'); 
-                    searchManageAdvanced();
+                    applyFilters();
                 } else {
                     alert('상태 변경에 실패했습니다.');
                     this.checked = !isPublic;
@@ -429,7 +353,6 @@
         });
     });
 
-    // 🛠️ [HTML 찌꺼기 노출 방어 완료] 문제 삭제 비동기 처리 함수 (CSRF 적용)
     function deleteProblem(id) {
         if (!confirm("정말 이 문제를 삭제하시겠습니까?")) return;
         
@@ -448,7 +371,6 @@
                 location.reload();
             } else {
                 const message = await res.text();
-                // 백엔드 화이트라벨 에러(HTML)가 응답으로 넘어온 경우 범용 에러 메시지 띄움
                 if (message.includes("<html>") || message.includes("<!DOCTYPE")) {
                     alert("삭제 처리에 실패하였습니다. (서버 내부 오류 또는 연관 데이터 존재)");
                 } else {
@@ -461,9 +383,5 @@
         });
     }
     </script>
-
-	<!-- 프로필 수정 모달 스크립트 (로그인 사용자만 활성화) -->
-	<th:block th:replace="~{common/header :: profile-modal-script}"></th:block>
-
 </body>
 </html>
