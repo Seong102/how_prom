@@ -1,4 +1,4 @@
-package com.howprom.controller.submission;
+package com.howprom.submission.controller;
 
 import com.howprom.common.entity.User;
 import com.howprom.repository.UserRepository;
