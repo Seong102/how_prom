@@ -1,4 +1,4 @@
-package com.howprom.controller.community;
+package com.howprom.community.controller;
 
 import com.howprom.community.dto.CommunityListDto;
 import com.howprom.community.service.CommunityService;

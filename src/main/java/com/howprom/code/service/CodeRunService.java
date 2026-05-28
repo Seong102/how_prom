@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.concurrent.TimeUnit;
@@ -25,8 +27,9 @@ public class CodeRunService {
         Path tempDir = Files.createTempDirectory("howprom_");
 
         try {
-            // 2. Main.java 파일 생성
-            Path sourceFile = tempDir.resolve("Main.java");
+            // 2. 소스 파일 생성 — public class 이름 추출하여 파일명 결정
+            String className = extractClassName(request.getCode());
+            Path sourceFile = tempDir.resolve(className + ".java");
             Files.writeString(sourceFile, request.getCode(), StandardCharsets.UTF_8);
 
             // 3. 컴파일 (javac)
@@ -36,7 +39,7 @@ public class CodeRunService {
             }
 
             // 4. 실행 (java)
-            return execute(tempDir, request.getStdin());
+            return execute(tempDir, request.getStdin(), className);
 
         } finally {
             // 5. 임시 파일 정리
@@ -73,7 +76,7 @@ public class CodeRunService {
     }
 
     /* ── 실행 ── */
-    private CodeRunResponse execute(Path tempDir, String stdin) throws IOException {
+    private CodeRunResponse execute(Path tempDir, String stdin, String className) throws IOException {
         ProcessBuilder pb = new ProcessBuilder(
                 "java",
                 "-cp", tempDir.toString(),
@@ -81,7 +84,7 @@ public class CodeRunService {
                 "-Dfile.encoding=UTF-8",           // 한글 출력 인코딩
                 "-Dstdout.encoding=UTF-8",         // stdout 인코딩
                 "-Dstderr.encoding=UTF-8",         // stderr 인코딩
-                "Main"
+                className
         );
         pb.directory(tempDir.toFile());
 
@@ -158,6 +161,16 @@ public class CodeRunService {
             }
         }
         return sb.toString().trim();
+    }
+
+    /** 코드에서 public class 이름 추출 — 없으면 "Main" 기본값 */
+    private String extractClassName(String code) {
+        Pattern pattern = Pattern.compile("public\\s+class\\s+(\\w+)");
+        Matcher matcher = pattern.matcher(code);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return "Main";
     }
 
     private void deleteDirectory(Path dir) {

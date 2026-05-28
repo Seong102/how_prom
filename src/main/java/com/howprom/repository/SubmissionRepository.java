@@ -129,4 +129,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * ERROR 상태 제외한 해당 문제 전체 제출 조회
      */
     List<Submission> findByProblemIdAndStatusNot(Long problemId, SubmissionStatus status);
+    
+    /**
+     * 문제별 제출 이력 개수 조회 (문제 삭제 가능 여부 확인용)
+     */
+    long countByProblemId(Long problemId);
 }

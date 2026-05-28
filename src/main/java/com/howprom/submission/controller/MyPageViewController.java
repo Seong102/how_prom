@@ -1,4 +1,4 @@
-package com.howprom.controller.submission;
+package com.howprom.submission.controller;
 
 import com.howprom.submission.dto.MyPageResponseDto;
 import com.howprom.submission.service.MyPageService;
