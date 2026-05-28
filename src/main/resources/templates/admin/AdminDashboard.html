@@ -26,7 +26,7 @@
                 <span class="hp-card__alert-label">⚠️ 요주의 문항 (가장 낮은 통과율)</span>
                 <div class="hp-card__alert-title">
                     <span th:text="${stats.hardestProblemTitle}">-</span>
-                    <span class="hp-text--warning" th:text="'(' + ${stats.hardestProblemPassRate} + '%)'"> (0%)</span>
+                    <span class="hp-text--warning" th:text="${stats.hardestProblemPassRate != '-'} ? '(' + ${stats.hardestProblemPassRate} + '%)' : ''">(0%)</span>
                 </div>
                 <p class="hp-card__alert-desc">학습자들이 통과에 애를 먹고 있습니다. 요구사항 명세 검토를 권장합니다.</p>
             </div>
@@ -34,7 +34,7 @@
                 <span class="hp-card__alert-label">✅ 변별력 검토 문항 (가장 높은 통과율)</span>
                 <div class="hp-card__alert-title">
                     <span th:text="${stats.easiestProblemTitle}">-</span>
-                    <span class="hp-text--success" th:text="'(' + ${stats.easiestProblemPassRate} + '%)'"> (0%)</span>
+                    <span class="hp-text--success" th:text="${stats.easiestProblemPassRate != '-'} ? '(' + ${stats.easiestProblemPassRate} + '%)' : ''">(0%)</span>
                 </div>
                 <p class="hp-card__alert-desc">대부분의 사용자가 쉽게 통과했습니다. 추가 조건 부여를 고려해 보세요.</p>
             </div>
@@ -143,16 +143,19 @@
                                         <span th:if="${prob.evaluationType == 'BUDGET'}" class="hp-badge hp-badge--budget">Budget</span>
                                     </td>
                                     <td style="text-align: center;" th:data-sort-value="${prob.totalCount}" th:text="${prob.totalCount}">0건</td>
-                                    <td style="text-align: center; font-weight: 600;" th:text="${prob.passedCount}" th:data-sort-value="${prob.passedCount}"
+                                    <td style="text-align: center; font-weight: 600;" th:text="${prob.passedCount}"
+                                        th:data-sort-value="${prob.passedCount}"
                                         th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : 'hp-text--success'}">0건</td>
-                                    <td style="text-align: center; font-weight: 600;" th:text="${prob.failedCount}" th:data-sort-value="${prob.failedCount}"
+                                    <td style="text-align: center; font-weight: 600;" th:text="${prob.failedCount}"
+                                        th:data-sort-value="${prob.failedCount}"
                                         th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : 'hp-text--warning'}">0건</td>
                                     <td class="hp-pass-rate" style="text-align: center; font-weight: 600; color: #4A90E2;"
                                         th:data-has-submissions="${prob.hasSubmissions}"
                                         th:data-total="${prob.totalCount}"
                                         th:data-passed="${prob.passedCount}"
                                         th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">-</td>
-                                    <td style="text-align: center; font-weight: 600;" th:text="${prob.avgScore}" th:data-sort-value="${prob.avgScore}"
+                                    <td style="text-align: center; font-weight: 600;" th:text="${prob.avgScore}"
+                                        th:data-sort-value="${prob.avgScore}"
                                         th:classappend="${!prob.hasSubmissions ? 'hp-text-muted' : ''}">0점</td>
                                 </tr>
                                 <tr id="noData-problemStatsTable" style="display: none;">
@@ -183,14 +186,13 @@
                     </select>
                     <input type="text" id="searchEfficiency" class="hp-search-input" placeholder="검색어를 입력하세요..."
                         onkeyup="searchProgressAdvanced('searchEfficiency', 'filterEfficiency', 'efficiencyList')">
-                    <button class="hp-sort-btn" onclick="sortProgress('efficiencyList', 'avgTokenVal')" style="margin-left: 8px;">토큰 ↕</button>
+                    <button class="hp-sort-btn" onclick="sortProgress(this, 'efficiencyList')" style="margin-left: 8px;">토큰 ↕</button>
                 </div>
                 <div class="hp-card__body hp-progress-scroll">
                     <p class="hp-progress-intro-text"></p>
                     <div class="hp-progress-container" id="efficiencyList">
                         <div class="hp-progress-item" th:each="eff : ${stats.efficiencyList}"
-                            th:attr="data-title=${eff.title}, data-token=${eff.avgUserTokens}"
-                            th:data-type="${eff.evaluationType}">
+                            th:attr="data-title=${eff.title}, data-token=${eff.avgUserTokens}, data-type=${eff.evaluationType}">
                             <div class="hp-progress-info" style="text-align: left;">
                                 <a th:href="@{/admin/problems/edit/{id}(id=${eff.id})}" class="hp-progress-link">
                                     <span th:text="'#' + ${eff.id} + ' ' + ${eff.title}">문제명</span>
@@ -199,7 +201,7 @@
                             </div>
                             <div class="hp-progress-bar-bg">
                                 <div class="hp-progress-bar-fill"
-                                    th:style="'width: ' + ${eff.barWidth} + '; background-color: ' + ${eff.color} + ';'"></div>
+                                    th:style="'width: ' + ${eff.barWidth} + '; background-color: ' + (${eff.color} != null ? ${eff.color} : 'var(--hp-primary)') + ';'"></div>
                             </div>
                         </div>
                     </div>
@@ -229,6 +231,7 @@
                                 <th style="width: 26%; text-align: left;">핵심 요구사항 명세</th>
                                 <th style="width: 8%; text-align: left;" onclick="sortTable('reqTable', 3)" title="클릭하여 정렬">배점 ↕</th>
                                 <th style="width: 14%; text-align: left;" onclick="sortTable('reqTable', 4)" title="클릭하여 정렬">평균 달성도 ↕</th>
+                                <!-- 11번 수정: data-failrate 속성 추가, SpEL 제거 -->
                                 <th style="width: 14%; text-align: left;" onclick="sortTable('reqTable', 5)" title="클릭하여 정렬">달성 미달 빈도 ↕</th>
                                 <th style="width: 11%; text-align: left;">미달 분포</th>
                             </tr>
@@ -236,7 +239,6 @@
                         <tbody>
                             <tr th:each="req : ${stats.requirementList}">
                                 <td style="text-align: left;" th:data-sort-value="${req.probId}" th:text="${req.probId}">#000</td>
-                                <!-- 11번 수정: probId에서 # 제거해서 링크 URL 오염 방지 -->
                                 <td style="font-weight: 500; text-align: left;">
                                     <a th:href="@{/admin/problems/edit/{id}(id=${#strings.replace(req.probId, '#', '')})}"
                                        class="hp-table-link" th:text="${req.title}">문제명</a>
@@ -246,19 +248,16 @@
                                     th:data-sort-value="${req.weight}" th:text="${req.weight} + '점'">0점</td>
                                 <td th:style="|text-align: left; color: ${req.color}; font-weight: 600;|"
                                     th:data-sort-value="${req.avgAchieve}" th:text="${req.avgAchieve}">0%</td>
-                                <!-- 9번 수정: 숫자 변환 후 비교로 오탐 방지 -->
+                                <!-- 11번 수정: data-failrate에 숫자값 저장, JS에서 색상/클래스 처리 -->
                                 <td style="text-align: left; font-weight: 600;"
-                                    th:data-sort-value="${req.failRate}" th:text="${req.failRate}"
-                                    th:classappend="${#numbers.formatDecimal(#strings.replace(req.failRate,'%',''), 1, 0) != null
-                                        and T(java.lang.Double).parseDouble(#strings.replace(req.failRate,'%','')) >= 50}
-                                        ? 'hp-text--danger-highlight' : ''">0%</td>
+                                    th:data-sort-value="${req.failRate}"
+                                    th:data-failrate="${#strings.replace(req.failRate,'%','')}"
+                                    th:text="${req.failRate}">0%</td>
                                 <td>
                                     <div class="hp-progress-bar-bg">
-                                        <!-- 9번 수정: 색상도 동일하게 숫자 비교로 처리 -->
                                         <div class="hp-progress-bar-fill"
-                                            th:style="'width: ' + ${req.failRate} + '; background-color: '
-                                                + (${T(java.lang.Double).parseDouble(#strings.replace(req.failRate,'%',''))} >= 50
-                                                ? '#e74c3c' : ${req.color}) + ';'"></div>
+                                            th:style="'width: ' + ${req.failRate} + ';'"
+                                            th:attr="data-color=${req.color}"></div>
                                     </div>
                                 </td>
                             </tr>
@@ -370,22 +369,35 @@
 
     </main>
 
-    <script>
+<script>
     const sortState = {};
 
     document.addEventListener("DOMContentLoaded", function () {
-        // 1번 수정: 따옴표 불일치 오류 수정
+        // 통과율 계산
         document.querySelectorAll('.hp-pass-rate').forEach(function (td) {
             const hasSub = td.getAttribute('data-has-submissions') === 'true';
             if (!hasSub) { td.textContent = '-'; return; }
-
             const totalNum = parseInt((td.getAttribute('data-total') || '').replace(/[^0-9]/g, ''), 10);
             const passedNum = parseInt((td.getAttribute('data-passed') || '').replace(/[^0-9]/g, ''), 10);
-
             if (!isNaN(totalNum) && totalNum > 0 && !isNaN(passedNum)) {
                 td.textContent = ((passedNum / totalNum) * 100).toFixed(1) + '%';
             } else {
                 td.textContent = '0.0%';
+            }
+        });
+
+        // 11번 수정: failRate 기반 색상/클래스 JS로 처리
+        document.querySelectorAll('#reqTable tbody tr').forEach(function(row) {
+            const failTd = row.querySelector('td[data-failrate]');
+            const barFill = row.querySelector('.hp-progress-bar-fill');
+            if (!failTd) return;
+            const failRate = parseFloat(failTd.getAttribute('data-failrate') || '0');
+            const originalColor = barFill ? barFill.getAttribute('data-color') : null;
+            if (failRate >= 50) {
+                failTd.classList.add('hp-text--danger-highlight');
+                if (barFill) barFill.style.backgroundColor = '#e74c3c';
+            } else {
+                if (barFill && originalColor) barFill.style.backgroundColor = originalColor;
             }
         });
 
@@ -407,13 +419,10 @@
             const aCell = a.cells[colIndex];
             const bCell = b.cells[colIndex];
             if (!aCell || !bCell) return 0;
-
             let aVal = aCell.getAttribute('data-sort-value') ?? aCell.innerText.trim();
             let bVal = bCell.getAttribute('data-sort-value') ?? bCell.innerText.trim();
-
             const aNum = parseFloat(aVal.replace(/[^0-9.\-]/g, ''));
             const bNum = parseFloat(bVal.replace(/[^0-9.\-]/g, ''));
-
             if (!isNaN(aNum) && !isNaN(bNum)) return asc ? aNum - bNum : bNum - aNum;
             return asc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
         });
@@ -441,6 +450,9 @@
         const rows = tbody.querySelectorAll('tr:not([id^="noData-"]):not(.hp-empty-warning)');
         let visibleCount = 0;
 
+        let searchKey = keyword;
+        if (filterType === 'id') searchKey = keyword.replace('#', '');
+
         rows.forEach(row => {
             if (!keyword) { row.style.display = ''; visibleCount++; return; }
 
@@ -450,12 +462,12 @@
             const probId = idMatch ? idMatch[1] : '';
             const totalCount = parseFloat(row.cells[2]?.innerText.replace(/[^0-9]/g, '')) || 0;
             const avgScore = parseFloat(row.cells[6]?.innerText.replace(/[^0-9.]/g, '')) || 0;
-            const inputNum = parseFloat(keyword);
+            const inputNum = parseFloat(searchKey);
 
             let isMatch = false;
-            if (filterType === 'title')          isMatch = titleText.includes(keyword);
-            else if (filterType === 'id')        isMatch = probId.includes(keyword);
-            else if (filterType === 'type')      isMatch = typeText.includes(keyword);
+            if (filterType === 'title')          isMatch = titleText.includes(searchKey);
+            else if (filterType === 'id')        isMatch = probId.includes(searchKey);
+            else if (filterType === 'type')      isMatch = typeText.includes(searchKey);
             else if (filterType === 'count_gte') isMatch = !isNaN(inputNum) && totalCount >= inputNum;
             else if (filterType === 'count_lte') isMatch = !isNaN(inputNum) && totalCount <= inputNum;
             else if (filterType === 'score_gte') isMatch = !isNaN(inputNum) && avgScore >= inputNum;
@@ -480,7 +492,6 @@
         rows.forEach(row => {
             if (row.cells.length < 5) return;
             if (!keyword) { row.style.display = ''; visibleCount++; return; }
-
             const rawProbId = row.cells[0]?.innerText.toLowerCase() ?? '';
             const cleanProbId = rawProbId.replace('#', '');
             const titleText = row.cells[1]?.innerText.toLowerCase() ?? '';
@@ -511,7 +522,6 @@
         rows.forEach(row => {
             if (row.cells.length < 6) return;
             if (!keyword) { row.style.display = ''; visibleCount++; return; }
-
             const rawProbId = row.cells[0]?.innerText.toLowerCase() ?? '';
             const cleanProbId = rawProbId.replace('#', '');
             const titleText = row.cells[1]?.innerText.toLowerCase() ?? '';
@@ -537,12 +547,21 @@
         const selectedType = document.getElementById('tokenTypeFilter').value;
         const inputNum = parseFloat(keyword);
 
+        let searchKey = keyword;
+        if (filterType === 'id') searchKey = keyword.replace('#', '');
+
         document.getElementById(containerId).querySelectorAll('.hp-progress-item').forEach(item => {
-            const rowType = item.getAttribute('data-type');
+            const rowType = item.getAttribute('data-type')?.toUpperCase().trim();
             const typeMatch = (selectedType === 'ALL' || rowType === selectedType);
 
-            if (!typeMatch) { item.style.display = 'none'; return; }
-            if (!keyword) { item.style.display = ''; return; }
+            if (!typeMatch) {
+                item.style.setProperty('display', 'none', 'important');
+                return;
+            }
+            if (!keyword) {
+                item.style.removeProperty('display');
+                return;
+            }
 
             const title = (item.dataset.title || '').toLowerCase();
             const idMatch = item.querySelector('.hp-progress-info a span')?.innerText.match(/#(\d+)/)
@@ -551,20 +570,53 @@
             const tokenVal = parseFloat((item.dataset.token || '0').replace(/[^0-9.]/g, ''));
 
             let isMatch = false;
-            if (filterType === 'title')          isMatch = title.includes(keyword);
-            else if (filterType === 'id')        isMatch = probId.includes(keyword);
+            if (filterType === 'title')          isMatch = title.includes(searchKey);
+            else if (filterType === 'id')        isMatch = probId.includes(searchKey);
             else if (filterType === 'token_gte') isMatch = !isNaN(inputNum) && tokenVal >= inputNum;
             else if (filterType === 'token_lte') isMatch = !isNaN(inputNum) && tokenVal <= inputNum;
 
-            item.style.display = isMatch ? '' : 'none';
+            if (isMatch) {
+                item.style.removeProperty('display');
+            } else {
+                item.style.setProperty('display', 'none', 'important');
+            }
+        });
+
+        updateProgressBarWidths(containerId);
+    }
+
+    function updateProgressBarWidths(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const items = Array.from(container.querySelectorAll('.hp-progress-item'));
+        const visibleItems = items.filter(item => item.style.getPropertyValue('display') !== 'none');
+        if (visibleItems.length === 0) return;
+
+        let maxToken = 0;
+        visibleItems.forEach(item => {
+            const tokenVal = parseFloat((item.dataset.token || '0').replace(/[^0-9.]/g, ''));
+            if (tokenVal > maxToken) maxToken = tokenVal;
+        });
+
+        visibleItems.forEach(item => {
+            const tokenVal = parseFloat((item.dataset.token || '0').replace(/[^0-9.]/g, ''));
+            const barFill = item.querySelector('.hp-progress-bar-fill');
+            if (barFill) {
+                barFill.style.transition = 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+                barFill.style.width = maxToken === 0 ? '0%' : (tokenVal / maxToken * 100) + '%';
+            }
         });
     }
 
-    function sortProgress(containerId, valClass) {
+    function sortProgress(btn, containerId) {
         const container = document.getElementById(containerId);
         const items = Array.from(container.querySelectorAll('.hp-progress-item'));
 
-        sortState[containerId] = !sortState[containerId];
+        if (sortState[containerId] === undefined) {
+            sortState[containerId] = false;
+        } else {
+            sortState[containerId] = !sortState[containerId];
+        }
         const asc = sortState[containerId];
 
         items.sort((a, b) => {
@@ -574,12 +626,9 @@
         });
 
         items.forEach(item => container.appendChild(item));
-        const btn = document.querySelector(`button[onclick="sortProgress('${containerId}', '${valClass}')"]`);
         if (btn) btn.innerText = '토큰 ' + (asc ? '↑' : '↓');
     }
-    </script>
-
+</script>
     <th:block th:replace="~{common/header :: profile-modal-script}"></th:block>
-
 </body>
 </html>
