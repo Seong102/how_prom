@@ -67,11 +67,13 @@ public interface AdminDashboardRepository extends JpaRepository<Submission, Long
     String REQUIREMENT_STATS_QUERY =
             "SELECT r.id, r.problem_id, p.title, r.description, r.weight, " +
             "       COALESCE(AVG(jt.score), 0.0) as avg_achieve, " +
-            "       COALESCE(AVG(100.0 - jt.score), 0.0) as fail_rate " +
+            "       COALESCE((SUM(CASE WHEN jt.score < 50 THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(jt.score), 0)), 0.0) as fail_rate " +
             "FROM requirements r " +
             "JOIN problems p ON p.id = r.problem_id " +
-            "LEFT JOIN submissions sub ON sub.problem_id = r.problem_id " + // INNER -> LEFT JOIN 변경
-            "LEFT JOIN JSON_TABLE(sub.requirements_result, '$[*]' COLUMNS( " + // INNER -> LEFT JOIN 변경
+            "JOIN submissions sub ON sub.problem_id = r.problem_id " +
+            "    AND sub.requirements_result IS NOT NULL " +
+            "    AND sub.status IN ('PASSED', 'FAILED') " +
+            "JOIN JSON_TABLE(sub.requirements_result, '$[*]' COLUMNS( " +
             "    req_id BIGINT PATH '$.id', " +
             "    score INT PATH '$.score' " +
             ")) AS jt ON jt.req_id = r.id " +
