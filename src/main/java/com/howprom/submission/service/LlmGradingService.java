@@ -97,8 +97,8 @@ public class LlmGradingService {
 
         WebClient client = webClientBuilder
                 .baseUrl("https://generativelanguage.googleapis.com")
-                .codecs(c -> c.defaultCodecs().maxInMemorySize(2 * 1024 * 1024))
-                .build();
+                .codecs(c -> c.defaultCodecs().maxInMemorySize(16 * 1024 * 1024))
+                .build();	
 
         // 5. 1회 시도 + 실패 시 재시도 1회
         for (int attempt = 1; attempt <= 2; attempt++) {
