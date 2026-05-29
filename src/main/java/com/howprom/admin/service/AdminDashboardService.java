@@ -105,15 +105,16 @@ public class AdminDashboardService {
         if (rawReqs != null && !rawReqs.isEmpty()) {
             int colorIdx = 0;
             for (Object[] row : rawReqs) {
-                // 2번 수정: SELECT에 r.id 추가됐으므로 인덱스 한 칸씩 밀림
                 // row[0]:r.id, row[1]:problem_id, row[2]:title, row[3]:description
-                // row[4]:weight, row[5]:avg_achieve, row[6]:fail_rate
+                // row[4]:weight, row[5]:avg_achieve, row[6]:fail_rate (레포지토리 수정으로 평균 감점 점수가 넘어옴)
                 String probId = row[1] != null ? "#" + row[1].toString() : "#0";
                 String title = row[2] != null ? (String) row[2] : "알 수 없는 문제";
                 String description = row[3] != null ? (String) row[3] : "요구사항 명세가 없습니다.";
                 Integer weight = row[4] != null ? ((Number) row[4]).intValue() : 0;
                 double avgAchieve = row[5] != null ? ((Number) row[5]).doubleValue() : 0.0;
-                double failRate = row[6] != null ? ((Number) row[6]).doubleValue() : 0.0;
+                
+                // SQL에서 넘어온 평균 감점 값 수집 (의미 전달을 위해 변수명만 avgDeduction으로 명시)
+                double avgDeduction = row[6] != null ? ((Number) row[6]).doubleValue() : 0.0;
 
                 requirementList.add(AdminDashboardDTO.RequirementAnalysisDTO.builder()
                         .probId(probId)
@@ -121,7 +122,10 @@ public class AdminDashboardService {
                         .description(description)
                         .weight(weight)
                         .avgAchieve(String.format("%.1f%%", avgAchieve))
-                        .failRate(String.format("%.1f%%", failRate))
+                        
+                        // 🌟 기존의 "%.1f%%" 포맷을 "%.1f점"으로 변경하여 평균 감점 수치로 표현
+                        .failRate(String.format("%.1f점", avgDeduction))
+                        
                         .color(EXTENDED_COLORS[colorIdx++ % EXTENDED_COLORS.length])
                         .build());
             }
@@ -159,7 +163,6 @@ public class AdminDashboardService {
         List<AdminDashboardDTO.EfficiencyChartDTO> result = new ArrayList<>();
         if (rawStats == null || rawStats.isEmpty()) return result;
 
-        // 3번 수정: null 방어 추가
         double maxTokens = rawStats.stream()
                 .mapToDouble(row -> row[3] != null ? ((Number) row[3]).doubleValue() : 0.0)
                 .max().orElse(0.0);
@@ -169,9 +172,8 @@ public class AdminDashboardService {
             Long id = row[0] != null ? ((Number) row[0]).longValue() : null;
             String title = row[1] != null ? (String) row[1] : "-";
             String evalType = row[2] != null ? row[2].toString() : "STANDARD";
-            // 3번 수정: null 안전 처리
             Double avgUserTokens = row[3] != null ? ((Number) row[3]).doubleValue() : 0.0;
-            if (avgUserTokens <= 0) continue; // 0이하 항목 제외
+            if (avgUserTokens <= 0) continue;
 
             String barWidth = maxTokens > 0 ? (int)((avgUserTokens / maxTokens) * 100) + "%" : "0%";
             String color = EXTENDED_COLORS[colorIdx % EXTENDED_COLORS.length];

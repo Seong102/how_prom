@@ -16,7 +16,6 @@
             <h1 class="hp-page-header__title">
                 관리자 대시보드 <span class="hp-admin-badge">Admin</span>
             </h1>
-            <p class="hp-page-header__subtitle">플랫폼의 가동 현황, 콘텐츠 품질 지표 및 유저 행동 분석 데이터를 실시간으로 모니터링합니다.</p>
         </div>
 
         <div th:replace="~{admin/adminSubNav :: subNav('dashboard')}"></div>
@@ -211,7 +210,7 @@
         </div>
 
         <div class="hp-card hp-card--full-width">
-            <div class="hp-card__header">요구사항별 달성률 · 자주 감점되는 취약 조건 분석</div>
+            <div class="hp-card__header">요구사항별 평균 달성도 · 평균 감점 폭 분석</div>
             <div class="hp-search-bar">
                 <select id="filterReq" class="hp-sort-btn">
                     <option value="title">문제명</option>
@@ -229,11 +228,10 @@
                                 <th style="width: 9%; text-align: left;" onclick="sortTable('reqTable', 0)" title="클릭하여 정렬">문제 번호 ↕</th>
                                 <th style="width: 18%; text-align: left;" onclick="sortTable('reqTable', 1)" title="클릭하여 정렬">문제명 ↕</th>
                                 <th style="width: 26%; text-align: left;">핵심 요구사항 명세</th>
-                                <th style="width: 8%; text-align: left;" onclick="sortTable('reqTable', 3)" title="클릭하여 정렬">배점 ↕</th>
+                                <th style="width: 8%; text-align: left;" onclick="sortTable('reqTable', 3)" title="클릭하여 정렬">가중치 ↕</th>
                                 <th style="width: 14%; text-align: left;" onclick="sortTable('reqTable', 4)" title="클릭하여 정렬">평균 달성도 ↕</th>
-                                <!-- 11번 수정: data-failrate 속성 추가, SpEL 제거 -->
-                                <th style="width: 14%; text-align: left;" onclick="sortTable('reqTable', 5)" title="클릭하여 정렬">달성 미달 빈도 ↕</th>
-                                <th style="width: 11%; text-align: left;">미달 분포</th>
+                                <th style="width: 14%; text-align: left;" onclick="sortTable('reqTable', 5)" title="클릭하여 정렬">평균 감점 폭 ↕</th>
+                                <th style="width: 11%; text-align: left;">감점 비중</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -248,15 +246,14 @@
                                     th:data-sort-value="${req.weight}" th:text="${req.weight} + '점'">0점</td>
                                 <td th:style="|text-align: left; color: ${req.color}; font-weight: 600;|"
                                     th:data-sort-value="${req.avgAchieve}" th:text="${req.avgAchieve}">0%</td>
-                                <!-- 11번 수정: data-failrate에 숫자값 저장, JS에서 색상/클래스 처리 -->
-                                <td style="text-align: left; font-weight: 600;"
-                                    th:data-sort-value="${req.failRate}"
-                                    th:data-failrate="${#strings.replace(req.failRate,'%','')}"
-                                    th:text="${req.failRate}">0%</td>
+                                <td style="text-align: left; font-weight: 600; color: #E74C3C;"
+                                    th:data-sort-value="${#strings.replace(req.failRate,'점','')}"
+                                    th:data-failrate="${#strings.replace(req.failRate,'점','')}"
+                                    th:text="${req.failRate}">0점</td>
                                 <td>
                                     <div class="hp-progress-bar-bg">
                                         <div class="hp-progress-bar-fill"
-                                            th:style="'width: ' + ${req.failRate} + ';'"
+                                            th:style="'width: ' + ${#strings.replace(req.failRate, '점', '%')} + ';'"
                                             th:attr="data-color=${req.color}"></div>
                                     </div>
                                 </td>
@@ -386,14 +383,17 @@
             }
         });
 
-        // 11번 수정: failRate 기반 색상/클래스 JS로 처리
+        // 🌟 요구사항 분석 탭 후처리 (평균 감점 폭 기준 위험 클래스 및 바 디자인 지정)
         document.querySelectorAll('#reqTable tbody tr').forEach(function(row) {
             const failTd = row.querySelector('td[data-failrate]');
             const barFill = row.querySelector('.hp-progress-bar-fill');
             if (!failTd) return;
+            
             const failRate = parseFloat(failTd.getAttribute('data-failrate') || '0');
             const originalColor = barFill ? barFill.getAttribute('data-color') : null;
-            if (failRate >= 50) {
+            
+            // 🌟 기준 조정: 100점 중 '25점' 이상 감점 발생 시 하이라이트 경고 처리
+            if (failRate >= 25) {
                 failTd.classList.add('hp-text--danger-highlight');
                 if (barFill) barFill.style.backgroundColor = '#e74c3c';
             } else {
@@ -402,6 +402,14 @@
         });
 
         sortTable('topScoreTable', 0);
+        
+        // 🌟 초기 정렬 최적화: 요구사항 대시보드 테이블을 '평균 감점 폭(5번 인덱스)' 기준 내림차순(DESC)으로 1차 배치
+        // (sortTable 함수가 호출되면서 내림차순 정렬 상태로 정돈됨)
+        sortTable('reqTable', 5); 
+        if(sortState['reqTable5'] === true) { // 만약 오름차순으로 잡혔다면 한 번 더 토글해서 확실한 내림차순(가장 취약한 항목 상단) 유도
+            sortTable('reqTable', 5);
+        }
+
         searchProgressAdvanced('searchEfficiency', 'filterEfficiency', 'efficiencyList');
     });
 
