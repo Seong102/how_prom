@@ -1,115 +1,209 @@
+@charset "UTF-8";
 
-    /* 이미지 UI와 동일하게 맞추기 위한 핵심 스타일 정의 */
 body {
-    background-color: #f9fafb;
-    color: #1f2937;
-}
-.proto-wrap {
-    max-width: 1200px;
-    margin-top: 2rem;
-}
-.app-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #f3f4f6;
-}
-.app-logo {
-    font-size: 24px;
-    font-weight: bold;
-    color: #3b82f6;
-}
-.app-logo span {
-    color: #10b981;
-}
-.app-nav a {
-    margin: 0 15px;
-    text-decoration: none;
-    color: #4b5563;
-    font-weight: 500;
-}
-.app-nav a.active {
-    color: #6366f1;
-    font-weight: bold;
-}
-.avatar {
-    background-color: #e0e7ff;
-    color: #4f46e5;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-weight: bold;
-    font-size: 14px;
-}
-.screen-body {
-    background-color: #ffffff;
-    border-radius: 12px;
-    border: 1px solid #f3f4f6;
-}
-.section-title {
-    font-size: 18px;
-    font-weight: bold;
-    color: #4b5563;
-    margin-bottom: 1.5rem;
+    min-height: 100vh;
+    background-color: #FAFBFC;
 }
 
-/* 테이블 스타일 커스텀 */
-.my-table {
+.page-header {
+    background: #ffffff;
+    border-bottom: 1px solid #EAECEF;
+    padding: 32px 0;
+}
+
+.page-header__inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 32px;
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1A1A1A;
+    letter-spacing: -0.5px;
+}
+
+.page-subtitle {
+    font-size: 14px;
+    color: #999999;
+    margin-top: 6px;
+}
+
+.page-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 32px 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ── 02. 통계 카드 (admin.css hp-stat-card 기준) ── */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.stat-card {
+    background-color: #ffffff;
+    border: 1px solid #EAECEF;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    padding: 24px 28px;
+    transition: all 0.2s ease-in-out;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
+}
+
+.stat-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666666;
+    margin-bottom: 14px;
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: 800;
+    color: #6342E7;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+}
+
+/* ── 03. 테이블 컨테이너 (admin.css hp-card 기준) ── */
+.table-card {
+    background-color: #ffffff;
+    border: 1px solid #EAECEF;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    overflow: hidden;
+}
+
+.table-card__head {
+    padding: 20px 24px;
+    border-bottom: 1px solid #EAECEF;
+    background-color: #ffffff;
+}
+
+.sec-label {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1A1A1A;
+}
+
+/* ── 04. 데이터 테이블 (admin.css hp-table 기준) ── */
+.sub-table {
     width: 100%;
     border-collapse: collapse;
+    font-size: 13px;
 }
-.my-table th {
-    padding: 12px 16px;
-    color: #9ca3af;
-    font-weight: 500;
-    border-bottom: 1px solid #f3f4f6;
-    font-size: 14px;
+
+.sub-table thead th {
+    padding: 14px 16px;
+    background-color: #FAFBFC;
+    border-bottom: 1px solid #EAECEF;
+    font-size: 12px;
+    font-weight: 600;
+    color: #999999;
 }
-.my-table td {
-    padding: 16px;
-    border-bottom: 1px solid #f3f4f6;
-    font-size: 15px;
+
+.sub-table thead th:first-child { text-align: left; }
+.sub-table thead th:not(:first-child) { text-align: center; }
+
+.sub-table tbody tr {
+    border-bottom: 1px solid #EAECEF;
+    transition: background 0.15s;
+}
+
+.sub-table tbody tr:last-child { border-bottom: none; }
+.sub-table tbody tr:hover { background-color: #FAFBFC; }
+
+.sub-table tbody td {
+    padding: 14px 16px;
+    color: #1A1A1A;
     vertical-align: middle;
 }
-.my-table tbody tr {
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-.my-table tbody tr:hover {
-    background-color: #f9fafb;
-}
 
-/* 정렬 규칙 정의 */
-.text-left { text-align: left; }
-.text-center { text-align: center; }
+.sub-table tbody td:first-child { font-weight: 500; }
+.sub-table tbody td:not(:first-child) { text-align: center; }
 
-/* 모드별 배지 디자인 */
-.badge-custom {
+.muted-cell { color: #999999 !important; }
+.score-cell { font-weight: 700 !important; color: #6342E7 !important; }
+.empty-row { text-align: center; padding: 32px 0 !important; color: #999999; font-size: 13px; }
+
+/* ── 05. 상태 및 평가 뱃지 (admin.css hp-badge 기준) ── */
+.eval-badge, .status-badge {
     display: inline-block;
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: bold;
-    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
 }
-.badge-violet { background-color: #eef2ff; color: #4f46e5; }
-.badge-green { background-color: #f0fdf4; color: #16a34a; }
-.badge-amber { background-color: #fefbc3; color: #ca8a04; }
 
-/* 점수 및 상태 스타일 */
-.score-text {
-    font-weight: 800;
-    color: #1f2937;
+.ev-standard  { background-color: rgba(74, 144, 226, 0.12); color: #4A90E2; }
+.ev-efficiency{ background-color: rgba(40, 167, 69, 0.12); color: #28a745; }
+.ev-budget    { background-color: rgba(226, 161, 52, 0.12); color: #E2A134; }
+
+.badge-passed  { background-color: rgba(40, 167, 69, 0.12); color: #28a745; }
+.badge-failed  { background-color: rgba(226, 161, 52, 0.12); color: #E2A134; }
+.badge-error   { color: #dc3545; font-weight: 700; }
+.badge-grading { background-color: #FAFBFC; border: 1px solid #EAECEF; color: #999999; }
+
+/* ── 06. 페이지네이션 ── */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    padding: 20px;
+    border-top: 1px solid #EAECEF;
+    background-color: #ffffff;
 }
-.status-pass {
-    color: #16a34a;
-    font-weight: bold;
-}
-.status-fail {
-    color: #dc2626;
-    font-weight: bold;
-}
-.table-caption {
-    color: #9ca3af;
+
+.page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid #EAECEF;
+    border-radius: 8px;
     font-size: 13px;
+    font-weight: 600;
+    color: #666666;
+    background: #FAFBFC;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease-in-out;
+}
+
+.page-btn:hover:not(.disabled):not(.active) {
+    background-color: #6342E7;
+    border-color: #6342E7;
+    color: #ffffff;
+}
+.page-btn.active {
+    background-color: #6342E7;
+    border-color: #6342E7;
+    color: #ffffff;
+}
+.page-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ── 07. 반응형 제어 ── */
+@media (max-width: 1024px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+    .stats-row { grid-template-columns: 1fr; }
 }
