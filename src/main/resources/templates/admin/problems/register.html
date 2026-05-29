@@ -120,6 +120,23 @@
         const form = document.getElementById('problemForm');
         if (form) {
             form.addEventListener('submit', function(e) {
+                // 🚨 [추가된 유효성 검사] 예산 최적화 모드 시 토큰량 필수 체크
+                const evalType = document.querySelector('select[name="evaluationType"]').value;
+                const tokenLimitInput = document.querySelector('input[name="tokenLimit"]');
+                const tokenLimit = tokenLimitInput ? tokenLimitInput.value.trim() : "";
+
+                if (evalType === 'BUDGET') {
+                    if (!tokenLimit || Number(tokenLimit) <= 0) {
+                        e.preventDefault(); // 폼 전송(페이지 이동) 강제 차단
+                        alert("예산 최적화 모드에서는 토큰 제한량을 반드시 입력해야 합니다.");
+                        if (tokenLimitInput) {
+                            tokenLimitInput.focus(); // 입력창으로 커서 자동 이동
+                        }
+                        return;
+                    }
+                }
+
+                // 기존 배점 합계 검사 로직
                 let total = 0;
                 document.querySelectorAll('.hp-weight').forEach(i => total += Math.round(Number(i.value) || 0));
                 

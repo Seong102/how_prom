@@ -71,6 +71,13 @@ public class AdminProblemService {
 
         EvaluationType evalType = EvaluationType.valueOf(dto.getEvaluationType());
 
+        // 🚨 [검증 추가] 예산 최적화 모드 시 토큰 제한량 유효성 체크
+        if (EvaluationType.BUDGET.equals(evalType)) { // ※ 프로젝트의 실제 Enum 항목명으로 매칭 필요
+            if (dto.getTokenLimit() == null || dto.getTokenLimit() <= 0) {
+                throw new IllegalArgumentException("예산 최적화 모드에서는 토큰 제한량을 반드시 입력해야 합니다.");
+            }
+        }
+
         float correctness = 1.0f;
         float efficiency = 0.0f;
 
@@ -133,6 +140,13 @@ public class AdminProblemService {
         }
 
         EvaluationType evalType = EvaluationType.valueOf(dto.getEvaluationType());
+
+        // 🚨 [검증 추가] 예산 최적화 모드 시 토큰 제한량 유효성 체크
+        if (EvaluationType.BUDGET.equals(evalType)) { // ※ 프로젝트의 실제 Enum 항목명으로 매칭 필요
+            if (dto.getTokenLimit() == null || dto.getTokenLimit() <= 0) {
+                throw new IllegalArgumentException("예산 최적화 모드에서는 토큰 제한량을 반드시 입력해야 합니다.");
+            }
+        }
 
         problem.setTitle(dto.getTitle());
         problem.setDescription(dto.getDescription());
