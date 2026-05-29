@@ -101,12 +101,22 @@
         <div class="hp-dashboard-row hp-dashboard-row--stats">
 
             <div class="hp-card">
-                <div class="hp-card__header">문제별 종합 통계 현황</div>
+                <div class="hp-card__header">
+                    <span>문제별 종합 통계 현황</span>
+                    <!-- 1번: 평가 유형 필터 드롭다운 (유형 정렬 기능 대체) -->
+                    <select id="problemTypeFilter"
+                        onchange="searchTableAdvanced('searchProblem', 'filterProblem', 'problemStatsTable')"
+                        class="hp-sort-btn hp-sort-btn--filter">
+                        <option value="ALL">모든 유형 보기</option>
+                        <option value="STANDARD">STANDARD</option>
+                        <option value="EFFICIENCY">EFFICIENCY</option>
+                        <option value="BUDGET">BUDGET</option>
+                    </select>
+                </div>
                 <div class="hp-search-bar">
                     <select id="filterProblem" class="hp-sort-btn">
                         <option value="title">문제명</option>
                         <option value="id">문제번호</option>
-                        <option value="type">평가 유형</option>
                         <option value="count_gte">총 제출 (이상)</option>
                         <option value="count_lte">총 제출 (이하)</option>
                         <option value="score_gte">평균 점수 (이상)</option>
@@ -121,7 +131,8 @@
                             <thead>
                                 <tr>
                                     <th style="width: 24%; text-align: left; white-space: nowrap;" onclick="sortTable('problemStatsTable', 0)" title="클릭하여 정렬">문제명 ↕</th>
-                                    <th style="width: 12%; text-align: center; white-space: nowrap;" onclick="sortTable('problemStatsTable', 1)" title="클릭하여 정렬">유형 ↕</th>
+                                    <!-- 1번: 유형 컬럼 onclick 정렬 제거 -->
+                                    <th style="width: 12%; text-align: center; white-space: nowrap;">유형</th>
                                     <th style="width: 11%; text-align: center; white-space: nowrap;" onclick="sortTable('problemStatsTable', 2)" title="클릭하여 정렬">총 제출 ↕</th>
                                     <th style="width: 13%; text-align: center; white-space: nowrap;" onclick="sortTable('problemStatsTable', 3)" title="클릭하여 정렬">정상 통과 ↕</th>
                                     <th style="width: 13%; text-align: center; white-space: nowrap;" onclick="sortTable('problemStatsTable', 4)" title="클릭하여 정렬">제출 실패 ↕</th>
@@ -169,7 +180,9 @@
             <div class="hp-card">
                 <div class="hp-card__header">
                     <span>유형별 평균 토큰 현황</span>
-                    <select id="tokenTypeFilter" onchange="searchProgressAdvanced('searchEfficiency', 'filterEfficiency', 'efficiencyList')" class="hp-sort-btn hp-sort-btn--filter">
+                    <select id="tokenTypeFilter"
+                        onchange="searchProgressAdvanced('searchEfficiency', 'filterEfficiency', 'efficiencyList')"
+                        class="hp-sort-btn hp-sort-btn--filter">
                         <option value="ALL">모든 모드 보기</option>
                         <option value="EFFICIENCY">EFFICIENCY 모드</option>
                         <option value="STANDARD">STANDARD 모드</option>
@@ -273,21 +286,25 @@
         <div class="hp-dashboard-row hp-dashboard-row--recent">
 
             <div class="hp-card">
+                <!-- 2번: 문제 번호 컬럼 포함 -->
                 <div class="hp-card__header">최근 제출 현황 (최근 10건)</div>
                 <div class="hp-card__body hp-card__body--nopadding">
                     <div class="hp-table-scroll">
                         <table class="hp-table" id="recentTable">
                             <thead>
                                 <tr>
-                                    <th style="width: 20%; text-align: left;">닉네임</th>
-                                    <th style="width: 30%; text-align: left;">문제명</th>
-                                    <th style="width: 12%; text-align: left;">점수</th>
-                                    <th style="width: 15%; text-align: left;">상태</th>
-                                    <th style="width: 23%; text-align: left;">제출 시각</th>
+                                    <th style="width: 14%; text-align: left;">문제 번호</th>
+                                    <th style="width: 18%; text-align: left;">닉네임</th>
+                                    <th style="width: 28%; text-align: left;">문제명</th>
+                                    <th style="width: 10%; text-align: left;">점수</th>
+                                    <th style="width: 12%; text-align: left;">상태</th>
+                                    <th style="width: 18%; text-align: left;">제출 시각</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr th:each="sub : ${stats.recentSubmissionList}">
+                                    <td style="text-align: left; font-weight: 600; color: var(--hp-primary);"
+                                        th:text="'#' + ${sub.problemId}">#0</td>
                                     <td style="text-align: left;" th:text="${sub.nickname}">닉네임</td>
                                     <td style="text-align: left;">
                                         <a th:href="@{/admin/problems/edit/{id}(id=${sub.problemId})}"
@@ -299,10 +316,11 @@
                                         <span th:if="${sub.status == 'FAILED'}" class="hp-badge hp-badge--budget">FAILED</span>
                                         <span th:if="${sub.status == 'ERROR'}" class="hp-text--error-status">ERROR</span>
                                     </td>
-                                    <td style="text-align: left; color: var(--hp-text-muted); font-size: 12px;" th:text="${sub.submittedAt}">2026.01.01 00:00</td>
+                                    <td style="text-align: left; color: var(--hp-text-muted); font-size: 12px;"
+                                        th:text="${sub.submittedAt}">2026.01.01 00:00</td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(stats.recentSubmissionList)}">
-                                    <td colspan="5" style="text-align: left; color: var(--hp-text-muted); padding: 32px 0;">제출 이력이 없습니다.</td>
+                                    <td colspan="6" style="text-align: left; color: var(--hp-text-muted); padding: 32px 0;">제출 이력이 없습니다.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -383,16 +401,13 @@
             }
         });
 
-        // 🌟 요구사항 분석 탭 후처리 (평균 감점 폭 기준 위험 클래스 및 바 디자인 지정)
+        // 요구사항 감점 폭 색상 처리
         document.querySelectorAll('#reqTable tbody tr').forEach(function(row) {
             const failTd = row.querySelector('td[data-failrate]');
             const barFill = row.querySelector('.hp-progress-bar-fill');
             if (!failTd) return;
-            
             const failRate = parseFloat(failTd.getAttribute('data-failrate') || '0');
             const originalColor = barFill ? barFill.getAttribute('data-color') : null;
-            
-            // 🌟 기준 조정: 100점 중 '25점' 이상 감점 발생 시 하이라이트 경고 처리
             if (failRate >= 25) {
                 failTd.classList.add('hp-text--danger-highlight');
                 if (barFill) barFill.style.backgroundColor = '#e74c3c';
@@ -402,11 +417,10 @@
         });
 
         sortTable('topScoreTable', 0);
-        
-        // 🌟 초기 정렬 최적화: 요구사항 대시보드 테이블을 '평균 감점 폭(5번 인덱스)' 기준 내림차순(DESC)으로 1차 배치
-        // (sortTable 함수가 호출되면서 내림차순 정렬 상태로 정돈됨)
-        sortTable('reqTable', 5); 
-        if(sortState['reqTable5'] === true) { // 만약 오름차순으로 잡혔다면 한 번 더 토글해서 확실한 내림차순(가장 취약한 항목 상단) 유도
+
+        // reqTable 초기 정렬: 감점 폭 내림차순
+        sortTable('reqTable', 5);
+        if (sortState['reqTable5'] === true) {
             sortTable('reqTable', 5);
         }
 
@@ -451,9 +465,13 @@
         });
     }
 
+    // 1번: problemTypeFilter 연동 포함
     function searchTableAdvanced(inputId, filterId, tableId) {
         const keyword = document.getElementById(inputId).value.toLowerCase().trim();
         const filterType = document.getElementById(filterId).value;
+        const typeSelect = document.getElementById('problemTypeFilter');
+        const selectedType = typeSelect ? typeSelect.value : 'ALL';
+
         const tbody = document.getElementById(tableId).querySelector('tbody');
         const rows = tbody.querySelectorAll('tr:not([id^="noData-"]):not(.hp-empty-warning)');
         let visibleCount = 0;
@@ -462,10 +480,15 @@
         if (filterType === 'id') searchKey = keyword.replace('#', '');
 
         rows.forEach(row => {
+            // 유형 필터 먼저 체크
+            const typeText = row.cells[1]?.innerText.toUpperCase().trim() ?? '';
+            const isTypeMatch = (selectedType === 'ALL' || typeText === selectedType);
+            if (!isTypeMatch) { row.style.display = 'none'; return; }
+
+            // 키워드 없으면 통과
             if (!keyword) { row.style.display = ''; visibleCount++; return; }
 
             const titleText = row.cells[0]?.innerText.toLowerCase() ?? '';
-            const typeText  = row.cells[1]?.innerText.toLowerCase() ?? '';
             const idMatch = titleText.match(/#(\d+)/);
             const probId = idMatch ? idMatch[1] : '';
             const totalCount = parseFloat(row.cells[2]?.innerText.replace(/[^0-9]/g, '')) || 0;
@@ -475,7 +498,6 @@
             let isMatch = false;
             if (filterType === 'title')          isMatch = titleText.includes(searchKey);
             else if (filterType === 'id')        isMatch = probId.includes(searchKey);
-            else if (filterType === 'type')      isMatch = typeText.includes(searchKey);
             else if (filterType === 'count_gte') isMatch = !isNaN(inputNum) && totalCount >= inputNum;
             else if (filterType === 'count_lte') isMatch = !isNaN(inputNum) && totalCount <= inputNum;
             else if (filterType === 'score_gte') isMatch = !isNaN(inputNum) && avgScore >= inputNum;
@@ -562,14 +584,8 @@
             const rowType = item.getAttribute('data-type')?.toUpperCase().trim();
             const typeMatch = (selectedType === 'ALL' || rowType === selectedType);
 
-            if (!typeMatch) {
-                item.style.setProperty('display', 'none', 'important');
-                return;
-            }
-            if (!keyword) {
-                item.style.removeProperty('display');
-                return;
-            }
+            if (!typeMatch) { item.style.setProperty('display', 'none', 'important'); return; }
+            if (!keyword) { item.style.removeProperty('display'); return; }
 
             const title = (item.dataset.title || '').toLowerCase();
             const idMatch = item.querySelector('.hp-progress-info a span')?.innerText.match(/#(\d+)/)
@@ -583,11 +599,8 @@
             else if (filterType === 'token_gte') isMatch = !isNaN(inputNum) && tokenVal >= inputNum;
             else if (filterType === 'token_lte') isMatch = !isNaN(inputNum) && tokenVal <= inputNum;
 
-            if (isMatch) {
-                item.style.removeProperty('display');
-            } else {
-                item.style.setProperty('display', 'none', 'important');
-            }
+            if (isMatch) { item.style.removeProperty('display'); }
+            else { item.style.setProperty('display', 'none', 'important'); }
         });
 
         updateProgressBarWidths(containerId);
@@ -637,6 +650,7 @@
         if (btn) btn.innerText = '토큰 ' + (asc ? '↑' : '↓');
     }
 </script>
+
     <th:block th:replace="~{common/header :: profile-modal-script}"></th:block>
 </body>
 </html>

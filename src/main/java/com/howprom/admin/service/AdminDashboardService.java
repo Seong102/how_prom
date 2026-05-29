@@ -13,6 +13,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 @Service
 @RequiredArgsConstructor
@@ -49,8 +51,10 @@ public class AdminDashboardService {
 
         List<Object[]> rawProblems = adminDashboardRepository.findProblemTableStatsRaw();
         List<AdminDashboardDTO.ProblemTableDTO> problemList = new ArrayList<>();
+        
+        // 🌟 [요구사항 3] 제출 이력이 존재하는 문제의 ID를 담을 Set 선언
+        Set<Long> solvedProblemIds = new HashSet<>();
 
-        // 9번 수정: 초기값 "-" 로 변경
         String hardestProblemTitle = "-";
         String hardestProblemPassRate = "-";
         String easiestProblemTitle = "-";
@@ -66,6 +70,11 @@ public class AdminDashboardService {
             long failed = row[6] != null ? ((Number) row[6]).longValue() : 0L;
             long error = row[7] != null ? ((Number) row[7]).longValue() : 0L;
             boolean hasSub = totalCount > 0;
+
+            // 제출 건수가 1건 이상 존재하는 문제 ID 저장
+            if (hasSub && row[0] != null) {
+                solvedProblemIds.add(((Number) row[0]).longValue());
+            }
 
             problemList.add(AdminDashboardDTO.ProblemTableDTO.builder()
                     .id(row[0] != null ? ((Number) row[0]).longValue() : null)
@@ -105,15 +114,18 @@ public class AdminDashboardService {
         if (rawReqs != null && !rawReqs.isEmpty()) {
             int colorIdx = 0;
             for (Object[] row : rawReqs) {
-                // row[0]:r.id, row[1]:problem_id, row[2]:title, row[3]:description
-                // row[4]:weight, row[5]:avg_achieve, row[6]:fail_rate (레포지토리 수정으로 평균 감점 점수가 넘어옴)
-                String probId = row[1] != null ? "#" + row[1].toString() : "#0";
+                Long probIdLong = row[1] != null ? ((Number) row[1]).longValue() : null;
+                
+                // 🌟 [요구사항 3] 아무도 푼 적이 없는 문제(제출 건수 0)의 요구사항은 화면에 뿌리지 않고 제외(Skip)
+                if (probIdLong == null || !solvedProblemIds.contains(probIdLong)) {
+                    continue;
+                }
+
+                String probId = "#" + probIdLong;
                 String title = row[2] != null ? (String) row[2] : "알 수 없는 문제";
                 String description = row[3] != null ? (String) row[3] : "요구사항 명세가 없습니다.";
                 Integer weight = row[4] != null ? ((Number) row[4]).intValue() : 0;
                 double avgAchieve = row[5] != null ? ((Number) row[5]).doubleValue() : 0.0;
-                
-                // SQL에서 넘어온 평균 감점 값 수집 (의미 전달을 위해 변수명만 avgDeduction으로 명시)
                 double avgDeduction = row[6] != null ? ((Number) row[6]).doubleValue() : 0.0;
 
                 requirementList.add(AdminDashboardDTO.RequirementAnalysisDTO.builder()
@@ -122,10 +134,7 @@ public class AdminDashboardService {
                         .description(description)
                         .weight(weight)
                         .avgAchieve(String.format("%.1f%%", avgAchieve))
-                        
-                        // 🌟 기존의 "%.1f%%" 포맷을 "%.1f점"으로 변경하여 평균 감점 수치로 표현
                         .failRate(String.format("%.1f점", avgDeduction))
-                        
                         .color(EXTENDED_COLORS[colorIdx++ % EXTENDED_COLORS.length])
                         .build());
             }
@@ -196,7 +205,7 @@ public class AdminDashboardService {
         List<AdminDashboardDTO.RecentSubmissionDTO> result = new ArrayList<>();
 
         for (Object[] row : raw) {
-            Long problemId = row[0] != null ? ((Number) row[0]).longValue() : null;
+            Long problemId = row[0] != null ? ((Number) row[0]).longValue() : null; // 🌟 이미 정상 매핑 중
             String nickname = row[1] != null ? (String) row[1] : "-";
             String problemTitle = row[2] != null ? (String) row[2] : "-";
             Integer score = row[3] != null ? ((Number) row[3]).intValue() : 0;
