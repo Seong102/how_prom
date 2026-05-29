@@ -120,17 +120,23 @@
         const form = document.getElementById('problemForm');
         if (form) {
             form.addEventListener('submit', function(e) {
-                // 🚨 [추가된 유효성 검사] 예산 최적화 모드 시 토큰량 필수 체크
                 const evalType = document.querySelector('select[name="evaluationType"]').value;
                 const tokenLimitInput = document.querySelector('input[name="tokenLimit"]');
-                const tokenLimit = tokenLimitInput ? tokenLimitInput.value.trim() : "";
+                const tokenLimitRaw = tokenLimitInput ? tokenLimitInput.value.trim() : "";
 
                 if (evalType === 'BUDGET') {
-                    if (!tokenLimit || Number(tokenLimit) <= 0) {
-                        e.preventDefault(); // 폼 전송(페이지 이동) 강제 차단
-                        alert("예산 최적화 모드에서는 토큰 제한량을 반드시 입력해야 합니다.");
+                    const tokenNum = Number(tokenLimitRaw);
+                    
+                    // 🚨 [강화된 정밀 숫자 검증]
+                    // 1. 값이 아예 없거나 공백인 경우
+                    // 2. 숫자가 아닌 문자가 섞인 경우 (isNaN)
+                    // 3. 0 이하의 값인 경우
+                    // 4. 소수점이 포함된 실수인 경우 (토큰은 무조건 자연수 정수형태)
+                    if (!tokenLimitRaw || isNaN(tokenNum) || tokenNum <= 0 || !Number.isInteger(tokenNum)) {
+                        e.preventDefault(); // 폼 제출 전면 차단
+                        alert("예산 최적화 모드에서는 최대 토큰 제한량을 올바른 숫자(1 이상의 정수)로 입력해야 합니다.");
                         if (tokenLimitInput) {
-                            tokenLimitInput.focus(); // 입력창으로 커서 자동 이동
+                            tokenLimitInput.focus();
                         }
                         return;
                     }
