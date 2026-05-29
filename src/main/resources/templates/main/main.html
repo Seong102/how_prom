@@ -49,7 +49,7 @@
                         <span class="hp-continue__status"
                               th:switch="${continueProblem.lastStatus}">
                             <span th:case="'GRADING'">채점 중</span>
-                            <span th:case="'FAILED'">컴파일 실패 · 재도전 가능</span>
+                            <span th:case="'FAILED'">조건 미충족(60점 이하) · 재도전 가능</span>
                             <span th:case="'ERROR'">시스템 오류 · 다시 시도</span>
                         </span>
                     </div>
