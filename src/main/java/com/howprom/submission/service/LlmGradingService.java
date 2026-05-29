@@ -91,9 +91,10 @@ public class LlmGradingService {
 
         Map<String, Object> body = new HashMap<>();
         body.put("model", geminiModel);
-        body.put("max_completion_tokens", 2048);
+        body.put("max_completion_tokens", 16384);
         body.put("messages", messages);
         body.put("temperature", 0.0);   /* 채점은 결정적으로 */
+        body.put("response_format", Map.of("type", "json_object"));
 
         WebClient client = webClientBuilder
                 .baseUrl("https://generativelanguage.googleapis.com")
