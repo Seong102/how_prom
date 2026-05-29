@@ -167,12 +167,12 @@ public class LlmGradingService {
         List<RequirementResultDto> reqResults = new ArrayList<>();
         List<Map<String, Object>> reqs = (List<Map<String, Object>>) map.get("requirements");
         if (reqs != null) {
-            for (Map<String, Object> r : reqs) {
-                Long   id      = ((Number) r.get("id")).longValue();
-                int    rScore  = ((Number) r.getOrDefault("score", 0)).intValue();
-                String comment = (String) r.getOrDefault("comment", "");
-                reqResults.add(new RequirementResultDto(id, rScore, comment));
-            }
+        	for (Map<String, Object> r : reqs) {
+        	    Long   id      = toLong(r.get("id"));
+        	    int    rScore  = toInt(r.getOrDefault("score", 0));
+        	    String comment = String.valueOf(r.getOrDefault("comment", ""));
+        	    reqResults.add(new RequirementResultDto(id, rScore, comment));
+        	}
         }
 
         // 총점은 LLM 응답값을 쓰지 않고 requirements 점수 합산으로 직접 계산
@@ -187,6 +187,20 @@ public class LlmGradingService {
         boolean passed = score >= 60;
 
         return new GradingResult(score, passed, feedback, reqResults, false);
+    }
+    
+    /** Object를 Long으로 안전 변환 (숫자/문자열 모두 처리) */
+    private Long toLong(Object o) {
+        if (o == null) return 0L;
+        if (o instanceof Number n) return n.longValue();
+        return Long.parseLong(o.toString().trim());
+    }
+
+    /** Object를 int로 안전 변환 (숫자/문자열 모두 처리) */
+    private int toInt(Object o) {
+        if (o == null) return 0;
+        if (o instanceof Number n) return n.intValue();
+        return Integer.parseInt(o.toString().trim());
     }
 
     /* ── 채점 결과 래퍼 ── */
