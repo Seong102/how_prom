@@ -192,7 +192,7 @@
         .chat-msgs::-webkit-scrollbar-thumb { background: var(--hp-border); border-radius: 2px; }
  
         .bw { display: flex; gap: 8px; align-items: flex-start; }
-        .bw.u { flex-direction: row-reverse; }
+        .bw.u { flex-direction: row-reverse; align-self: flex-end;}
         .bav {
             width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
@@ -267,6 +267,60 @@
         .spinner { width: 36px; height: 36px; border: 3px solid var(--hp-border); border-top-color: var(--hp-primary); border-radius: 50%; animation: spin .75s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .loading-txt { font-size: 14px; font-weight: 500; color: var(--hp-text); }
+		
+		/* 드래그 가능한 구분선 */
+		.splitter {
+		    width: 5px;
+		    background: var(--hp-border);
+		    cursor: col-resize;
+		    flex-shrink: 0;
+		    position: relative;
+		    transition: background 0.15s;
+		}
+		.splitter:hover {
+		    background: var(--hp-primary, #5B47D6);
+		}
+		.splitter.dragging {
+		    background: var(--hp-primary, #5B47D6);
+		}
+		/* 드래그 영역을 좀 더 넓혀서 잡기 쉽게 (시각적 폭은 그대로) */
+		.splitter::before {
+		    content: "";
+		    position: absolute;
+		    top: 0;
+		    bottom: 0;
+		    left: -3px;
+		    right: -3px;
+		}
+		/* 드래그 중 텍스트 선택 방지 */
+		body.is-resizing {
+		    cursor: col-resize !important;
+		    user-select: none !important;
+		}
+		body.is-resizing * {
+		    cursor: col-resize !important;
+		}
+		
+		/* 문제 설명 — 줄바꿈 보존 */
+		.prob-desc {
+		    white-space: pre-wrap;
+		    word-break: break-word;
+		}
+
+		/* 입출력 예시 박스 — pre 태그 자체에 적용 */
+		.io-box pre {
+		    white-space: pre-wrap;
+		    word-break: break-word;
+		    margin: 0;
+		    padding: 0;
+		    font-family: 'Consolas', 'D2Coding', 'Courier New', monospace;
+		    font-size: 13px;
+		    line-height: 1.5;
+		    background: transparent;
+		    color: inherit;
+		    text-align: left;
+		}
+		
     </style>
 </head>
 <body>
@@ -303,11 +357,11 @@
                 <div class="sec-label">예시 입출력</div>
                 <div class="io-box" th:if="${problem.exampleInput != null}">
                     <div class="io-label">입력</div>
-                    <code th:text="${problem.exampleInput}"></code>
+                    <pre th:text="${problem.exampleInput}"></pre>
                 </div>
                 <div class="io-box" th:if="${problem.exampleOutput != null}">
                     <div class="io-label">출력</div>
-                    <code th:text="${problem.exampleOutput}"></code>
+                    <pre th:text="${problem.exampleOutput}"></pre>
                 </div>
             </div>
  
@@ -343,6 +397,8 @@
         </div>
     </aside>
  
+	<div class="splitter" id="splitterLeft"></div>
+	
     <!-- ── 가운데: 코드 에디터 ── -->
     <div class="editor-panel">
         <div class="editor-toolbar">
@@ -383,6 +439,8 @@
         </div>
     </div>
  
+	<div class="splitter" id="splitterRight"></div>
+	
     <!-- ── 오른쪽: 채팅 패널 ── -->
     <div class="chat-panel">
         <div class="chat-head">
@@ -765,6 +823,82 @@ public class Main {
             el.textContent = (h >= 12 ? '오후 ' : '오전 ') + (h > 12 ? h - 12 : h || 12) + ':' + m;
         }
     })();
+	
+	// ============ 패널 리사이즈 기능 ============
+	(function initResizer() {
+	    const layout = document.querySelector('.prob-layout');
+	    const probPanel = document.querySelector('.prob-panel');
+	    const chatPanel = document.querySelector('.chat-panel');
+	    const splitterLeft = document.getElementById('splitterLeft');
+	    const splitterRight = document.getElementById('splitterRight');
+
+	    // 최소·최대 너비 제한 (UX)
+	    const MIN_SIDE_WIDTH = 200;   // 좌·우 패널 최소 200px
+	    const MAX_SIDE_WIDTH = 700;   // 좌·우 패널 최대 700px
+	    const MIN_CENTER_WIDTH = 400; // 가운데 에디터 최소 400px
+
+	    function attachResize(splitter, targetPanel, side) {
+	        // side: 'left' 면 prob-panel 조절, 'right' 면 chat-panel 조절
+	        let isDragging = false;
+	        let startX = 0;
+	        let startWidth = 0;
+
+	        splitter.addEventListener('mousedown', function(e) {
+	            isDragging = true;
+	            startX = e.clientX;
+	            startWidth = targetPanel.getBoundingClientRect().width;
+	            document.body.classList.add('is-resizing');
+	            splitter.classList.add('dragging');
+	            e.preventDefault();
+	        });
+
+	        document.addEventListener('mousemove', function(e) {
+	            if (!isDragging) return;
+
+	            const dx = e.clientX - startX;
+	            // left splitter는 우측으로 끌면 prob-panel이 커짐 (+dx)
+	            // right splitter는 좌측으로 끌면 chat-panel이 커짐 (-dx)
+	            let newWidth = side === 'left' ? startWidth + dx : startWidth - dx;
+
+	            // 최소·최대 제한
+	            newWidth = Math.max(MIN_SIDE_WIDTH, Math.min(MAX_SIDE_WIDTH, newWidth));
+
+	            // 가운데 패널 최소 너비 보장
+	            const layoutWidth = layout.getBoundingClientRect().width;
+	            const otherPanel = side === 'left' ? chatPanel : probPanel;
+	            const otherWidth = otherPanel.getBoundingClientRect().width;
+	            const splitterWidth = 10; // 좌우 splitter 합계
+	            const centerWidth = layoutWidth - newWidth - otherWidth - splitterWidth;
+	            if (centerWidth < MIN_CENTER_WIDTH) return; // 가운데가 너무 좁아지면 무시
+
+	            targetPanel.style.width = newWidth + 'px';
+	        });
+
+	        document.addEventListener('mouseup', function() {
+	            if (isDragging) {
+	                isDragging = false;
+	                document.body.classList.remove('is-resizing');
+	                splitter.classList.remove('dragging');
+	                // 마지막 너비 localStorage 저장 (다음 진입 시 복원)
+	                try {
+	                    localStorage.setItem('hp_panel_' + side, targetPanel.style.width);
+	                } catch (e) { /* 무시 */ }
+	            }
+	        });
+	    }
+
+	    attachResize(splitterLeft, probPanel, 'left');
+	    attachResize(splitterRight, chatPanel, 'right');
+
+	    // 저장된 너비 복원
+	    try {
+	        const savedLeft = localStorage.getItem('hp_panel_left');
+	        const savedRight = localStorage.getItem('hp_panel_right');
+	        if (savedLeft) probPanel.style.width = savedLeft;
+	        if (savedRight) chatPanel.style.width = savedRight;
+	    } catch (e) { /* 무시 */ }
+	})();
+	
 </script>
 
 <!-- 프로필 수정 모달 스크립트 -->
