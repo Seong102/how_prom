@@ -102,7 +102,23 @@
         }
         .btn-submit:hover  { background: var(--hp-primary-hover); }
         .btn-submit:active { transform: scale(0.98); }
+        .btn-submit:disabled { opacity: .45; cursor: not-allowed; background: var(--hp-primary); transform: none; }
         .btn-submit svg { width: 14px; height: 14px; }
+
+        .exceeded-msg {
+            font-size: 11.5px; color: var(--hp-text-muted); text-align: center;
+            margin-bottom: 8px; line-height: 1.6;
+        }
+        .btn-reset {
+            width: 100%; padding: 11px; background: #FEF3C7; color: #92400E;
+            border: 1px solid #FDE68A; border-radius: var(--hp-radius-sm);
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            font-family: inherit; display: flex; align-items: center;
+            justify-content: center; gap: 7px; transition: background .15s, transform .1s;
+        }
+        .btn-reset:hover  { background: #FDE68A; }
+        .btn-reset:active { transform: scale(0.98); }
+        .btn-reset svg { width: 14px; height: 14px; }
  
         /* ── 가운데: 에디터 ── */
         .editor-panel { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
@@ -329,17 +345,31 @@
             <div class="token-bg">
                 <div class="token-fill" id="tokenFill" style="width:0%"></div>
             </div>
-            <div class="token-warn" id="tokenWarn">⚠ 토큰 한도 초과 — 제출만 가능합니다</div>
+            <div class="token-warn" id="tokenWarn">⚠ 토큰 한도 초과 — 제출이 불가합니다</div>
         </div>
  
         <div class="submit-area">
-            <button class="btn-submit" onclick="handleSubmit()">
+            <!-- 정상 상태: 제출 버튼 -->
+            <button class="btn-submit" id="btnSubmit" onclick="handleSubmit()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <polyline points="9 11 12 14 22 4"/>
                     <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
                 </svg>
                 대화 종료 및 제출
             </button>
+            <!-- 토큰 초과 시: 초기화 버튼 -->
+            <div id="exceededActions" style="display:none;">
+                <p class="exceeded-msg">토큰 한도를 초과했습니다.<br>대화를 초기화하고 다시 풀어보세요.</p>
+                <button class="btn-reset" onclick="handleReset()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                        <path d="M10 11v6M14 11v6"/>
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                    </svg>
+                    문제 초기화
+                </button>
+            </div>
         </div>
     </aside>
  
@@ -586,11 +616,12 @@ public class Main {
         fill.style.width      = pct.toFixed(1) + '%';
         cnt.textContent       = val + ' / ' + TOKEN_LIMIT;
         fill.style.background = pct >= 90 ? '#EF4444' : pct >= 70 ? '#F59E0B' : 'var(--hp-primary)';
-        if (val >= TOKEN_LIMIT) {
-            warn.style.display = 'block';
-            document.getElementById('chatInput').disabled = true;
-            document.getElementById('sendBtn').disabled   = true;
-        }
+        const exceeded = val >= TOKEN_LIMIT;
+        warn.style.display = exceeded ? 'block' : 'none';
+        document.getElementById('chatInput').disabled = exceeded;
+        document.getElementById('sendBtn').disabled   = exceeded;
+        document.getElementById('btnSubmit').style.display      = exceeded ? 'none'  : '';
+        document.getElementById('exceededActions').style.display = exceeded ? 'block' : 'none';
     }
  
     /* ════════════════════════════════════
@@ -720,9 +751,38 @@ public class Main {
     function removeTyping() { const el = document.getElementById('typingEl'); if (el) el.remove(); }
  
     /* ════════════════════════════════════
-       대화 종료 및 제출
+       문제 초기화 (토큰 초과 시)
     ════════════════════════════════════ */
+    function handleReset() {
+        if (!confirm('대화 이력과 에디터 코드가 모두 초기화됩니다.\n계속하시겠습니까?')) return;
+        /* 대화 초기화 */
+        conversation       = [];
+        totalUserTokens    = 0;
+        prevTotalForServer = 0;
+        aiWaiting          = false;
+        const msgs = document.getElementById('chatMsgs');
+        msgs.innerHTML = `
+            <div class="bw">
+                <div class="bav ai">AI</div>
+                <div>
+                    <div class="bubble ai">안녕하세요! 문제를 함께 풀어볼게요.<br>어떤 부분부터 시작할까요?</div>
+                    <div class="btime"></div>
+                </div>
+            </div>`;
+        /* 에디터 초기화 */
+        if (monacoEditor) monacoEditor.setValue(INITIAL_CODE);
+        /* 게이지·버튼 초기화 */
+        updateGauge(0);
+        /* 채팅 입력 활성화 */
+        document.getElementById('chatInput').disabled = false;
+        document.getElementById('sendBtn').disabled   = false;
+    }
+
+    
     async function handleSubmit() {
+        if (TOKEN_LIMIT > 0 && totalUserTokens >= TOKEN_LIMIT) {
+            alert('토큰 한도를 초과하여 제출할 수 없습니다.'); return;
+        }
         if (!conversation.find(m => m.role === 'assistant')) {
             alert('AI 응답이 없습니다. 먼저 대화를 진행해주세요.'); return;
         }
