@@ -1,8 +1,11 @@
 package com.howprom.submission.service;
 
 import com.howprom.repository.RequirementRepository;
+import com.howprom.common.entity.EvaluationType;
+import com.howprom.common.entity.Problem;
 import com.howprom.common.entity.Requirement;
 import com.howprom.common.entity.Submission;
+import com.howprom.submission.dto.RequirementResultDto;
 import com.howprom.submission.dto.RequirementResultViewDto;
 import com.howprom.submission.dto.ResultViewDto;
 import com.howprom.repository.SubmissionRepository;
@@ -29,14 +32,37 @@ public class ResultService {
                         .filter(m -> "user".equals(m.getRole()))
                         .count();
 
+        Problem problem = s.getProblem();
+
+        // EFFICIENCY 점수 분해 계산
+        // llmScore = Σ requirementsResult[].score (LLM 원점수, requirements_result 합산)
+        // correctnessPart = llmScore × correctnessWeight  (정확도 기여분)
+        // efficiencyPart  = finalScore - correctnessPart   (효율성 기여분)
+        int     llmScore        = 0;
+        double  correctnessPart = 0.0;
+        double  efficiencyPart  = 0.0;
+
+        if (EvaluationType.EFFICIENCY.equals(problem.getEvaluationType())
+                && s.getRequirementsResult() != null) {
+            llmScore = s.getRequirementsResult().stream()
+                    .mapToInt(RequirementResultDto::getScore)
+                    .sum();
+            correctnessPart = llmScore * problem.getCorrectnessWeight();
+            efficiencyPart  = s.getScore() - correctnessPart;
+        }
+
         return new ResultViewDto(
-                s.getProblem().getId(),
-                s.getProblem().getTitle(),
-                s.getProblem().getEvaluationType().name(),
+                problem.getId(),
+                problem.getTitle(),
+                problem.getEvaluationType().name(),
                 s.getScore(),
                 s.getStatus().name(),
                 s.getTotalUserTokens(),
-                turnCount
+                turnCount,
+                llmScore,
+                correctnessPart,
+                efficiencyPart,
+                problem.getAvgUserTokens()
         );
     }
 
@@ -53,7 +79,7 @@ public class ResultService {
                     Requirement req = requirementRepository.findById(r.getId())
                             .orElseThrow(() -> new IllegalArgumentException("Requirement not found: " + r.getId()));
                     int pct = req.getWeight() > 0 ? (r.getScore() * 100 / req.getWeight()) : 0;
-                    return new RequirementResultViewDto(req.getDescription(), r.getScore(), req.getWeight(), pct);
+                    return new RequirementResultViewDto(req.getDescription(), r.getScore(), req.getWeight(), pct, r.getComment());
                 })
                 .toList();
     }

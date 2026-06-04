@@ -13,4 +13,9 @@ public class ResultViewDto {
     private String  status;
     private Integer totalUserTokens;
     private Integer turnCount;
+    
+    private Integer llmScore;        // Σ requirementsResult[].score
+    private Double  correctnessPart; // llmScore × 0.7
+    private Double  efficiencyPart;  // score - correctnessPart
+    private Float   avgUserTokens;   // problems.avg_user_tokens
 }
