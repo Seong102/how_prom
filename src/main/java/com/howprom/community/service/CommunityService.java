@@ -43,6 +43,7 @@ public class CommunityService {
                 .score(submission.getScore())
                 .finalCode(submission.getFinalCode())
                 .totalUserTokens(submission.getTotalUserTokens())
+                .turnCount(turnCount)
                 .conversation(submission.getConversation())
                 .requirementsResult(submission.getRequirementsResult())
                 .build();
