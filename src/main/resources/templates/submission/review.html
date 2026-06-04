@@ -5,155 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>내 풀이 보기 - HowProm</title>
     <th:block th:replace="~{common/header :: styles}"></th:block>
-    <style>
-        * { margin: 0; padding: 0; }
-        body { min-height: 100vh; display: flex; flex-direction: column; }
-
-        /* ── 서브 헤더 ── */
-        .sub-header {
-            background: var(--hp-surface);
-            border-bottom: 1px solid var(--hp-border);
-            padding: 12px 32px;
-            display: flex; align-items: center; gap: 12px;
-        }
-        .btn-back {
-            display: inline-flex; align-items: center; gap: 5px;
-            padding: 5px 12px; border: 1px solid var(--hp-border);
-            border-radius: var(--hp-radius-sm); font-size: 12px;
-            color: var(--hp-text-muted); background: var(--hp-surface);
-            cursor: pointer; font-family: inherit; transition: background .15s;
-        }
-        .btn-back:hover { background: var(--hp-bg); }
-        .sub-title { font-size: 14px; font-weight: 600; color: var(--hp-text); }
-        .sub-meta  { font-size: 12px; color: var(--hp-text-muted); }
-        .score-pill {
-            margin-left: auto;
-            display: inline-block; padding: 4px 14px;
-            border-radius: 20px; font-size: 12px; font-weight: 700;
-        }
-        .pill-pass { background: var(--hp-success-bg); color: var(--hp-success-text); }
-        .pill-fail { background: var(--hp-danger-bg);  color: var(--hp-danger-text); }
-
-        /* ── 메인 2열 ── */
-        .main-content {
-            flex: 1;
-            max-width: 1100px; width: 100%;
-            margin: 24px auto 40px; padding: 0 24px;
-            display: grid;
-            grid-template-columns: 1fr 380px;
-            gap: 16px;
-            align-items: start;
-        }
-
-        /* ── 카드 ── */
-        .card {
-            background: var(--hp-surface);
-            border: 1px solid var(--hp-border);
-            border-radius: var(--hp-radius);
-            overflow: hidden;
-        }
-        .card-head {
-            padding: 14px 18px;
-            border-bottom: 1px solid var(--hp-border);
-        }
-        .sec-label {
-            font-size: 10.5px; font-weight: 600; color: var(--hp-text-muted);
-            letter-spacing: 0.9px; text-transform: uppercase;
-        }
-
-        /* ── 대화 이력 ── */
-        .conv-list {
-            padding: 16px 18px;
-            display: flex; flex-direction: column; gap: 14px;
-            max-height: calc(100vh - 220px);
-            overflow-y: auto;
-        }
-        .conv-list::-webkit-scrollbar { width: 4px; }
-        .conv-list::-webkit-scrollbar-thumb { background: var(--hp-border); border-radius: 2px; }
-
-        .msg-row { display: flex; gap: 10px; align-items: flex-start; }
-        .msg-row.msg-user { flex-direction: row-reverse; }
-
-        .msg-avatar {
-            width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 10px; font-weight: 700;
-        }
-        .msg-avatar.av-ai   { background: var(--hp-primary-soft); color: var(--hp-primary); }
-        .msg-avatar.av-user { background: var(--hp-border-soft);  color: var(--hp-text-muted); }
-
-        .msg-bubble {
-            max-width: 76%;
-            padding: 10px 13px;
-            font-size: 13px; line-height: 1.65;
-            word-break: break-word; white-space: pre-wrap;
-        }
-        .msg-bubble.bubble-ai {
-            background: var(--hp-bg);
-            border: 1px solid var(--hp-border);
-            border-radius: 4px 12px 12px 12px;
-            color: var(--hp-text);
-        }
-        .msg-bubble.bubble-user {
-            background: var(--hp-primary);
-            border-radius: 12px 4px 12px 12px;
-            color: #fff;
-        }
-
-        .msg-empty {
-            padding: 32px 18px;
-            text-align: center;
-            font-size: 13px; color: var(--hp-text-muted);
-        }
-
-        /* ── 우측 패널 ── */
-        .right-col { display: flex; flex-direction: column; gap: 16px; }
-
-        /* 점수 요약 */
-        .score-summary {
-            background: var(--hp-surface);
-            border: 1px solid var(--hp-border);
-            border-radius: var(--hp-radius);
-            padding: 18px 20px;
-        }
-        .score-big {
-            font-size: 48px; font-weight: 800;
-            color: var(--hp-primary); letter-spacing: -2px; line-height: 1;
-        }
-        .score-denom { font-size: 16px; color: var(--hp-text-muted); font-weight: 400; }
-        .score-stats {
-            display: grid; grid-template-columns: 1fr 1fr;
-            gap: 8px; margin-top: 14px;
-        }
-        .stat-box {
-            background: var(--hp-bg); border: 1px solid var(--hp-border);
-            border-radius: var(--hp-radius-sm); padding: 10px 12px;
-        }
-        .stat-lbl {
-            font-size: 10.5px; font-weight: 600; color: var(--hp-text-muted);
-            text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 3px;
-        }
-        .stat-val { font-size: 16px; font-weight: 700; color: var(--hp-text); }
-
-        /* 최종 코드 */
-        .code-box {
-            padding: 14px 16px;
-            background: #1E1E2E; color: #CDD6F4;
-            font-size: 12px; font-family: 'Consolas', 'D2Coding', monospace;
-            white-space: pre; overflow-x: auto;
-            line-height: 1.6;
-            max-height: 420px; overflow-y: auto;
-        }
-        .code-box::-webkit-scrollbar { width: 4px; height: 4px; }
-        .code-box::-webkit-scrollbar-thumb { background: #45475A; border-radius: 2px; }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/review.css}">
 </head>
 <body>
 
-<!-- 헤더 -->
 <header th:replace="~{common/header :: header('mypage')}"></header>
 
-<!-- 서브 헤더 -->
 <div class="sub-header">
     <button class="btn-back" th:onclick="|history.back()|">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -170,10 +27,8 @@
           th:text="${detail.score + ' / 100'}">88 / 100</span>
 </div>
 
-<!-- 메인 2열 -->
 <div class="main-content">
 
-    <!-- 왼쪽: 대화 이력 -->
     <div class="card">
         <div class="card-head">
             <div class="sec-label">대화 이력</div>
@@ -194,10 +49,8 @@
         </div>
     </div>
 
-    <!-- 오른쪽: 요약 + 최종 코드 -->
     <div class="right-col">
 
-        <!-- 점수 요약 -->
         <div class="score-summary">
             <div class="sec-label" style="margin-bottom: 10px;">채점 결과 요약</div>
             <div>
@@ -217,10 +70,18 @@
             </div>
         </div>
 
-        <!-- 최종 코드 -->
         <div class="card">
             <div class="card-head">
                 <div class="sec-label">최종 생성 코드</div>
+                <button class="btn-zoom" onclick="openCodeModal()">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polyline points="15 3 21 3 21 9"></polyline>
+                        <polyline points="9 21 3 21 3 15"></polyline>
+                        <line x1="21" y1="3" x2="14" y2="10"></line>
+                        <line x1="3" y1="21" x2="10" y2="14"></line>
+                    </svg>
+                    확대 보기
+                </button>
             </div>
             <pre class="code-box" th:text="${detail.finalCode}">// 코드 없음</pre>
         </div>
@@ -228,8 +89,54 @@
     </div>
 </div>
 
-<!-- 프로필 수정 모달 스크립트 -->
+<div id="codeModal" class="code-modal-overlay" onclick="closeCodeModal(event)">
+    <div class="code-modal-content">
+        <div class="code-modal-head">
+            <div class="code-modal-title">최종 생성 코드 (확대 보기)</div>
+            <button class="btn-modal-close" onclick="forceCloseModal()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="code-modal-body">
+            <pre id="modalCodeTarget"></pre>
+        </div>
+    </div>
+</div>
+
 <th:block th:replace="~{common/header :: profile-modal-script}"></th:block>
+
+<script th:inline="javascript">
+    const modal = document.getElementById('codeModal');
+    const modalTarget = document.getElementById('modalCodeTarget');
+    const originalCodeBox = document.querySelector('.code-box');
+
+    function openCodeModal() {
+        modalTarget.textContent = originalCodeBox.textContent;
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function forceCloseModal() {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    function closeCodeModal(event) {
+        if (event.target === modal) {
+            forceCloseModal();
+        }
+    }
+
+    // ESC 키로 닫기 지원
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && modal.style.display === 'flex') {
+            forceCloseModal();
+        }
+    });
+</script>
 
 </body>
 </html>
