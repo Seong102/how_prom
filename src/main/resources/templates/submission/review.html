@@ -6,7 +6,7 @@
     <title>내 풀이 보기 - HowProm</title>
     <th:block th:replace="~{common/header :: styles}"></th:block>
     <style>
-        * { margin: 0; padding: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body { min-height: 100vh; display: flex; flex-direction: column; }
 
         /* ── 서브 헤더 ── */
@@ -55,11 +55,24 @@
         .card-head {
             padding: 14px 18px;
             border-bottom: 1px solid var(--hp-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .sec-label {
             font-size: 10.5px; font-weight: 600; color: var(--hp-text-muted);
             letter-spacing: 0.9px; text-transform: uppercase;
         }
+
+        /* 확대 버튼 스타일 */
+        .btn-zoom {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 8px; border: 1px solid var(--hp-border);
+            border-radius: var(--hp-radius-sm); font-size: 11px; font-weight: 600;
+            color: var(--hp-text); background: var(--hp-bg); cursor: pointer;
+            font-family: inherit; transition: background .15s;
+        }
+        .btn-zoom:hover { background: var(--hp-border-soft); }
 
         /* ── 대화 이력 ── */
         .conv-list {
@@ -146,14 +159,45 @@
         }
         .code-box::-webkit-scrollbar { width: 4px; height: 4px; }
         .code-box::-webkit-scrollbar-thumb { background: #45475A; border-radius: 2px; }
+
+        /* ── 코드 확대 모달 스타일 ── */
+        .code-modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            display: none; justify-content: center; align-items: center;
+            z-index: 9999; padding: 24px;
+        }
+        .code-modal-content {
+            background: #1E1E2E; width: 100%; max-width: 1000px;
+            max-height: 85vh; border-radius: var(--hp-radius);
+            border: 1px solid #45475A; display: flex; flex-direction: column;
+            overflow: hidden; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        .code-modal-head {
+            padding: 14px 20px; background: #181825;
+            border-bottom: 1px solid #313244; display: flex;
+            justify-content: space-between; align-items: center;
+        }
+        .code-modal-title { font-size: 12px; font-weight: 600; color: #A6ADC8; text-transform: uppercase; letter-spacing: 0.8px;}
+        .btn-modal-close {
+            background: none; border: none; color: #A6ADC8; cursor: pointer;
+            padding: 4px; display: flex; align-items: center; transition: color .15s;
+        }
+        .btn-modal-close:hover { color: #F38BA8; }
+        .code-modal-body { flex: 1; overflow: auto; padding: 20px; }
+        .code-modal-body pre {
+            margin: 0; color: #CDD6F4; font-size: 13px;
+            font-family: 'Consolas', 'D2Coding', monospace; white-space: pre; line-height: 1.6;
+        }
+        .code-modal-body::-webkit-scrollbar { width: 6px; height: 6px; }
+        .code-modal-body::-webkit-scrollbar-thumb { background: #45475A; border-radius: 3px; }
     </style>
 </head>
 <body>
 
-<!-- 헤더 -->
 <header th:replace="~{common/header :: header('mypage')}"></header>
 
-<!-- 서브 헤더 -->
 <div class="sub-header">
     <button class="btn-back" th:onclick="|history.back()|">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -170,10 +214,8 @@
           th:text="${detail.score + ' / 100'}">88 / 100</span>
 </div>
 
-<!-- 메인 2열 -->
 <div class="main-content">
 
-    <!-- 왼쪽: 대화 이력 -->
     <div class="card">
         <div class="card-head">
             <div class="sec-label">대화 이력</div>
@@ -194,10 +236,8 @@
         </div>
     </div>
 
-    <!-- 오른쪽: 요약 + 최종 코드 -->
     <div class="right-col">
 
-        <!-- 점수 요약 -->
         <div class="score-summary">
             <div class="sec-label" style="margin-bottom: 10px;">채점 결과 요약</div>
             <div>
@@ -217,10 +257,18 @@
             </div>
         </div>
 
-        <!-- 최종 코드 -->
         <div class="card">
             <div class="card-head">
                 <div class="sec-label">최종 생성 코드</div>
+                <button class="btn-zoom" onclick="openCodeModal()">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polyline points="15 3 21 3 21 9"></polyline>
+                        <polyline points="9 21 3 21 3 15"></polyline>
+                        <line x1="21" y1="3" x2="14" y2="10"></line>
+                        <line x1="3" y1="21" x2="10" y2="14"></line>
+                    </svg>
+                    확대 보기
+                </button>
             </div>
             <pre class="code-box" th:text="${detail.finalCode}">// 코드 없음</pre>
         </div>
@@ -228,8 +276,54 @@
     </div>
 </div>
 
-<!-- 프로필 수정 모달 스크립트 -->
+<div id="codeModal" class="code-modal-overlay" onclick="closeCodeModal(event)">
+    <div class="code-modal-content">
+        <div class="code-modal-head">
+            <div class="code-modal-title">최종 생성 코드 (확대 보기)</div>
+            <button class="btn-modal-close" onclick="forceCloseModal()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="code-modal-body">
+            <pre id="modalCodeTarget"></pre>
+        </div>
+    </div>
+</div>
+
 <th:block th:replace="~{common/header :: profile-modal-script}"></th:block>
+
+<script th:inline="javascript">
+    const modal = document.getElementById('codeModal');
+    const modalTarget = document.getElementById('modalCodeTarget');
+    const originalCodeBox = document.querySelector('.code-box');
+
+    function openCodeModal() {
+        modalTarget.textContent = originalCodeBox.textContent;
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function forceCloseModal() {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    function closeCodeModal(event) {
+        if (event.target === modal) {
+            forceCloseModal();
+        }
+    }
+
+    // ESC 키로 닫기 지원
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && modal.style.display === 'flex') {
+            forceCloseModal();
+        }
+    });
+</script>
 
 </body>
 </html>
