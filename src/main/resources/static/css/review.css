@@ -1,0 +1,187 @@
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ── 서브 헤더 ── */
+.sub-header {
+    background: var(--hp-surface);
+    border-bottom: 1px solid var(--hp-border);
+    padding: 12px 32px;
+    display: flex; align-items: center; gap: 12px;
+}
+.btn-back {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px; border: 1px solid var(--hp-border);
+    border-radius: var(--hp-radius-sm); font-size: 12px;
+    color: var(--hp-text-muted); background: var(--hp-surface);
+    cursor: pointer; font-family: inherit; transition: background .15s;
+}
+.btn-back:hover { background: var(--hp-bg); }
+.sub-title { font-size: 14px; font-weight: 600; color: var(--hp-text); }
+.sub-meta  { font-size: 12px; color: var(--hp-text-muted); }
+.score-pill {
+    margin-left: auto;
+    display: inline-block; padding: 4px 14px;
+    border-radius: 20px; font-size: 12px; font-weight: 700;
+}
+.pill-pass { background: var(--hp-success-bg); color: var(--hp-success-text); }
+.pill-fail { background: var(--hp-danger-bg);  color: var(--hp-danger-text); }
+
+/* ── 메인 2열 ── */
+.main-content {
+    flex: 1;
+    max-width: 1100px; width: 100%;
+    margin: 24px auto 40px; padding: 0 24px;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 16px;
+    align-items: start;
+}
+
+/* ── 카드 ── */
+.card {
+    background: var(--hp-surface);
+    border: 1px solid var(--hp-border);
+    border-radius: var(--hp-radius);
+    overflow: hidden;
+}
+.card-head {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--hp-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.sec-label {
+    font-size: 10.5px; font-weight: 600; color: var(--hp-text-muted);
+    letter-spacing: 0.9px; text-transform: uppercase;
+}
+
+/* 확대 버튼 스타일 */
+.btn-zoom {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 8px; border: 1px solid var(--hp-border);
+    border-radius: var(--hp-radius-sm); font-size: 11px; font-weight: 600;
+    color: var(--hp-text); background: var(--hp-bg); cursor: pointer;
+    font-family: inherit; transition: background .15s;
+}
+.btn-zoom:hover { background: var(--hp-border-soft); }
+
+/* ── 대화 이력 ── */
+.conv-list {
+    padding: 16px 18px;
+    display: flex; flex-direction: column; gap: 14px;
+    max-height: calc(100vh - 220px);
+    overflow-y: auto;
+}
+.conv-list::-webkit-scrollbar { width: 4px; }
+.conv-list::-webkit-scrollbar-thumb { background: var(--hp-border); border-radius: 2px; }
+
+.msg-row { display: flex; gap: 10px; align-items: flex-start; }
+.msg-row.msg-user { flex-direction: row-reverse; }
+
+.msg-avatar {
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700;
+}
+.msg-avatar.av-ai   { background: var(--hp-primary-soft); color: var(--hp-primary); }
+.msg-avatar.av-user { background: var(--hp-border-soft);  color: var(--hp-text-muted); }
+
+.msg-bubble {
+    max-width: 76%;
+    padding: 10px 13px;
+    font-size: 13px; line-height: 1.65;
+    word-break: break-word; white-space: pre-wrap;
+}
+.msg-bubble.bubble-ai {
+    background: var(--hp-bg);
+    border: 1px solid var(--hp-border);
+    border-radius: 4px 12px 12px 12px;
+    color: var(--hp-text);
+}
+.msg-bubble.bubble-user {
+    background: var(--hp-primary);
+    border-radius: 12px 4px 12px 12px;
+    color: #fff;
+}
+
+.msg-empty {
+    padding: 32px 18px;
+    text-align: center;
+    font-size: 13px; color: var(--hp-text-muted);
+}
+
+/* ── 우측 패널 ── */
+.right-col { display: flex; flex-direction: column; gap: 16px; }
+
+/* 점수 요약 */
+.score-summary {
+    background: var(--hp-surface);
+    border: 1px solid var(--hp-border);
+    border-radius: var(--hp-radius);
+    padding: 18px 20px;
+}
+.score-big {
+    font-size: 48px; font-weight: 800;
+    color: var(--hp-primary); letter-spacing: -2px; line-height: 1;
+}
+.score-denom { font-size: 16px; color: var(--hp-text-muted); font-weight: 400; }
+.score-stats {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px; margin-top: 14px;
+}
+.stat-box {
+    background: var(--hp-bg); border: 1px solid var(--hp-border);
+    border-radius: var(--hp-radius-sm); padding: 10px 12px;
+}
+.stat-lbl {
+    font-size: 10.5px; font-weight: 600; color: var(--hp-text-muted);
+    text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 3px;
+}
+.stat-val { font-size: 16px; font-weight: 700; color: var(--hp-text); }
+
+/* 최종 코드 */
+.code-box {
+    padding: 14px 16px;
+    background: #1E1E2E; color: #CDD6F4;
+    font-size: 12px; font-family: 'Consolas', 'D2Coding', monospace;
+    white-space: pre; overflow-x: auto;
+    line-height: 1.6;
+    max-height: 420px; overflow-y: auto;
+}
+.code-box::-webkit-scrollbar { width: 4px; height: 4px; }
+.code-box::-webkit-scrollbar-thumb { background: #45475A; border-radius: 2px; }
+
+/* ── 코드 확대 모달 스타일 ── */
+.code-modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    display: none; justify-content: center; align-items: center;
+    z-index: 9999; padding: 24px;
+}
+.code-modal-content {
+    background: #1E1E2E; width: 100%; max-width: 1000px;
+    max-height: 85vh; border-radius: var(--hp-radius);
+    border: 1px solid #45475A; display: flex; flex-direction: column;
+    overflow: hidden; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+.code-modal-head {
+    padding: 14px 20px; background: #181825;
+    border-bottom: 1px solid #313244; display: flex;
+    justify-content: space-between; align-items: center;
+}
+.code-modal-title { font-size: 12px; font-weight: 600; color: #A6ADC8; text-transform: uppercase; letter-spacing: 0.8px;}
+.btn-modal-close {
+    background: none; border: none; color: #A6ADC8; cursor: pointer;
+    padding: 4px; display: flex; align-items: center; transition: color .15s;
+}
+.btn-modal-close:hover { color: #F38BA8; }
+.code-modal-body { flex: 1; overflow: auto; padding: 20px; }
+.code-modal-body pre {
+    margin: 0; color: #CDD6F4; font-size: 13px;
+    font-family: 'Consolas', 'D2Coding', monospace; white-space: pre; line-height: 1.6;
+}
+.code-modal-body::-webkit-scrollbar { width: 6px; height: 6px; }
+.code-modal-body::-webkit-scrollbar-thumb { background: #45475A; border-radius: 3px; }
