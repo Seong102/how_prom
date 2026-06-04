@@ -39,7 +39,7 @@ public interface AdminDashboardRepository extends JpaRepository<Submission, Long
     @Query("SELECT COUNT(p) FROM Problem p")
     Long countTotalProblems();
 
-    @Query(value = "SELECT COALESCE(AVG(TIMESTAMPDIFF(SECOND, s.submitted_at, s.graded_at)), 0.0) " +
+    @Query(value = "SELECT COALESCE(AVG(TIMESTAMPDIFF(MICROSECOND, s.submitted_at, s.graded_at) / 1000000.0), 0.0) " +
                    "FROM submissions s " +
                    "WHERE s.graded_at IS NOT NULL AND s.status NOT IN ('GRADING', 'ERROR')",
             nativeQuery = true)
