@@ -31,6 +31,12 @@ public class CommunityService {
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 제출 기록입니다."));
 
+        // 턴 수 계산 (user 역할 메시지 수)
+        int turnCount = submission.getConversation() == null ? 0 :
+            (int) submission.getConversation().stream()
+                .filter(msg -> "user".equals(msg.getRole()))
+                .count();
+        
         return MyPageDetailResponseDto.builder()
                 .submissionId(submission.getId())
                 .problemTitle(submission.getProblem().getTitle())
