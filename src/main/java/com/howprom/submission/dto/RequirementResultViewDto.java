@@ -10,4 +10,5 @@ public class RequirementResultViewDto {
     private Integer score;
     private Integer maxScore;
     private Integer pct;
+    private String comment;
 }

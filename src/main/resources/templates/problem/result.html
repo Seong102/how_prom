@@ -148,6 +148,45 @@
                     text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 4px; }
         .stat-val { font-size: 18px; font-weight: 700; color: var(--hp-text); }
 
+        /* ── EFFICIENCY 점수 분해 카드 ── */
+        .eff-item {
+            background: var(--hp-bg); border: 1px solid var(--hp-border);
+            border-radius: var(--hp-radius-sm); padding: 12px 14px;
+            margin-bottom: 8px;
+        }
+        .eff-item:last-of-type { margin-bottom: 0; }
+        .eff-item-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 7px;
+        }
+        .eff-item-label { font-size: 11px; font-weight: 600; color: var(--hp-text-muted); }
+        .eff-item-score { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+        .eff-item-score--correctness { color: var(--hp-primary); }
+        .eff-item-score--efficiency  { color: #10B981; }
+        .eff-bar-bg {
+            height: 5px; background: var(--hp-border-soft);
+            border-radius: 3px; overflow: hidden; border: 1px solid var(--hp-border);
+        }
+        .eff-bar-fill {
+            height: 100%; border-radius: 3px; width: 0%;
+            transition: width 1s cubic-bezier(.4,0,.2,1) .4s;
+        }
+        .eff-bar-fill--correctness { background: var(--hp-primary); }
+        .eff-bar-fill--efficiency  { background: #10B981; }
+        .eff-desc { font-size: 11px; color: var(--hp-text-muted); margin-top: 5px; }
+        .eff-operator {
+            text-align: center; font-size: 12px; font-weight: 700;
+            color: var(--hp-text-muted); margin: 4px 0; line-height: 1;
+        }
+        .eff-total {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 14px;
+            background: var(--hp-primary-soft); border: 1px solid var(--hp-primary);
+            border-radius: var(--hp-radius-sm); margin-top: 8px;
+        }
+        .eff-total-label { font-size: 12px; font-weight: 700; color: var(--hp-primary); }
+        .eff-total-score { font-size: 20px; font-weight: 800; color: var(--hp-primary); letter-spacing: -0.5px; }
+
         /* ── 하단 버튼 ── */
         .bottom-actions {
             max-width: 900px; width: 100%;
@@ -294,6 +333,58 @@
             </div>
         </div>
 
+        <!-- EFFICIENCY 전용: 점수 구성 분해 -->
+        <!-- llmScore     = Σ requirementsResult[].score (requirements_result 합산) -->
+        <!-- correctness  = llmScore × 0.7              -->
+        <!-- efficiency   = finalScore - correctness     -->
+        <div class="card" th:if="${submission.evaluationType == 'EFFICIENCY'}">
+            <div class="sec-label">점수 구성</div>
+
+            <!-- 정확도 기여분 (×0.7) -->
+            <div class="eff-item">
+                <div class="eff-item-header">
+                    <span class="eff-item-label">🎯 정확도 점수 ×0.7</span>
+                    <span class="eff-item-score eff-item-score--correctness"
+                          th:text="${#numbers.formatDecimal(submission.correctnessPart, 1, 1)}">0.0</span>
+                </div>
+                <div class="eff-bar-bg">
+                    <div class="eff-bar-fill eff-bar-fill--correctness"
+                         th:attr="data-pct=${submission.correctnessPart}"></div>
+                </div>
+                <div class="eff-desc">
+                    LLM 원점수 <strong th:text="${submission.llmScore}">0</strong>점 × 0.7
+                </div>
+            </div>
+
+            <div class="eff-operator">+</div>
+
+            <!-- 효율성 기여분 (×0.3) -->
+            <div class="eff-item">
+                <div class="eff-item-header">
+                    <span class="eff-item-label">⚡ 효율성 보너스 ×0.3</span>
+                    <span class="eff-item-score eff-item-score--efficiency"
+                          th:text="${#numbers.formatDecimal(submission.efficiencyPart, 1, 1)}">0.0</span>
+                </div>
+                <div class="eff-bar-bg">
+                    <div class="eff-bar-fill eff-bar-fill--efficiency"
+                         th:attr="data-pct=${submission.efficiencyPart}"></div>
+                </div>
+                <div class="eff-desc">
+                    사용 <strong th:text="${submission.totalUserTokens}">0</strong> /
+                    평균 <strong th:text="${submission.avgUserTokens}">0</strong> 토큰
+                </div>
+            </div>
+
+            <div class="eff-operator">=</div>
+
+            <!-- 최종 합계 -->
+            <div class="eff-total">
+                <span class="eff-total-label">최종 점수</span>
+                <span class="eff-total-score"
+                      th:text="${submission.score + ' / 100'}">0 / 100</span>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -378,6 +469,10 @@
         setTimeout(() => {
             document.querySelectorAll('.req-bar-fill').forEach(bar => {
                 bar.style.width = (bar.dataset.pct || 0) + '%';
+            });
+            /* EFFICIENCY 점수 바 애니메이션 */
+            document.querySelectorAll('.eff-bar-fill').forEach(bar => {
+                bar.style.width = Math.min(parseFloat(bar.dataset.pct) || 0, 100) + '%';
             });
         }, 350);
     });
